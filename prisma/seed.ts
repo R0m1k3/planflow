@@ -181,6 +181,65 @@ async function main() {
     console.log(`  ${person.email} — ${person.role}`);
   }
 
+  console.log('→ Contrats et dossiers');
+  const contractSpecs = [
+    { number: 'E0001', type: 'CDI', hours: 39, forfait: false, location: 'loc-nantes' },
+    { number: 'E0002', type: 'CDI', hours: 0, forfait: true, location: 'loc-nantes' },
+    { number: 'E0003', type: 'CDI', hours: 35, forfait: false, location: 'loc-rennes' },
+    { number: 'E0004', type: 'CDD', hours: 24, forfait: false, location: 'loc-nantes' },
+  ] as const;
+
+  for (const spec of contractSpecs) {
+    const membership = await prisma.membership.findUnique({
+      where: {
+        accountId_employeeNumber: {
+          accountId: account.id,
+          employeeNumber: spec.number,
+        },
+      },
+    });
+    if (!membership) continue;
+
+    const holder = membership.userId
+      ? await prisma.user.findUnique({ where: { id: membership.userId } })
+      : null;
+
+    await prisma.employeeProfile.upsert({
+      where: { membershipId: membership.id },
+      update: {},
+      create: {
+        membershipId: membership.id,
+        accountId: account.id,
+        firstName: holder?.firstName ?? 'Prénom',
+        lastName: holder?.lastName ?? 'À compléter',
+        city: 'Nantes',
+        phone: '00 00 00 00 00',
+      },
+    });
+
+    const existing = await prisma.userContract.findFirst({
+      where: { membershipId: membership.id },
+    });
+    if (existing) continue;
+
+    await prisma.userContract.create({
+      data: {
+        accountId: account.id,
+        membershipId: membership.id,
+        locationId: spec.location,
+        contractType: spec.type,
+        startDate: new Date('2024-01-08'),
+        workTimeArrangement: spec.forfait ? 'FORFAIT_JOURS' : 'HOURLY',
+        weeklyHours: spec.forfait ? 0 : spec.hours,
+        forfaitDaysPerYear: spec.forfait ? 218 : null,
+        forfaitAgreementRef: spec.forfait ? 'CONV-2024-002' : null,
+        forfaitAgreedAt: spec.forfait ? new Date('2024-01-05') : null,
+        monthlySalary: 2100,
+      },
+    });
+  }
+  console.log(`  ${contractSpecs.length} contrats`);
+
   console.log('→ Durées de conservation');
   const retention = [
     ['Shift', 12, 'creation', 'Décompte des horaires : 1 an minimum (matrice n° 21).'],

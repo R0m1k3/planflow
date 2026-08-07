@@ -119,6 +119,9 @@ model Membership {
   scopes      MembershipScope[]
   invitations Invitation[]
   auditLogs   AuditLog[]
+  profile     EmployeeProfile?
+  contracts   UserContract[]
+  workPermits WorkPermit[]
 
   @@unique([accountId, employeeNumber])
   @@index([accountId])
@@ -376,4 +379,169 @@ model LegalConfigEntry {
 
   @@unique([accountId, domain, key, effectiveFrom])
   @@index([accountId])
+}
+
+// ============================================================================
+// Dossier salarié et contrats — PLAN.md §4.3, WP-03
+// ============================================================================
+
+/// Dossier personnel. NIR, IBAN et BIC sont chiffrés au repos (PLAN.md §3.6) :
+/// une sauvegarde volée ne doit pas suffire à les lire.
+model EmployeeProfile {
+  membershipId String @id
+  accountId    String
+
+  /// Nom d'état civil, porté par le dossier et non par le compte utilisateur :
+  /// la plupart des salariés n'ont pas de compte, et le registre unique du
+  /// personnel exige leur nom.
+  firstName String
+  lastName  String
+
+  birthDate    DateTime? @db.Date
+  birthPlace   String?
+  nationality  String?
+  addressLine1 String?
+  postalCode   String?
+  city         String?
+  country      String?
+  phone        String?
+  personalEmail String?
+
+  socialSecurityNumberEnc Bytes?
+  ibanEnc                 Bytes?
+  bicEnc                  Bytes?
+
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  updatedAt DateTime @updatedAt
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+/// Titre de séjour et son échéance. Le tableau de bord RH surveille les
+/// expirations : un titre périmé interdit l'emploi.
+model WorkPermit {
+  id           String    @id @default(cuid())
+  accountId    String
+  membershipId String
+  permitType   String
+  reference    String
+  issuedAt     DateTime? @db.Date
+  expiresAt    DateTime  @db.Date
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([membershipId])
+}
+
+model UserContract {
+  id           String @id @default(cuid())
+  accountId    String
+  membershipId String
+  locationId   String
+
+  contractType ContractType
+  startDate    DateTime  @db.Date
+  endDate      DateTime? @db.Date
+  trialEndDate DateTime? @db.Date
+
+  /// Organisation du temps. Le forfait jours exclut le décompte horaire (§6.4).
+  workTimeArrangement        WorkTimeArrangement @default(HOURLY)
+  weeklyHours                Decimal             @default(35) @db.Decimal(5, 2)
+  forfaitDaysPerYear         Decimal?            @db.Decimal(5, 1)
+  /// Convention individuelle écrite. Sans elle le forfait est inopposable :
+  /// l'activation est refusée.
+  forfaitAgreementRef        String?
+  forfaitAgreedAt            DateTime?
+  isModulated                Boolean             @default(false)
+
+  hourlyRate     Decimal? @db.Decimal(10, 4)
+  monthlySalary  Decimal? @db.Decimal(10, 2)
+  jobTitleId     String?
+  classification String?
+  coefficient    String?
+
+  status    ContractStatus @default(ACTIVE)
+  endReason String?
+  version   Int            @default(0)
+  createdAt DateTime       @default(now())
+
+  membership Membership  @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  amendments Amendment[]
+
+  @@index([accountId])
+  @@index([membershipId])
+}
+
+/// Liste exhaustive relevée dans le filtre « Tous les types de contrats ».
+enum ContractType {
+  APPRENTISSAGE
+  CDD
+  CDI
+  DIRIGEANT_ASSIMILE_SALARIE
+  DIRIGEANT_NON_SALARIE
+  EXTRA
+  INTERIM
+  STAGIAIRE
+  SAISONNIER
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+}
+
+enum WorkTimeArrangement {
+  HOURLY
+  FORFAIT_JOURS
+}
+
+/// Avenant. Conserve l'historique plutôt que d'écraser le contrat : un contrôle
+/// demande l'état du contrat au moment des faits, pas son état actuel.
+model Amendment {
+  id             String   @id @default(cuid())
+  accountId      String
+  userContractId String
+  effectiveDate  DateTime @db.Date
+  changes        Json
+  reason         String?
+  createdBy      String
+  createdAt      DateTime @default(now())
+
+  contract UserContract @relation(fields: [userContractId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([userContractId])
+}
+
+/// Décompte des jours d'un salarié au forfait. Conservation 3 ans (§12.5).
+model ForfaitDayEntry {
+  id             String   @id @default(cuid())
+  accountId      String
+  userContractId String
+  localDate      DateTime @db.Date
+  quantity       Decimal  @db.Decimal(2, 1)
+  createdBy      String
+  createdAt      DateTime @default(now())
+
+  @@unique([userContractId, localDate])
+  @@index([accountId])
+}
+
+/// Entretien annuel de charge, obligatoire au forfait jours (matrice n° 7).
+model WorkloadReview {
+  id             String   @id @default(cuid())
+  accountId      String
+  userContractId String
+  heldAt         DateTime @db.Date
+  summary        String
+  actions        String?
+
+  @@index([accountId])
+  @@index([userContractId])
 }

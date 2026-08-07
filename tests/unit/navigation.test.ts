@@ -27,10 +27,11 @@ describe('matches', () => {
 
 describe('activeItem', () => {
   it('retient la correspondance la plus spécifique', () => {
-    // Sur une fiche, « Membres » (/equipe) et « Fiche salarié » correspondent
-    // tous deux ; c'est la fiche qui doit s'allumer.
-    expect(activeItem('/equipe/camille-ferrand')?.id).toBe('fiche');
+    // Une fiche salarié est un détail de « Membres » : c'est cette entrée qui
+    // reste allumée, et non un lien codé en dur vers un salarié particulier.
+    expect(activeItem('/equipe/cm123abc')?.id).toBe('membres');
     expect(activeItem('/equipe')?.id).toBe('membres');
+    expect(activeItem('/reglages/registre')?.id).toBe('registre');
   });
 
   it('ne renvoie rien pour une route hors navigation', () => {
@@ -47,7 +48,7 @@ describe('isActive', () => {
           typeof href === 'string' && !href.includes('#'),
       );
 
-    for (const pathname of [...targets, '/equipe/sarah-lemoine']) {
+    for (const pathname of [...targets, '/equipe/cm123abc']) {
       const lit = NAVIGATION.flatMap((section) => section.items).filter(
         (item) => item.href && isActive(item.href, pathname),
       );

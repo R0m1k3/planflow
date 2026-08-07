@@ -58,3 +58,34 @@ test('un manager ne peut ni voir ni modifier les établissements', async ({
     page.getByRole('heading', { name: 'Établissements' }),
   ).toBeHidden();
 });
+
+test('un salarié sans compte applicatif est créable', async ({ page }) => {
+  await signIn(page, 'direction@example.test');
+  await page.goto('/equipe');
+
+  await expect(page.getByRole('heading', { name: 'Équipe' })).toBeVisible();
+  // L'effectif vient de la base, pas du module de démonstration.
+  await expect(page.getByText('E0001')).toBeVisible();
+
+  const matricule = `E9${Date.now() % 100000}`;
+  const form = page.locator('form').filter({ hasText: 'Ajouter' });
+  await form.locator('input[name="firstName"]').fill('Sans');
+  await form.locator('input[name="lastName"]').fill('Compte');
+  await form.locator('input[name="employeeNumber"]').fill(matricule);
+  await page.getByRole('button', { name: 'Ajouter' }).click();
+  await expect(page.getByText('Salarié ajouté.')).toBeVisible();
+
+  // Rechargement explicite : ce qui est vérifié ici est la persistance et la
+  // présence dans l'annuaire, pas le moment exact où la revalidation atteint
+  // le rendu courant.
+  await page.reload();
+
+  // Un salarié sans adresse doit exister : la plupart des équipes de vente ne
+  // se connectent jamais à l'outil.
+  await expect(
+    page.getByRole('cell', { name: matricule, exact: true }),
+  ).toBeVisible();
+  // Le nom vit sur le dossier, pas sur le compte : un salarié sans accès
+  // applicatif doit tout de même figurer nommément au registre du personnel.
+  await expect(page.getByRole('link', { name: /Sans Compte/ })).toBeVisible();
+});
