@@ -60,8 +60,20 @@ Huit constats structurants, qu'une lecture de la documentation publique de Combo
 | **Paie** | **Export vers Silae** (§8). Aucun moteur de paie, aucun bulletin, aucune DSN dans PlanFlow. |
 | **Pointeuse** | **Hors périmètre.** Pas de borne, pas de PWA kiosque, pas de pointage matériel. Les heures réelles sont saisies et validées par le manager (§7.3). |
 | **Convention d'amorce** | **IDCC 1517**, moteur paramétrable pour en ajouter d'autres. |
-| **Stack** | Next.js 15 (App Router, TypeScript strict) · PostgreSQL 16 + Prisma · Auth.js v5 · Tailwind + shadcn/ui · Zod · Vitest + Playwright · pnpm · `docker-compose` auto-hébergé. |
+| **Stack** | Next.js 16 (App Router, TypeScript strict) · PostgreSQL 16 + Prisma 7 · **sessions maison en base** · Tailwind 4 · Zod · Vitest + Playwright · pnpm · `docker-compose` auto-hébergé. |
 | **Mobile** | PWA installable, responsive. Pas d'application native. |
+
+### Écarts constatés à la réalisation
+
+Trois choix de §2 ont été révisés au WP-00, après confrontation aux versions réellement disponibles.
+
+| Sujet | Plan initial | Retenu | Raison |
+|---|---|---|---|
+| Next.js | 15 | **16.3** | Version stable courante. Démarrer une majeure en retard n'apporte rien. |
+| Authentification | Auth.js v5 | **Sessions en base** | Auth.js v5 est toujours en beta. Le besoin se limite à identifiants et invitation, sans OAuth — et la matrice n° 23 impose la **révocation de session**, immédiate avec des sessions en base, malaisée avec des JWT. |
+| Convention | `middleware.ts` | **`proxy.ts`** | Next 16 a renommé la convention ; `middleware` est déprécié. |
+
+Prisma 7 a par ailleurs déplacé l'URL de connexion du schéma vers `prisma.config.ts`, et l'application passe désormais par un adaptateur `pg` explicite — c'est ce point d'accroche qui recevra l'extension de scoping multi-tenant au WP-01.
 
 **Hors périmètre v1**, à ne pas construire : moteur de paie, DSN, bulletins de paie, distribution de bulletins, signature électronique qualifiée, transmission DPAE à l'URSSAF, connecteurs de caisse, abonnement et facturation, planning prédictif, auto-assignation.
 

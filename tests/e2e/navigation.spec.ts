@@ -1,0 +1,60 @@
+import { expect, test } from '@playwright/test';
+
+test('les six écrans se chargent et affichent leur contenu', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Aperçu RH' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Plannings' }).click();
+  await expect(
+    page.getByRole('heading', { name: /Planning · semaine 33/ }),
+  ).toBeVisible();
+  // La grille doit porter des créneaux, pas seulement son ossature.
+  await expect(page.getByText('Congés payés').first()).toBeVisible();
+
+  await page.getByRole('link', { name: 'Vue jour' }).click();
+  await expect(
+    page.getByRole('heading', { name: /Planning · mercredi 12 août/ }),
+  ).toBeVisible();
+
+  await page.getByRole('link', { name: 'Équipe', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Équipe' })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Camille Ferrand' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Camille Ferrand' }),
+  ).toBeVisible();
+
+  await page.getByRole('link', { name: 'Congés' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Calendrier des absences' }),
+  ).toBeVisible();
+});
+
+test('le thème bascule et survit à un rechargement', async ({ page }) => {
+  await page.goto('/');
+  const html = page.locator('html');
+  await expect(html).toHaveAttribute('data-theme', 'light');
+
+  await page.getByRole('button', { name: /^Thème/ }).click();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+
+  // Le script inline doit reposer le thème avant le premier rendu : sans lui,
+  // la page reviendrait en clair puis basculerait — un flash blanc.
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', 'dark');
+});
+
+test('une entrée de navigation non construite mène à un écran explicite', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Profils incomplets' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Profils incomplets' }),
+  ).toBeVisible();
+  // `exact` évite de heurter l'annonceur de route de Next, qui répète le titre
+  // du document — « Écran à venir · PlanFlow ».
+  await expect(
+    page.getByText('Écran à venir', { exact: true }),
+  ).toBeVisible();
+});

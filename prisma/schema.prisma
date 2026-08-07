@@ -1,0 +1,14 @@
+// PlanFlow — schéma de données.
+//
+// WP-00 n'installe que la plomberie : datasource, generator et les extensions
+// PostgreSQL dont les lots suivants dépendent. Les modèles métier arrivent au
+// WP-01 (tenancy, identité, autorisation) — voir PLAN.md §4.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Prisma 7 : l'URL de connexion vit dans prisma.config.ts, plus ici.
+datasource db {
+  provider = "postgresql"
+}
