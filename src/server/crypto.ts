@@ -38,7 +38,13 @@ export function encrypt(plaintext: string): Buffer {
   return Buffer.concat([iv, cipher.getAuthTag(), encrypted]);
 }
 
-export function decrypt(payload: Buffer): string {
+export function decrypt(payload: Uint8Array): string {
+  // Prisma 7 renvoie les colonnes `Bytes` en Uint8Array, pas en Buffer.
+  const buffer = Buffer.from(payload.buffer, payload.byteOffset, payload.byteLength);
+  return decryptBuffer(buffer);
+}
+
+function decryptBuffer(payload: Buffer): string {
   if (payload.length < IV_LENGTH + TAG_LENGTH) {
     throw new Error('Chiffré invalide : trop court pour contenir iv et tag');
   }
@@ -60,7 +66,9 @@ export function encryptOptional(value: string | null | undefined): Buffer | null
   return value ? encrypt(value) : null;
 }
 
-export function decryptOptional(payload: Buffer | null | undefined): string | null {
+export function decryptOptional(
+  payload: Uint8Array | null | undefined,
+): string | null {
   return payload ? decrypt(payload) : null;
 }
 

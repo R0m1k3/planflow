@@ -2,20 +2,12 @@ import { notFound } from 'next/navigation';
 
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Card, CardHeader } from '@/components/ui/Card';
-import { POSTE_LABELS, posteShort, posteTokens } from '@/lib/design/postes';
-import { EMPLOYEES, findEmployee } from '@/lib/demo/equipe';
-import {
-  FICHE_COUNTERS,
-  FICHE_DOCUMENTS,
-  FICHE_SHIFTS,
-} from '@/lib/demo/fiche';
-import { fullName, initials } from '@/lib/demo/types';
+import { Card, CardHeader, EmptyState } from '@/components/ui/Card';
+import { getEmployee } from '@/server/employees/queries';
 
-export function generateStaticParams() {
-  return EMPLOYEES.map((employee) => ({ id: employee.id }));
-}
+export const dynamic = 'force-dynamic';
+
+const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
 
 export default async function FichePage({
   params,
@@ -23,20 +15,24 @@ export default async function FichePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const employee = findEmployee(id);
+  const employee = await getEmployee(id);
   if (!employee) notFound();
+
+  const active = employee.contracts.find(
+    (contract) => contract.status === 'ACTIVE',
+  );
 
   return (
     <PageBody>
       <PageHeader
-        title={fullName(employee)}
-        subtitle={`${employee.job} · Nantes Atlantis · entrée le ${employee.since}`}
-        actions={
-          <>
-            <Button>Documents</Button>
-            <Button variant="primary">Modifier le contrat</Button>
-          </>
-        }
+        title={`${employee.firstName} ${employee.lastName}`}
+        subtitle={[
+          employee.contract?.label,
+          employee.locationName,
+          `matricule ${employee.employeeNumber}`,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
       />
 
       <div className="flex flex-wrap items-center gap-3 rounded-3 border border-line-1 bg-surface p-4">
@@ -44,104 +40,127 @@ export default async function FichePage({
           aria-hidden
           className="flex size-11 flex-none items-center justify-center rounded-full bg-surface-3 text-sm font-semibold text-ink-2"
         >
-          {initials(employee)}
+          {employee.firstName.charAt(0)}
+          {employee.lastName.charAt(0)}
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-medium">{employee.contract}</p>
-          <p className="text-micro text-ink-3">
-            Poste principal · {POSTE_LABELS[employee.poste]}
+          <p className="text-sm font-medium">
+            {employee.email ?? 'Aucun compte applicatif'}
           </p>
+          <p className="text-micro text-ink-3">Rôle · {employee.roleName}</p>
         </div>
         <span className="flex-1" />
-        {employee.forfaitJours ? (
-          <Badge tone="accent">Forfait jours · 218 j</Badge>
+        {active?.forfaitJours ? (
+          <Badge tone="accent">
+            Forfait jours · {active.forfaitDaysPerYear ?? '—'} j
+          </Badge>
+        ) : active ? (
+          <Badge tone="neutral">{active.weeklyHours} h hebdomadaires</Badge>
         ) : null}
-        <ul className="flex flex-wrap items-center gap-2">
-          {FICHE_COUNTERS.map((counter) => (
-            <li
-              key={counter.label}
-              className="rounded-2 border border-line-1 bg-surface-2 px-3 py-1.5"
-            >
-              <span className="block text-micro text-ink-3">
-                {counter.label}
-              </span>
-              <span
-                className={`tnum block text-sm font-semibold ${
-                  counter.tone === 'warn' ? 'text-warn-soft-ink' : 'text-ink-1'
-                }`}
-              >
-                {counter.value}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {!employee.hasAccount ? (
+          <Badge tone="info">Sans accès applicatif</Badge>
+        ) : null}
       </div>
 
-      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(400px,1fr))]">
-        <Card>
-          <CardHeader
-            title="Créneaux de la semaine"
-            action={
-              <Button size="sm" variant="ghost">
-                Voir le planning
-              </Button>
-            }
+      <Card>
+        <CardHeader
+          title="Contrats et avenants"
+          badge={<Badge tone="neutral">{employee.contracts.length}</Badge>}
+        />
+        {employee.contracts.length === 0 ? (
+          <EmptyState
+            title="Aucun contrat"
+            description="Ce salarié n’a pas encore de contrat. Il ne peut pas être planifié tant qu’aucune période n’est ouverte."
           />
+        ) : (
           <ul>
-            {FICHE_SHIFTS.map((shift, index) => {
-              const tokens = posteTokens(shift.poste);
-              return (
-                <li
-                  key={`${shift.day}-${index}`}
-                  className="flex items-center gap-3 border-b border-line-1 px-4 py-2.5 last:border-b-0"
-                >
-                  <span className="tnum w-28 flex-none text-xs text-ink-2">
-                    {shift.day}
-                  </span>
-                  <span
-                    className="flex-none rounded-2 px-1.5 py-0.5 text-micro font-semibold tracking-wide"
-                    style={{
-                      background: tokens.bg,
-                      color: tokens.fg,
-                      border: `1px solid ${tokens.edge}`,
-                    }}
-                    title={POSTE_LABELS[shift.poste]}
-                  >
-                    {posteShort(shift.poste)}
-                  </span>
-                  <span className="tnum flex-1 text-sm">{shift.time}</span>
-                  <span className="tnum flex-none text-xs text-ink-2">
-                    {shift.worked}
-                  </span>
-                  <Badge tone={shift.tone}>{shift.state}</Badge>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-
-        <Card>
-          <CardHeader title="Documents" />
-          <ul>
-            {FICHE_DOCUMENTS.map((document) => (
+            {employee.contracts.map((contract) => (
               <li
-                key={document.label}
-                className="flex items-center gap-3 border-b border-line-1 px-4 py-3 last:border-b-0"
+                key={contract.id}
+                className="border-b border-line-1 px-4 py-3 last:border-b-0"
               >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {document.label}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{contract.label}</span>
+                  {contract.forfaitJours ? (
+                    <Badge tone="accent">Forfait jours</Badge>
+                  ) : (
+                    <Badge tone="neutral">{contract.weeklyHours} h</Badge>
+                  )}
+                  <span className="tnum text-xs text-ink-2">
+                    {dateFormat.format(contract.startDate)}
+                    {contract.endDate
+                      ? ` → ${dateFormat.format(contract.endDate)}`
+                      : ' → en cours'}
                   </span>
-                  <span className="tnum block text-micro text-ink-3">
-                    {document.date}
-                  </span>
-                </span>
-                <Badge tone={document.tone}>{document.state}</Badge>
+                  <span className="flex-1" />
+                  {employee.canSeeSalary && contract.monthlySalary ? (
+                    <span className="tnum text-sm">
+                      {contract.monthlySalary} € brut
+                    </span>
+                  ) : null}
+                  <Badge
+                    tone={contract.status === 'ACTIVE' ? 'ok' : 'neutral'}
+                  >
+                    {contract.status === 'ACTIVE' ? 'En cours' : 'Terminé'}
+                  </Badge>
+                </div>
+
+                {contract.amendments.length > 0 ? (
+                  <ul className="mt-2 border-l-2 border-line-2 pl-3">
+                    {contract.amendments.map((amendment) => (
+                      <li
+                        key={amendment.id}
+                        className="py-1 text-xs text-ink-2"
+                      >
+                        <span className="tnum">
+                          {dateFormat.format(amendment.effectiveDate)}
+                        </span>{' '}
+                        — avenant{amendment.reason ? ` · ${amendment.reason}` : ''}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>
+        )}
+      </Card>
+
+      {employee.profile ? (
+        <Card>
+          <CardHeader title="Dossier personnel" />
+          <dl className="grid gap-x-8 gap-y-3 p-4 text-sm [grid-template-columns:repeat(auto-fit,minmax(200px,1fr))]">
+            <div>
+              <dt className="text-micro text-ink-3">Téléphone</dt>
+              <dd className="tnum">{employee.profile.phone ?? '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-micro text-ink-3">Ville</dt>
+              <dd>{employee.profile.city ?? '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-micro text-ink-3">
+                Numéro de sécurité sociale
+              </dt>
+              <dd className="tnum">
+                {/* Non chargé quand la capacité manque : un champ absent de la
+                    réponse ne peut fuiter ni par le HTML ni par un journal. */}
+                {employee.profile.socialSecurityNumber ?? (
+                  <span className="text-ink-3">Accès non autorisé</span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-micro text-ink-3">IBAN</dt>
+              <dd className="tnum">
+                {employee.profile.iban ?? (
+                  <span className="text-ink-3">Accès non autorisé</span>
+                )}
+              </dd>
+            </div>
+          </dl>
         </Card>
-      </div>
+      ) : null}
     </PageBody>
   );
 }

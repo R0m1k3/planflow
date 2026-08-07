@@ -49,7 +49,6 @@ export const NAVIGATION: NavSection[] = [
     label: 'Équipe',
     items: [
       { id: 'membres', label: 'Membres', href: '/equipe' },
-      { id: 'fiche', label: 'Fiche salarié', href: '/equipe/camille-ferrand' },
       { id: 'contrats', label: 'Modifications de contrat' },
     ],
   },

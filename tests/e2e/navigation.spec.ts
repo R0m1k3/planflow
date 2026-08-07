@@ -19,9 +19,11 @@ test('les six écrans se chargent et affichent leur contenu', async ({ page }) =
   await page.getByRole('link', { name: 'Équipe', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Équipe' })).toBeVisible();
 
-  await page.getByRole('link', { name: 'Camille Ferrand' }).click();
+  // La fiche est atteinte depuis l'annuaire réel, plus depuis un lien codé
+  // en dur : l'identifiant est celui de la base.
+  await page.getByRole('link', { name: /Camille Ferrand/ }).first().click();
   await expect(
-    page.getByRole('heading', { name: 'Camille Ferrand' }),
+    page.getByRole('heading', { name: /Camille Ferrand/ }),
   ).toBeVisible();
 
   await page.getByRole('link', { name: 'Congés' }).click();
