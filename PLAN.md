@@ -5,6 +5,7 @@
 > **Sources fonctionnelles :**
 > - [`Audit Combo/`](Audit%20Combo/INDEX.md) — 58 écrans, cartographie fonctionnelle et inventaire de crawl.
 > - [`Audit Combo/dropdowns/`](Audit%20Combo/dropdowns/DROPDOWN-AUDIT.md) — 172 déclencheurs, 51 menus ouverts. **Fait foi sur les énumérations** : rôles, types de contrat, vues, statuts, actions.
+> - [`matrice-conformite-rh-france-2026.md`](matrice-conformite-rh-france-2026.md) — 24 exigences réglementaires cotées P0/P1/P2, avec sources officielles. **Fait foi sur la conformité** : durées de conservation, traçabilité, RGPD, habilitations. Voir §12.
 >
 > **Régime : clean room.** L'audit et ce plan décrivent des *capacités* et des *invariants*. Ne recopier ni code, ni CSS, ni icônes, ni illustrations, ni wording propriétaire au-delà des libellés métier nécessaires. Concevoir une API, un schéma, des textes et une interface originaux.
 
@@ -18,6 +19,7 @@
    - une règle de convention **non couverte** par le jeu de paramètres IDCC 1517 de §6.3 est nécessaire, ou une valeur relevant d'un accord d'entreprise (taux dimanche notamment) ;
    - un code de rubrique Silae est nécessaire (§8) ;
    - une donnée personnelle réelle serait requise pour tester ;
+   - une règle concernant les **salariés mineurs** est nécessaire : la matrice de conformité les exclut explicitement de son périmètre, les règles `MINOR_*` sont donc non sourcées ;
    - un point marqué **`À VALIDER`** dans ce document bloque l'avancement.
 4. Ne jamais inventer de paramètre légal, de code de paie ou de règle métier. L'absence d'information est un signal d'arrêt, pas une invitation à choisir. Les valeurs de §6.3 sont fournies **avec leur origine** (ordre public, convention, accord d'entreprise) : ne pas en ajouter par déduction.
    **Les énumérations de ce document proviennent de l'audit des menus déroulants et sont exhaustives.** Ne pas y ajouter de valeur « qui semble manquer » : une valeur absente de l'audit est une valeur à faire confirmer.
@@ -30,7 +32,7 @@
 Le dépôt ne contient que l'audit ; il n'y a aucun code. L'objectif est de construire **PlanFlow**, une application de gestion du personnel et des plannings multi-établissements, reprenant les capacités de Combo pour l'organisation auditée, avec la paie **exportée vers Silae**.
 
 ### Ce que l'audit corrige
-Six constats structurants, qu'une lecture de la documentation publique de Combo aurait manqués ou faussés. Ils sont listés ici parce qu'ils conditionnent des choix qui coûtent cher à reprendre.
+Sept constats structurants, qu'une lecture de la documentation publique de Combo aurait manqués ou faussés. Ils sont listés ici parce qu'ils conditionnent des choix qui coûtent cher à reprendre.
 
 **La convention collective n'est pas HCR.** Le compte audité est **FROUARD DISTRIBUTION / La Foir'Fouille**, configuré sur **« Commerces de détail non alimentaires (IDCC 1517) — JF 50 % et Dimanche 100 % »**, code APE **4759B — commerce de détail d'autres équipements du foyer**. C'est du commerce de détail : les durées maximales, coupures et majorations propres à l'hôtellerie-restauration ne s'appliquent pas. Les paramètres réels de l'IDCC 1517 sont en §6.3.
 
@@ -44,8 +46,7 @@ Six constats structurants, qu'une lecture de la documentation publique de Combo 
 
 **Les énumérations sont fermées et connues.** Rôles, types de contrat, vues de planning, statuts et filtres sont relevés exhaustivement dans l'audit des menus. Il n'y a rien à deviner, et deviner produit des valeurs qui n'existent nulle part.
 
-### Écart de documentation — `À VALIDER`
-`Audit Combo/INDEX.md` référence `../../matrice-conformite-rh-france-2026.md`, absent du dépôt. Ce document conditionne §12. Le demander avant WP-03.
+**Le temps a trois états, pas deux.** La matrice de conformité impose de distinguer **prévu**, **réalisé** et **payé**, et interdit de conditionner le paiement à la validation d'un manager. Une application qui ne stocke que prévu et réalisé ne peut pas justifier un écart entre l'heure constatée et l'heure payée — or c'est précisément ce qu'un contrôle demande.
 
 ---
 
@@ -592,7 +593,30 @@ model Integration    { id String @id @default(cuid()); accountId String; provide
 model SilaeCodeMapping { id String @id @default(cuid()); accountId String; kind SilaeCodeKind; internalRef String; silaeCode String }
 enum SilaeCodeKind { HOURS ABSENCE VARIABLE }
 
-model FeatureFlag  { id String @id @default(cuid()); accountId String?; key String; enabled Boolean @default(false) }
+// Verrou de conformité (§12.4) : une fonctionnalité de contrôle reste inactive
+// tant que notice, remise et avis CSE ne sont pas renseignés.
+model FeatureFlag {
+  id              String    @id @default(cuid())
+  accountId       String?
+  key             String
+  enabled         Boolean   @default(false)
+  noticeDocumentId String?
+  noticeDeliveredAt DateTime?
+  cseOpinionAt    DateTime?
+  activatedAt     DateTime?
+}
+
+// Durées de conservation (§12.5) — une ligne par objet, avec sa justification.
+model RetentionPolicy {
+  id            String   @id @default(cuid())
+  accountId     String
+  objectType    String                    // "Shift", "UserContract", "Document:SICK_NOTE"…
+  durationMonths Int
+  startPoint    String                    // "creation", "contract_end", "employee_departure"…
+  justification String
+  legalHold     Boolean  @default(false)
+  effectiveFrom DateTime @db.Date
+}
 model Notification { id String @id @default(cuid()); membershipId String; notificationType String; payload Json; readAt DateTime? }
 ```
 
@@ -739,12 +763,22 @@ Règles normatives :
 - **Un jour férié dans une période de congé n'est pas décompté** en congé payé. L'implémentation le retire du décompte ; elle n'oblige pas l'utilisateur à scinder sa demande.
 - Deux absences acceptées ne peuvent pas se chevaucher pour un même contrat. Contrainte vérifiée en transaction.
 
-### 7.3 Heures — sans pointeuse
-Il n'y a **pas de pointage**. Chaque `Shift` porte des heures **prévues** (`startAt`, `endAt`, `breakMinutes`) et, optionnellement, des heures **réelles** (`actualStartAt`, `actualEndAt`, `actualBreakMinutes`).
+### 7.3 Heures — sans pointeuse, mais trois états
+Il n'y a **pas de pointage matériel**. La matrice de conformité (exigences 4 et 5) impose néanmoins de distinguer **trois** grandeurs, pas deux :
 
-- Heures réelles absentes → **les heures prévues font foi**.
-- Un manager disposant de `hours.edit_actual` saisit un écart ; `hours.validate` valide la ligne, ce qui écrit auteur, date et écart à l'audit.
-- L'écran `/reports/hours` liste par salarié : prévu, réel, écart, statut ; sélection multiple et validation groupée.
+| État | Source | Champ |
+|---|---|---|
+| **Prévu** | Le planning publié | `startAt`, `endAt`, `breakMinutes` |
+| **Réalisé** | Ce que le salarié a effectivement fait | `actualStartAt`, `actualEndAt`, `actualBreakMinutes` |
+| **Payé** | Ce qui part en paie après application des règles | `PayPeriodSnapshot` |
+
+Règles normatives :
+- Heures réelles absentes → **les heures prévues font foi** comme réalisé.
+- **Le paiement n'est jamais conditionné à la validation.** Une ligne non validée par un manager part quand même en paie sur la base du réalisé. Bloquer le paiement d'heures accomplies faute de validation est précisément ce que la matrice interdit.
+- Un workflow d'autorisation d'heures supplémentaires **ne supprime jamais** des heures accomplies. Il les qualifie — autorisées ou non — et la qualification est tracée.
+- Toute correction conserve **valeur avant, valeur après, motif, auteur et date**.
+- **Pas d'arrondi défavorable systématique.** La règle d'arrondi est un paramètre explicite du registre §12.7, pas une constante enfouie.
+- L'écran `/reports/heures` liste par salarié : prévu, réalisé, écart, payé, statut ; sélection multiple et validation groupée.
 
 ### 7.4 Bandeau de compteurs de la grille
 Chaque ligne salarié affiche cinq valeurs : **heures contractuelles · planifié · absences · écart · repos compensateur**.
@@ -852,7 +886,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-00 — Socle
 **Dépend de :** rien
-**Livre :** `docker-compose.yml` (app + Postgres 16), projet Next.js 15 TypeScript strict, Prisma, Tailwind + shadcn/ui, Vitest, Playwright, CI GitHub Actions (lint, typecheck, test, build), **Content-Security-Policy restrictive** (§3.7), `.env.example`, `README.md`.
+**Livre :** `docker-compose.yml` (app + Postgres 16), projet Next.js 15 TypeScript strict, Prisma, Tailwind + shadcn/ui, Vitest, Playwright, CI GitHub Actions (lint, typecheck, test, build), **Content-Security-Policy restrictive** (§3.7), sauvegardes chiffrées et restauration testée, SBOM, registre des sous-traitants (matrice n° 16 et 17), `.env.example`, `README.md`.
 **Critères d'acceptation**
 - `docker compose up` démarre l'application et la base, migrations appliquées.
 - CI verte sur un dépôt propre.
@@ -861,7 +895,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-01 — Tenancy, identité, autorisation
 **Dépend de :** WP-00
-**Livre :** modèles §4.1 et §4.2 ; extension Prisma de scoping ; RLS PostgreSQL ; Auth.js (mot de passe + invitation par e-mail) ; `can()` ; catalogue de permissions §5 semé ; rôles semés ; `AuditLog` ; chiffrement de colonnes ; stockage de fichiers à URL signée.
+**Livre :** modèles §4.1 et §4.2 ; extension Prisma de scoping ; RLS PostgreSQL ; Auth.js (mot de passe + invitation par e-mail) ; `can()` ; catalogue de permissions §5 semé ; rôles semés ; `AuditLog` ; chiffrement de colonnes ; stockage de fichiers à URL signée ; **MFA administrateurs et RH**, revue d'accès et accès « break glass » tracé (matrice n° 15) ; **table `RetentionPolicy` et jobs de purge** (§12.5) ; dictionnaire donnée → finalité → base → destinataire → durée (n° 14) ; runbook de violation et alerte sur export massif (n° 23).
 **Critères d'acceptation**
 - Un membership scopé sur l'établissement A ne peut **lire ni écrire** une donnée de l'établissement B — testé au niveau requête, pas seulement UI.
 - Une Server Action appelée sans la permission requise échoue **avant** tout effet de bord.
@@ -871,7 +905,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-02 — Organisation et référentiels
 **Dépend de :** WP-01
-**Livre :** établissements, équipes, jours fériés, emplois, étiquettes, types d'absence, convention collective et écran de paramètres ; réglages compte, préférences, productivité, taux de cotisations.
+**Livre :** établissements, équipes, jours fériés, emplois, étiquettes, types d'absence, convention collective et écran de paramètres ; réglages compte, préférences, productivité, taux de cotisations ; **registre de paramétrage juridique** (§12.7) ; **verrou d'activation notice + CSE** (§12.4).
 **Critères d'acceptation**
 - Création d'un compte à deux établissements et plusieurs équipes de bout en bout.
 - Fuseau par établissement effectif sur l'affichage et les calculs.
@@ -901,7 +935,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-05 — Moteur de règles
 **Dépend de :** WP-04
-**Livre :** moteur §6, les 17 règles, `ComplianceViolation`, revalidation ciblée, panneau d'alertes, confirmation tracée à la publication, écran de paramètres, **jeu IDCC 1517 de §6.3 semé en base** avec l'origine de chaque valeur (OP / CCN / ENT).
+**Livre :** moteur §6 **effectif-daté** (§12.2), les 17 règles, `ComplianceViolation`, revalidation ciblée, panneau d'alertes, confirmation tracée à la publication, écran de paramètres, **jeu IDCC 1517 de §6.3 semé en base** avec l'origine de chaque valeur (OP / CCN / ENT) et sa source datée.
 **Critères d'acceptation**
 - Chaque règle a un test aux bornes : la valeur limite exacte passe, un cran au-delà déclenche.
 - Modifier un shift revalide la semaine **et ses voisines**.
@@ -914,7 +948,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-06 — Absences et compteurs
 **Dépend de :** WP-05
-**Livre :** `TimeOff`, `AbsenceType`, `Counter`, `LedgerOperation`, `RttPolicy` ; demande, file à traiter, décision, calendrier, traitées, expirées ; affichage sur la grille ; soldes et prévision ; ajustement manuel ; trigger d'immutabilité du ledger.
+**Livre :** `TimeOff`, `AbsenceType`, `Counter`, `LedgerOperation`, `RttPolicy` ; demande, file à traiter, décision, calendrier, traitées, expirées ; affichage sur la grille ; soldes et prévision ; ajustement manuel ; trigger d'immutabilité du ledger ; **acquisition et report de congés payés** (§12.3) ; **notification d'information au retour d'arrêt**, horodatée avec preuve de remise ; vue manager sans motif médical (n° 9).
 **Critères d'acceptation**
 - `endDate` porte le dernier jour d'absence ; un test couvre explicitement la confusion avec la date de reprise.
 - Un jour férié dans un congé n'est pas décompté, **sans** scission manuelle.
@@ -997,22 +1031,124 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 6. Un manager de l'établissement A tente d'atteindre une ressource de B → refus serveur.
 7. Passer d'une vue de planning à l'autre après modification → les cinq vues concordent.
 
+**Jeux de tests imposés par la matrice de conformité**
+Repris de sa section « Jeux de tests d'acceptation indispensables ». Ceux hors périmètre PlanFlow (DSN, forfait jours, astreintes) sont écartés tant que §12.6 n'a pas tranché.
+
+- planning produisant moins de 11 h de repos, plus de 10 h/jour, plus de 48 h/semaine, ou une moyenne supérieure à 44 h sur 12 semaines ;
+- pause manquante après 6 h ;
+- correction rétroactive d'un pointage **après clôture**, avec piste avant-après ;
+- heures supplémentaires à cheval sur deux mois mais dans la même semaine civile ;
+- temps partiel et heures complémentaires ;
+- congés acquis pendant un arrêt maladie, information au retour, report de 15 mois ;
+- départ d'un salarié : RUP, purge progressive, export, conservation des pièces dues ;
+- restauration d'une sauvegarde ancienne **suivie de l'application des suppressions échues** ;
+- manager tentant d'accéder au motif médical, au salaire, au RIB ou à un autre établissement ;
+- **changement de règle à date d'effet** : reproduction exacte d'une paie antérieure, et nouveau calcul après la date.
+
 **Jeu de données de départ** — un compte, **deux établissements**, plusieurs équipes, une trentaine de salariés mêlant CDI, CDD, temps partiels, un apprenti et **un mineur** (règles dédiées), dont au moins un salarié sans compte utilisateur et un rattaché à deux établissements ; quatre semaines publiées, des absences longues chevauchant des semaines, un jour férié en milieu de congé, des écarts d'heures, une semaine incluant un changement d'heure. **Données entièrement fictives.**
 
 ---
 
-## 12. Conformité et risques
+## 12. Conformité
 
-- **RGPD** — le dossier contient état civil, NIR, coordonnées bancaires, titres de séjour et arrêts de travail. Les arrêts sont des **données de santé, catégorie particulière**. Minimisation, chiffrement au repos, journalisation des accès, rétention, masquage, export et suppression. Traité dès WP-01.
-- **Matrice de conformité manquante** — `À VALIDER`, voir §1. C'est le dernier point bloquant du document ; il conditionne WP-03.
-- **Paramètres de convention** — le jeu IDCC 1517 de §6.3 est chargé et utilisable, mais issu de sources secondaires. Recoupement Legifrance, accord d'entreprise et confirmation du gestionnaire de paie requis avant d'engager une paie réelle. Le taux dimanche en particulier n'est **pas** conventionnel.
+Cette section applique [`matrice-conformite-rh-france-2026.md`](matrice-conformite-rh-france-2026.md) au périmètre PlanFlow. La matrice fait foi ; ce qui suit indique **comment** chaque exigence se traduit en produit, et lesquelles sortent du périmètre.
+
+> **Portée de la matrice.** Elle couvre l'employeur privé français et les **salariés majeurs**. Les mineurs en sont explicitement exclus. Les règles `MINOR_*` de §6.2 doivent donc être sourcées séparément avant d'être activées — signal d'arrêt.
+
+### 12.1 Exigences P0 portées par PlanFlow
+
+| # matrice | Exigence | Traduction produit | Lot |
+|---|---|---|---|
+| 1 | Règle applicable versionnée et datée | `CollectiveAgreement` effectif-daté, §12.2 | WP-05 |
+| 2 | Durée légale et maxima | Règles §6.2 ; dérogation avec motif et habilitation, jamais silencieuse | WP-05 |
+| 3 | Repos et pauses | `MIN_DAILY_REST`, `MIN_WEEKLY_REST`, `MIN_BREAK_AFTER_THRESHOLD` ; **l'acquittement n'efface pas l'anomalie**, il la trace | WP-05 |
+| 4 | Décompte fiable du temps | Prévu / réalisé / payé (§7.3), corrections avant-après tracées, pas d'arrondi défavorable systématique | WP-07 |
+| 5 | Heures supplémentaires et complémentaires | Tranches §6.3 ; **le workflow d'autorisation ne supprime jamais des heures accomplies** | WP-07 |
+| 8 | Congés payés | Acquisition, report 15 mois, information au retour d'arrêt (§12.3) | WP-06 |
+| 9 | Absences et données de santé | Écran manager « autorisé / indisponible » **sans motif médical** ; coffre séparé pour les justificatifs | WP-06 |
+| 13 | Registre unique du personnel | Export par établissement, ordre d'embauche, mentions spécifiques, corrections tracées | WP-03 |
+| 14 | Finalités, bases légales, minimisation | Dictionnaire donnée → finalité → base → destinataire → durée, livré comme artefact | WP-01 |
+| 15 | Habilitations et confidentialité | RBAC §3.2 + **MFA administrateurs et RH**, revue d'accès périodique, déprovisionnement immédiat, masquage salaires/NIR/RIB/santé, accès support « break glass » tracé | WP-01 |
+| 16 | Sécurité de l'auto-hébergement | TLS, sauvegardes chiffrées, gestion des secrets, sauvegardes 3-2-1, restauration testée, SBOM, environnement de test pseudonymisé | WP-00 |
+| 17 | Sous-traitants et transferts | Registre fournisseurs, **blocage des télémétries inutiles** (§3.7), réversibilité testée | WP-00 |
+| 19 | Information préalable et CSE | **Verrou produit** : toute fonctionnalité de contrôle reste désactivée tant que notice, date de remise et avis CSE ne sont pas renseignés (§12.4) | WP-02 |
+| 21 | Politique de conservation | Table §12.5, base active / archive séparées, purges testées | WP-01 |
+| 22 | Intégrité, clôture, correction | Clôture de période, écritures correctives non destructives, **rejeu déterministe**, séparation saisie/validation | WP-07 |
+| 23 | Violation de données et continuité | Runbook incident, registre de violations, **alerte sur export massif**, notification CNIL sous 72 h, PRA | WP-01 |
+| 24 | Portabilité et sortie | Exports PDF/CSV filtrés, paquet de départ salarié, manifeste et empreinte | WP-09 |
+
+### 12.2 Moteur effectif-daté — exigence n° 1 et n° 22
+
+La matrice impose de pouvoir **reproduire à l'identique une paie antérieure** après un changement de règle. C'est plus fort qu'un simple versionnement :
+
+- `CollectiveAgreement` porte `effectiveFrom` ; les versions coexistent et ne se remplacent pas.
+- Tout calcul mémorise la **version de règle appliquée**, jointe au `PayPeriodSnapshot`.
+- **Aucune modification rétroactive silencieuse** : changer un paramètre crée une nouvelle version datée, jamais une mise à jour en place.
+- Chaque version conserve source (URL ou PDF), date d'effet, auteur, approbateur et diff.
+
+Test d'acceptation : charger une règle v1, calculer une période, publier la v2 à une date d'effet postérieure, recalculer — la période antérieure doit produire **exactement** le résultat d'origine.
+
+### 12.3 Congés payés — exigence n° 8
+
+Paramètres d'ordre public à charger :
+
+| Paramètre | Valeur |
+|---|---|
+| Acquisition | **2,5 jours ouvrables par mois** de travail effectif |
+| Acquisition pendant maladie non professionnelle | **2 jours ouvrables par mois**, plafond **24 jours par an** |
+| Report après arrêt de travail | **15 mois** lorsque applicable |
+| Information au retour d'arrêt | Le salarié doit être informé de ses droits et de la date limite de prise **dans le mois** suivant sa reprise |
+
+L'information au retour est une **obligation active**, pas un affichage : PlanFlow génère la notification, l'horodate et conserve la preuve de remise. Prévoir aussi le paramétrage ouvrables/ouvrés, le fractionnement et l'ancienneté — ces derniers relèvent de l'accord d'entreprise, donc `À VALIDER`.
+
+### 12.4 Verrou d'activation — exigence n° 19
+
+Aucune donnée ne peut être collectée par un dispositif qui n'a pas été porté à la connaissance du salarié. Traduction produit : un **feature flag de conformité** qui refuse l'activation tant que ne sont pas renseignés la notice d'information, sa date de remise, l'avis ou la consultation du CSE et la date d'activation. Le verrou est vérifié côté serveur, pas seulement à l'écran.
+
+Ce verrou s'applique à toute fonctionnalité de contrôle ajoutée ultérieurement — pointeuse, géolocalisation, biométrie, planning algorithmique. Il justifie aussi l'exclusion du **planning prédictif** du périmètre v1 : la matrice exige une AIPD préalable pour tout scoring ou optimisation algorithmique.
+
+### 12.5 Durées de conservation — exigence n° 21
+
+La matrice est explicite : les minima légaux ne sont ni universels ni une autorisation de tout garder. **Ne pas appliquer « 5 ans partout ».** Une table `RetentionPolicy` porte, par objet, la durée, son point de départ et sa justification.
+
+| Objet | Durée | Portée PlanFlow |
+|---|---|---|
+| Décompte des horaires et astreintes | **1 an minimum** | Oui — `Shift`, heures réelles |
+| Jours des forfaits jours | **3 ans** | Conditionnel (§12.6) |
+| Contrats, salaires, primes, indemnités | **5 ans** | Oui — `UserContract`, `Amendment` |
+| Registre unique du personnel | **5 ans après le départ** | Oui |
+| Éléments d'assiette et données DSN | **6 ans** | Oui — les variables exportées vers Silae alimentent l'assiette |
+| Bulletins de paie | 5 ans ; disponibilité 50 ans ou jusqu'aux 75 ans du salarié | **Non** — PlanFlow ne détient aucun bulletin |
+| Géolocalisation | 2 mois, 1 an ou 5 ans **selon la finalité** | Sans objet — non collectée |
+
+Base active et archive intermédiaire sont **séparées**. Les purges sont automatiques, testées, et un *legal hold* nominatif peut les suspendre. Les sauvegardes suivent le même calendrier : soit l'expiration s'y propage, soit une restauration est suivie d'une purge.
+
+> **Arbitrage à rendre — `À VALIDER`.** Le décompte horaire brut a un minimum d'un an, alors que les éléments justifiant la paie se conservent plus longtemps. La matrice demande de trancher explicitement plutôt que d'aligner tout sur la durée la plus longue. Décision attendue avant WP-07.
+
+### 12.6 Hors périmètre v1, mais couverts par la matrice
+
+| Sujet | Décision |
+|---|---|
+| **Bulletins et bulletin électronique** (n° 10, 11) | Hors périmètre — Silae les produit et les conserve. PlanFlow n'hérite d'aucune obligation de disponibilité longue. |
+| **DSN, événements, PAS** (n° 12) | Hors périmètre. PlanFlow **alimente** l'assiette : ses variables exportées relèvent donc de la conservation à 6 ans. |
+| **Astreintes** (n° 6, P1) | Non modélisées. `À VALIDER` : y a-t-il des astreintes en magasin ? Si oui, entité dédiée, délai de prévenance de 15 jours et requalification des interventions en travail effectif. |
+| **Forfait jours** (n° 7, P1) | Non modélisé. `À VALIDER` : les directeurs de magasin sont-ils au forfait jours ? Si oui, plafond 218 jours, convention individuelle écrite, suivi de charge et entretien annuel. |
+| **Géolocalisation** (n° 20, P2) | Non collectée. Ne pas l'introduire sans AIPD. |
+| **AIPD** (n° 18) | Requise avant biométrie, géolocalisation, scoring ou planning algorithmique. Aucun de ces éléments n'est au périmètre v1. |
+
+### 12.7 Registre de paramétrage — livrable
+
+La matrice impose un **paramétrage juridique signé avant migration**, couvrant huit domaines : identité juridique, populations, temps, rémunération, absences, paie/DSN, vie privée, sécurité. Chaque réponse porte **valeur, source, date d'effet, population, approbateur, date de validation et pièce jointe**.
+
+Ce registre est un **livrable de WP-02**, pas une note : un écran d'administration le tient à jour et il s'exporte. Sans lui, aucune valeur de §6.3 n'est opposable.
+
+### 12.8 Autres risques
+
+- **Paramètres de convention** — le jeu IDCC 1517 de §6.3 vient de sources secondaires. Recoupement Legifrance daté, accord d'entreprise et confirmation du gestionnaire Silae avant d'engager une paie. Le taux dimanche n'est **pas** conventionnel.
 - **Codes de paie Silae** — signal d'arrêt §8.2.
-- **DPAE** — générée seulement. La transmission à l'URSSAF exige un raccordement déclaratif, hors périmètre.
-- **Signature électronique** — exige un prestataire de confiance qualifié. Hors périmètre ; ne pas implémenter de substitut maison, qui n'aurait aucune valeur probante.
-- **Paie et DSN** — hors périmètre. Responsabilité réglementaire majeure et veille législative permanente.
-- **Conservation des bulletins** — hors périmètre : PlanFlow ne détient pas de bulletins.
-- **Auditabilité** — auteur, horodatage, avant/après et justification sur toutes les opérations sensibles ; agrégats explicables depuis leurs sources.
-- **Traceurs tiers** — voir §3.7. Interdits par défaut, CSP restrictive livrée et testée dès WP-00. C'est le point sur lequel PlanFlow diverge le plus délibérément du produit audité.
+- **DPAE** — générée seulement ; la transmission URSSAF exige un raccordement déclaratif, hors périmètre.
+- **Signature électronique** — exige un prestataire qualifié. Ne pas implémenter de substitut maison, qui n'aurait aucune valeur probante.
+- **Traceurs tiers** — §3.7. Interdits par défaut, CSP livrée et testée dès WP-00. C'est la divergence la plus délibérée avec le produit audité, et elle rejoint l'exigence n° 17.
 
 ---
 
