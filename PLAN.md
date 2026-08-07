@@ -14,7 +14,7 @@
 
 ## 0. Mode d'emploi pour l'orchestrateur
 
-1. Lire les sections 1 à 9 en entier avant d'écrire la moindre ligne. Elles définissent des invariants transverses ; les découvrir au lot 3 impose de refaire les lots 0 à 2.
+1. Lire les sections 1 à 9 en entier avant d'écrire la moindre ligne. Elles définissent des invariants transverses ; les découvrir à WP-03 impose de refaire WP-00 à WP-02.
 2. Exécuter les lots de travail (§10) **dans l'ordre**. Chaque lot déclare ses dépendances, ses livrables et ses **critères d'acceptation**. Un lot n'est terminé que si tous ses critères passent en test automatisé.
 3. **Signaux d'arrêt.** Interrompre et demander un arbitrage humain dans ces cas :
    - une valeur numérique de convention collective est nécessaire (§6) ;
@@ -31,16 +31,21 @@
 
 Le dépôt ne contient que l'audit ; il n'y a aucun code. L'objectif est de construire **PlanFlow**, une application de gestion du personnel et des plannings multi-établissements, reprenant les capacités de Combo pour l'organisation auditée, avec la paie **exportée vers Silae**.
 
-L'audit corrige trois hypothèses qu'une lecture de la documentation publique de Combo aurait induites :
+### Ce que l'audit corrige
+Cinq constats structurants, qu'une lecture de la documentation publique de Combo aurait manqués ou faussés. Ils sont listés ici parce qu'ils conditionnent des choix qui coûtent cher à reprendre.
 
 **La convention collective n'est pas HCR.** Le compte audité est **FROUARD DISTRIBUTION / La Foir'Fouille**, configuré sur **« Commerces de détail non alimentaires (IDCC 1517) — JF 50 % et Dimanche 100 % »**. C'est du commerce de détail. Les durées maximales, coupures et majorations propres à l'hôtellerie-restauration ne s'appliquent pas.
 
-**L'autorisation est par capacités, pas par rôles.** L'audit relève des permissions granulaires et des rôles **configurables par le client** (`/settings/roles-permissions/:roleKey`). `Role`, `Permission` et `Scope` sont trois notions distinctes dès le lot 0. Aucun écran ne teste un nom de rôle.
+**L'autorisation est par capacités, pas par rôles.** L'audit relève des permissions granulaires et des rôles **configurables par le client** (`/settings/roles-permissions/:roleKey`). `Role`, `Permission` et `Scope` sont trois notions distinctes dès WP-01. Aucun écran ne teste un nom de rôle.
 
 **Les compteurs de congés sont un registre d'écritures.** L'audit identifie `Counter` / `LedgerOperation` avec ajustements protégés et prévision. Un solde stocké serait un contresens : le solde est le cumul des écritures.
 
+**Le verrouillage d'une période de paie n'est pas terminal.** Le menu d'actions est dépendant de l'état : une période verrouillée propose « Déverrouiller », et reste supprimable. Concevoir le verrouillage comme définitif rendrait impossible le cas le plus courant — corriger une paie avant transmission — et laisserait des exports périmés circuler sans signalement (§4.6).
+
+**Les énumérations sont fermées et connues.** Rôles, types de contrat, vues de planning, statuts et filtres sont relevés exhaustivement dans l'audit des menus. Il n'y a rien à deviner, et deviner produit des valeurs qui n'existent nulle part.
+
 ### Écart de documentation — `À VALIDER`
-`Audit Combo/INDEX.md` référence `../../matrice-conformite-rh-france-2026.md`, absent du dépôt. Ce document conditionne §12. Le demander avant le lot 2.
+`Audit Combo/INDEX.md` référence `../../matrice-conformite-rh-france-2026.md`, absent du dépôt. Ce document conditionne §12. Le demander avant WP-03.
 
 ---
 
@@ -57,13 +62,13 @@ L'audit corrige trois hypothèses qu'une lecture de la documentation publique de
 
 **Hors périmètre v1**, à ne pas construire : moteur de paie, DSN, bulletins de paie, distribution de bulletins, signature électronique qualifiée, transmission DPAE à l'URSSAF, connecteurs de caisse, abonnement et facturation, planning prédictif, auto-assignation.
 
-**Conservés mais différés au lot 5** : articles, conversations, analyses RH avancées.
+**Conservés mais différés en fin de parcours** : articles et conversations internes (WP-11, optionnel). Les analyses RH sont bien dans le périmètre v1 (WP-09).
 
 ---
 
 ## 3. Architecture et invariants transverses
 
-Ces sept invariants s'appliquent à tout le code. Ils ne sont pas négociables et chacun fait l'objet de tests dédiés.
+Ces huit invariants s'appliquent à tout le code. Ils ne sont pas négociables et chacun fait l'objet de tests dédiés.
 
 ### 3.1 Isolation multi-tenant
 Hiérarchie `Account` → `Location` → `Team`. Base unique, **scoping par ligne**.
@@ -91,7 +96,8 @@ Point d'entrée unique `can(membership, permissionCode, resource?)` dans `src/do
 
 ### 3.5 Immutabilité et audit
 - `LedgerOperation`, `AuditLog` et `PayrollExport` sont **append-only**. Une correction est une écriture inverse suivie d'une nouvelle écriture, jamais un `UPDATE` ni un `DELETE`.
-- `AuditLog` capture auteur, horodatage, entité, avant/après et justification pour : contrat, avenant, absence et décision, publication et dépublication de planning, validation d'heures, ouverture et verrouillage de période, export, changement de rôle ou de permission, ajustement de compteur, accès à une donnée sensible.
+- Corollaire : la péremption d'un export (§4.6) est **dérivée**, jamais stockée — un export est périmé si la période a été déverrouillée après sa génération. Écrire un drapeau sur `PayrollExport` violerait l'append-only.
+- `AuditLog` capture auteur, horodatage, entité, avant/après et justification pour : contrat, avenant, absence et décision, publication et dépublication de planning, validation d'heures, ouverture, **verrouillage et déverrouillage** de période, export, changement de rôle ou de permission, ajustement de compteur, accès à une donnée sensible.
 
 ### 3.6 Données sensibles
 - NIR, IBAN, BIC et pièces jointes de santé **chiffrés au repos** (chiffrement applicatif par colonne, clé hors base).
@@ -363,7 +369,7 @@ model Holiday {
 }
 ```
 
-**`À VALIDER`** — l'audit décrit `Rest` comme « pause/repos, durée théorique, extension », ce qui est ambigu. Ce plan tranche : les pauses **dans** un shift sont `Shift.breakMinutes` ; `Rest` marque un repos **de journée** (hebdomadaire ou compensateur). Faire confirmer avant le lot 2.
+**`À VALIDER`** — l'audit décrit `Rest` comme « pause/repos, durée théorique, extension », ce qui est ambigu. Ce plan tranche : les pauses **dans** un shift sont `Shift.breakMinutes` ; `Rest` marque un repos **de journée** (hebdomadaire ou compensateur). Faire confirmer avant WP-04.
 
 ### 4.5 Absences et compteurs
 
@@ -464,6 +470,8 @@ model PayPeriod {
   status      PayPeriodStatus @default(OPEN)
   lockedAt    DateTime?
   lockedBy    String?
+  unlockedAt  DateTime?                     // dernier déverrouillage — sert à dériver la péremption des exports
+  unlockedBy  String?
   version     Int           @default(0)
   @@unique([locationId, startDate, endDate, kind])
 }
@@ -507,7 +515,7 @@ enum ExportFormat { SILAE GENERIC_CSV RAW }
 Conséquences normatives :
 - `payroll.period.unlock` rouvre la période aux mutations. L'action est journalisée avec justification obligatoire.
 - Un **nouveau verrouillage recalcule intégralement** les instantanés. Ils ne sont donc pas immuables au sens strict : c'est le couple (instantané, `PayrollExport`) qui porte la preuve, et `PayrollExport` reste append-only.
-- Un export déjà généré pour une période ensuite déverrouillée doit être signalé comme **périmé** dans l'historique. Sans cela, un fichier transmis à Silae ne correspond plus aux données, sans que rien ne l'indique.
+- Un export déjà généré pour une période ensuite déverrouillée est **périmé**. Sans ce signalement, un fichier transmis à Silae cesse de correspondre aux données sans que rien ne l'indique. La péremption est **dérivée**, jamais stockée : `PayrollExport.generatedAt < PayPeriod.unlockedAt`. `PayrollExport` reste ainsi strictement append-only (§3.5).
 - La suppression reste possible sur une période verrouillée : elle exige `payroll.period.delete`, une confirmation explicite et une entrée d'audit conservant le périmètre supprimé.
 - Une correction sur période close **sans** déverrouillage passe par une régularisation sur la période ouverte suivante.
 
@@ -591,7 +599,7 @@ model Notification { id String @id @default(cuid()); membershipId String; notifi
 
 ## 5. Catalogue des permissions
 
-À semer en base au lot 0. Les codes sont **stables** : le code les référence, jamais les libellés.
+À semer en base à WP-01. Les codes sont **stables** : le code les référence, jamais les libellés.
 
 **Planning** — `planning.view`, `planning.view_unpublished`, `planning.create`, `planning.create_on_published`, `planning.edit`, `planning.edit_published`, `planning.delete`, `planning.duplicate`, `planning.publish`, `planning.unpublish`, `planning.validate`, `planning.invalidate`, `planning.bulk_actions`, `planning.unassigned.view`, `planning.alerts.view`, `planning.alerts.acknowledge`, `planning.counters.view`, `planning.labels.manage`, `planning.notes.manage`, `planning.print`
 
@@ -605,7 +613,7 @@ model Notification { id String @id @default(cuid()); membershipId String; notifi
 
 **Administration** — `settings.access`, `settings.locations.manage`, `settings.teams.manage`, `settings.agreement.manage`, `settings.jobtitles.manage`, `settings.templates.manage`, `settings.integrations.manage`, `settings.notifications.manage`, `settings.roles.manage`, `role_config.assign_owner_level`, `audit.view`
 
-**Communication (lot 5)** — `articles.view`, `articles.manage`, `conversations.access`
+**Communication (WP-11)** — `articles.view`, `articles.manage`, `conversations.access`
 
 ### Rôles semés
 Liste exhaustive relevée dans le filtre « Tous les rôles » (`/members`) — **cinq rôles, pas davantage** :
@@ -910,15 +918,19 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 **Tests d'intégration — base réelle**
 - Scoping multi-tenant au niveau requête.
 - RLS active indépendamment du code applicatif.
-- Immutabilité du ledger imposée par la base.
+- Immutabilité du ledger **et de `PayrollExport`** imposée par la base.
 - Conflits de version sur écriture concurrente.
+- Refus de mutation sur une période verrouillée ; acceptation après déverrouillage.
+- Absence de dépendance de traçage tierce et CSP effective (§3.7).
 
 **Playwright — parcours traversants**
 1. Construire une semaine, déclencher une alerte, publier après confirmation → acquittement et audit écrits, salarié notifié.
 2. Demander un congé → accepter → barre visible sur la grille, ledger écrit, solde et prévision à jour → annuler → contre-passation, solde restauré.
 3. Saisir un écart d'heures → valider → période de paie → verrouiller → export Silae → réexport identique.
-4. Deux sessions sur la même semaine → conflit rendu, pas de perte.
-5. Un manager de l'établissement A tente d'atteindre une ressource de B → refus serveur.
+4. **Cycle de déverrouillage** : verrouiller → exporter → déverrouiller → corriger un shift → reverrouiller → l'export initial apparaît **périmé**, le nouvel export diffère du premier.
+5. Deux sessions sur la même semaine → conflit rendu, pas de perte.
+6. Un manager de l'établissement A tente d'atteindre une ressource de B → refus serveur.
+7. Passer d'une vue de planning à l'autre après modification → les cinq vues concordent.
 
 **Jeu de données de départ** — un compte, **deux établissements**, plusieurs équipes, une trentaine de salariés mêlant CDI, CDD, temps partiels, un apprenti et **un mineur** (règles dédiées), dont au moins un salarié sans compte utilisateur et un rattaché à deux établissements ; quatre semaines publiées, des absences longues chevauchant des semaines, un jour férié en milieu de congé, des écarts d'heures, une semaine incluant un changement d'heure. **Données entièrement fictives.**
 
