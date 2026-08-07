@@ -50,6 +50,9 @@ jobs:
       - name: Appliquer les migrations
         run: pnpm db:deploy
 
+      - name: Installer le jeu de données
+        run: pnpm db:seed
+
       - run: pnpm typecheck
 
       - run: pnpm lint
