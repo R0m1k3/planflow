@@ -1,0 +1,5502 @@
+{
+  "generated_at": "2026-08-07",
+  "mode": "read-only route crawl",
+  "page_count": 58,
+  "pages": [
+    {
+      "route": "/",
+      "actual_route": "/",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Bonjour [PRÉNOM MASQUÉ],"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Afficher le planning",
+        "Voir mon équipe",
+        "Consulter les absences",
+        "Gérer la paie"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Accéder à la configuration",
+          "url": "https://app.combohr.com/settings"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "root-06171705.png"
+    },
+    {
+      "route": "/home",
+      "actual_route": "/home",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "FROUARD DISTRIBUTION"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Voir plus",
+          "url": "https://app.combohr.com/dashboard-rh/incomplete-profiles"
+        },
+        {
+          "label": "Voir toutes les activités",
+          "url": "https://app.combohr.com/reports/activities"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "home-b0020d12.png"
+    },
+    {
+      "route": "/plannings/week",
+      "actual_route": "/plannings/week",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "3 août - 9 août 2026",
+        "Vue par employés",
+        "Affichage",
+        "Outils",
+        "Dépublier",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "plannings--week-e089b6f7.png"
+    },
+    {
+      "route": "/plannings/day",
+      "actual_route": "/plannings/day",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Vue par jour",
+        "Affichage",
+        "Outils",
+        "Dépublier",
+        "Caisse\n9h00 - 14h30 (10mn)",
+        "Caisse\n9h00 - 12h00",
+        "Caisse\n13h00 - 19h00 (10mn)",
+        "Magasin\n9h00 - 14h50 (10mn)",
+        "Magasin\n13h00 - 19h00 (10mn)",
+        "Manager\n9h00 - 12h00",
+        "Manager\n13h00 - 17h00",
+        "Manager\n9h00 - 13h00",
+        "Manager\n14h00 - 18h30 (10mn)",
+        "Magasin\n9h00 - 12h00",
+        "Arrêt maladie (8 jours)",
+        "Manager\n13h00 - 19h10 (10mn)",
+        "Manager\n13h05 - 19h15 (10mn)",
+        "Congé maternité (112 jours)",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "plannings--day-7cd951d1.png"
+    },
+    {
+      "route": "/plannings/labels",
+      "actual_route": "/plannings/labels",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "3 août - 9 août 2026",
+        "Vue par étiquettes",
+        "Outils",
+        "Dépublier",
+        "Créer un shift",
+        "Marie-Gabrielle LUDWIG\n\n13h15 - 19h10 (10mn)",
+        "Marie-Gabrielle LUDWIG\n\n9h00 - 12h00",
+        "Marie-Gabrielle LUDWIG\n\n13h00 - 19h10 (10mn)\n\n+2h55",
+        "Marie-Gabrielle LUDWIG\n\n9h00 - 13h00",
+        "Marie-Gabrielle LUDWIG\n\n14h00 - 19h10 (10mn)",
+        "Marie-Gabrielle LUDWIG\n\n9h00 - 14h30 (10mn)",
+        "Maelle DIDIER\n\n9h00 - 13h00",
+        "Marie-Gabrielle LUDWIG\n\n13h00 - 19h00 (10mn)",
+        "Maelle DIDIER\n\n14h00 - 19h15",
+        "Antoine SEURAT\n\n13h45 - 18h45",
+        "Maelle DIDIER\n\n13h45 - 18h45",
+        "Stacy REIS\n\n9h00 - 13h00",
+        "Tom PONTON\n\n9h00 - 12h00",
+        "Tom PONTON\n\n13h00 - 19h00 (10mn)",
+        "Stacy REIS\n\n14h00 - 19h00 (10mn)",
+        "Stacy REIS\n\n9h00 - 12h00",
+        "Stacy REIS\n\n13h00 - 16h00 (10mn)",
+        "Tom PONTON\n\n9h00 - 14h50 (10mn)",
+        "Daria SOROKINA\n\n9h05 - 12h00\n\n-05mn",
+        "Daria SOROKINA\n\n13h10 - 19h00 (10mn)",
+        "Stacy REIS\n\n9h00 - 14h50 (10mn)",
+        "Daria SOROKINA\n\n9h00 - 13h00",
+        "Stacy REIS\n\n13h00 - 19h00 (10mn)",
+        "Daria SOROKINA\n\n14h00 - 19h00 (10mn)",
+        "Rudolph MATTON\n\n9h00 - 12h00",
+        "Rudolph MATTON\n\n13h00 - 17h00",
+        "Gael COPIE\n\n9h00 - 13h00",
+        "Gael COPIE\n\n14h00 - 19h00 (10mn)",
+        "Gael COPIE\n\n14h00 - 19h10 (10mn)",
+        "Valerie LEROY\n\n13h00 - 19h10 (10mn)",
+        "Gael COPIE\n\n14h00 - 18h30 (10mn)",
+        "Valerie LEROY\n\n13h05 - 19h15 (10mn)",
+        "Valerie LEROY\n\n13h45 - 18h45 (10mn)",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "plannings--labels-9accd691.png"
+    },
+    {
+      "route": "/members",
+      "actual_route": "/members",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Équipe"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Registre Unique du Personnel",
+        "Ajouter un collaborateur",
+        "Tous les rôles",
+        "Tous les types de contrats",
+        "Utilisateurs actifs",
+        "Tri par nom",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "members-479e6ee1.png"
+    },
+    {
+      "route": "/reports/payrolls",
+      "actual_route": "/reports/payrolls",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Rapports",
+        "Périodes de paies"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter la liste du personnel",
+        "Paies",
+        "Activité",
+        "Exports",
+        "Nouvelle période principale",
+        "Déverrouiller",
+        "Verrouiller",
+        "Juillet\n\n1 juil. 2026 - 31 juil. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Actions",
+        "La Foir'Fouille",
+        "Juin\n\n1 juin 2026 - 30 juin 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "Mai\n\n1 mai 2026 - 31 mai 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExport",
+        "Avril\n\n1 avr. 2026 - 30 avr. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nEx",
+        "Mars\n\n1 mars 2026 - 31 mars 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "Février\n\n1 févr. 2026 - 28 févr. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Janvier\n\n1 janv. 2026 - 31 janv. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Décembre\n\n1 déc. 2025 - 31 déc. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions",
+        "Novembre\n\n1 nov. 2025 - 30 nov. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions",
+        "Octobre\n\n1 oct. 2025 - 31 oct. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\n",
+        "Septembre\n\n1 sept. 2025 - 30 sept. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActi",
+        "Août\n\n1 août 2025 - 31 août 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "1",
+        "2",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "reports--payrolls-1b72f4bc.png"
+    },
+    {
+      "route": "/reports/payrolls-history",
+      "actual_route": "/reports/payrolls-history",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Rapports",
+        "Périodes de paies"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter la liste du personnel",
+        "Paies",
+        "Activité",
+        "Exports",
+        "Déverrouiller",
+        "Verrouiller",
+        "Juillet\n\n1 juil. 2026 - 31 juil. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Actions",
+        "La Foir'Fouille",
+        "Juin\n\n1 juin 2026 - 30 juin 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "Mai\n\n1 mai 2026 - 31 mai 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExport",
+        "Avril\n\n1 avr. 2026 - 30 avr. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nEx",
+        "Mars\n\n1 mars 2026 - 31 mars 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "Février\n\n1 févr. 2026 - 28 févr. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Janvier\n\n1 janv. 2026 - 31 janv. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Décembre\n\n1 déc. 2025 - 31 déc. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions",
+        "Novembre\n\n1 nov. 2025 - 30 nov. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions",
+        "Octobre\n\n1 oct. 2025 - 31 oct. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\n",
+        "Septembre\n\n1 sept. 2025 - 30 sept. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActi",
+        "Août\n\n1 août 2025 - 31 août 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "1",
+        "2",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "reports--payrolls-history-754a97cb.png"
+    },
+    {
+      "route": "/reports/activities",
+      "actual_route": "/reports/activities",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Rapports"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter la liste du personnel",
+        "Paies",
+        "Activité",
+        "1",
+        "2",
+        "3",
+        "4",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "03/08/2026",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "reports--activities-17d415b4.png"
+    },
+    {
+      "route": "/reports/sick-leaves-status-report",
+      "actual_route": "/reports/payrolls",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Rapports",
+        "Périodes de paies"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter la liste du personnel",
+        "Paies",
+        "Activité",
+        "Exports",
+        "Nouvelle période principale",
+        "Déverrouiller",
+        "Verrouiller",
+        "Juillet\n\n1 juil. 2026 - 31 juil. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Actions",
+        "La Foir'Fouille",
+        "Juin\n\n1 juin 2026 - 30 juin 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "Mai\n\n1 mai 2026 - 31 mai 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExport",
+        "Avril\n\n1 avr. 2026 - 30 avr. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nEx",
+        "Mars\n\n1 mars 2026 - 31 mars 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "Février\n\n1 févr. 2026 - 28 févr. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Janvier\n\n1 janv. 2026 - 31 janv. 2026\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nAction",
+        "Décembre\n\n1 déc. 2025 - 31 déc. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions",
+        "Novembre\n\n1 nov. 2025 - 30 nov. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions",
+        "Octobre\n\n1 oct. 2025 - 31 oct. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\n",
+        "Septembre\n\n1 sept. 2025 - 30 sept. 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActi",
+        "Août\n\n1 août 2025 - 31 août 2025\n\nEntrées\n\nSorties\n\nExtras\n\nCDI, CDD, Intérimaires, Apprentis Et Stagiaires\n\nActions\nExp",
+        "1",
+        "2",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "reports--sick-leaves-status-report-8fa30734.png"
+    },
+    {
+      "route": "/reports/timeclock",
+      "actual_route": "/reports/timeclock",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Rapports"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter la liste du personnel",
+        "Paies",
+        "Activité",
+        "Valider",
+        "Voir",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "reports--timeclock-c5bad0a2.png"
+    },
+    {
+      "route": "/dashboard-rh/home",
+      "actual_route": "/dashboard-rh/home",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Aperçu",
+        "6",
+        "0",
+        "Entrées",
+        "Sorties"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Voir tout",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--home-2bfb06b6.png"
+    },
+    {
+      "route": "/dashboard-rh/incomplete-profiles",
+      "actual_route": "/dashboard-rh/incomplete-profiles",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Profils incomplets"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Informations RUP et DPAE manquantes",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--incomplete-profiles-6495d949.png"
+    },
+    {
+      "route": "/dashboard-rh/absence-log",
+      "actual_route": "/dashboard-rh/absence-log",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Journal des absences"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Toutes les absences",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--absence-log-6571a205.png"
+    },
+    {
+      "route": "/dashboard-rh/analytics/summary",
+      "actual_route": "/dashboard-rh/analytics/summary",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Vue d'ensemble"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire",
+        "Date\nAnnée glissante",
+        "Établissement\nTous",
+        "Équipe\nTous",
+        "Type de contrat\nTous"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--analytics--summary-7fe094db.png"
+    },
+    {
+      "route": "/dashboard-rh/analytics/absence",
+      "actual_route": "/dashboard-rh/analytics/absence",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Absences"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire",
+        "Date\nAnnée glissante",
+        "Établissement\nTous",
+        "Équipe\nTous",
+        "Type de contrat\nTous"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--analytics--absence-24fe89e0.png"
+    },
+    {
+      "route": "/dashboard-rh/analytics/worked-hours",
+      "actual_route": "/dashboard-rh/analytics/worked-hours",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Heures travaillées"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire",
+        "Date\nAnnée glissante",
+        "Établissement\nTous",
+        "Équipe\nTous",
+        "Type de contrat\nTous"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--analytics--worked-hours-436bf32b.png"
+    },
+    {
+      "route": "/dashboard-rh/analytics/workforce",
+      "actual_route": "/dashboard-rh/analytics/workforce",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Effectifs"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire",
+        "Date\nAnnée glissante",
+        "Établissement\nTous",
+        "Équipe\nTous",
+        "Type de contrat\nTous"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--analytics--workforce-ca7d5f3f.png"
+    },
+    {
+      "route": "/dashboard-rh/clock-in-out-follow-up",
+      "actual_route": "/dashboard-rh/clock-in-out-follow-up",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Suivi des émargements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter",
+        "En savoir plus"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--clock-in-out-follow-up-f8c70a76.png"
+    },
+    {
+      "route": "/dashboard-rh/contracts-changes",
+      "actual_route": "/dashboard-rh/contracts-changes",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Modifications de contrat"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--contracts-changes-d0cff662.png"
+    },
+    {
+      "route": "/dashboard-rh/document-signing",
+      "actual_route": "/dashboard-rh/document-signing",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Signature de documents"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Nouvelle demande de signature",
+        "Tous les statuts",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--document-signing-2f34d713.png"
+    },
+    {
+      "route": "/dashboard-rh/entries",
+      "actual_route": "/dashboard-rh/entries",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Entrées"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter les entrées",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--entries-d173a0d1.png"
+    },
+    {
+      "route": "/dashboard-rh/exits",
+      "actual_route": "/dashboard-rh/exits",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Sorties"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter les sorties",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--exits-385f8679.png"
+    },
+    {
+      "route": "/dashboard-rh/paid-leaves",
+      "actual_route": "/dashboard-rh/paid-leaves",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Compteurs de congés payés"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Exporter",
+        "Modifier les compteurs",
+        "Contrats en cours",
+        "Voir le détail",
+        "1",
+        "2",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--paid-leaves-3fdaa519.png"
+    },
+    {
+      "route": "/dashboard-rh/payslips",
+      "actual_route": "/dashboard-rh/payslips/marketing",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Distribution dématérialisée des bulletins de paie",
+        "Fiches de paie, importées !",
+        "Distribuer ? Rien de plus simple",
+        "Tout est sur Combo",
+        "Découvrez la nouvelle fonctionnalité de distribution dématérialisée des bulletins de paie"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Souscrire",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--payslips-2c5c19cf.png"
+    },
+    {
+      "route": "/dashboard-rh/payslips/history",
+      "actual_route": "/dashboard-rh/payslips/marketing",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Distribution dématérialisée des bulletins de paie",
+        "Fiches de paie, importées !",
+        "Distribuer ? Rien de plus simple",
+        "Tout est sur Combo",
+        "Découvrez la nouvelle fonctionnalité de distribution dématérialisée des bulletins de paie"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Souscrire",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--payslips--history-656a18fe.png"
+    },
+    {
+      "route": "/dashboard-rh/residence-permit",
+      "actual_route": "/dashboard-rh/residence-permit",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Titres de séjour"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--residence-permit-b1bb29e3.png"
+    },
+    {
+      "route": "/dashboard-rh/trial-end",
+      "actual_route": "/dashboard-rh/trial-end",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Fins de période d'essai"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "dashboard-rh--trial-end-caa3b13e.png"
+    },
+    {
+      "route": "/timeoffs",
+      "actual_route": "/timeoffs/pending",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Demandes d'absence"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Nouvelle absence",
+        "Demandes à traiter",
+        "Demandes traitées",
+        "Demandes expirées",
+        "Calendrier des absences",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "timeoffs-5bec8195.png"
+    },
+    {
+      "route": "/timeoffs/calendar",
+      "actual_route": "/timeoffs/calendar",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Demandes d'absence"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Nouvelle absence",
+        "Demandes à traiter",
+        "Demandes traitées",
+        "Demandes expirées",
+        "Calendrier des absences",
+        "La Foir'Fouille",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "timeoffs--calendar-105fd8b1.png"
+    },
+    {
+      "route": "/timeoffs/pending",
+      "actual_route": "/timeoffs/pending",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Demandes d'absence"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Nouvelle absence",
+        "Demandes à traiter",
+        "Demandes traitées",
+        "Demandes expirées",
+        "Calendrier des absences",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "timeoffs--pending-9b5fdee8.png"
+    },
+    {
+      "route": "/timeoffs/treated",
+      "actual_route": "/timeoffs/treated",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Demandes d'absence"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Nouvelle absence",
+        "Demandes à traiter",
+        "Demandes traitées",
+        "Demandes expirées",
+        "Calendrier des absences",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "timeoffs--treated-1418882e.png"
+    },
+    {
+      "route": "/timeoffs/expired",
+      "actual_route": "/timeoffs/expired",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Demandes d'absence"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Nouvelle absence",
+        "Demandes à traiter",
+        "Demandes traitées",
+        "Demandes expirées",
+        "Calendrier des absences",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "timeoffs--expired-ea098c0b.png"
+    },
+    {
+      "route": "/articles",
+      "actual_route": "/articles",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Articles",
+        "Pause",
+        "Guide d'utilisation combo",
+        "Comment utiliser les articles ?"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un article",
+        "1",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "articles-429717a2.png"
+    },
+    {
+      "route": "/conversations",
+      "actual_route": "/conversations",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Discussions"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Tout",
+        "Non lu",
+        "Archivé",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "conversations-76a68f29.png"
+    },
+    {
+      "route": "/electronic-signature",
+      "actual_route": "/electronic-signature",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Importer un document"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Fermer",
+        "Importer",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "electronic-signature-0423eb58.png"
+    },
+    {
+      "route": "/settings",
+      "actual_route": "/settings/locations",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Établissements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un établissement",
+        "Établissements actifs",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings-a6640f1b.png"
+    },
+    {
+      "route": "/settings/adp",
+      "actual_route": "/settings/locations",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Établissements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un établissement",
+        "Établissements actifs",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--adp-0ebef0dd.png"
+    },
+    {
+      "route": "/settings/cash-register",
+      "actual_route": "/settings/locations",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Établissements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un établissement",
+        "Établissements actifs",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--cash-register-c5c45a74.png"
+    },
+    {
+      "route": "/settings/collective-agreement",
+      "actual_route": "/settings/collective-agreement",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Convention Collective",
+        "La Foir'Fouille"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Commerces de détail non alimentaires (IDCC 1517) - JF 50% et Dimanche 100%",
+        "Règles de la convention collective",
+        "Enregistrer",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--collective-agreement-c85be4e3.png"
+    },
+    {
+      "route": "/settings/contact",
+      "actual_route": "/settings/contact",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Informations sur le compte"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Enregistrer"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--contact-fb657344.png"
+    },
+    {
+      "route": "/settings/job-title",
+      "actual_route": "/settings/job-title",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Gestion des emplois"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un emploi",
+        "Regrouper les emplois"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--job-title-1eb80d37.png"
+    },
+    {
+      "route": "/settings/legal/rgpd",
+      "actual_route": "/settings/legal/rgpd",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "DPA - Contrat de sous-traitance (Combo)",
+        "Contrat de sous-traitance",
+        "ANNEXE 1 – DESCRIPTION DU TRAITEMENT FAISANT L’OBJET DE LA SOUS-TRAITANCE",
+        "ANNEXE 2 – MESURES DE SECURITE"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--legal--rgpd-04701b4f.png"
+    },
+    {
+      "route": "/settings/locations",
+      "actual_route": "/settings/locations",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Établissements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un établissement",
+        "Établissements actifs",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--locations-fcd0c32d.png"
+    },
+    {
+      "route": "/settings/marketplace",
+      "actual_route": "/settings/marketplace",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Intégration",
+        "Marketplace"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Toutes les applications",
+        "Configurer",
+        "Connecter",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--marketplace-dcc3a936.png"
+    },
+    {
+      "route": "/settings/notification",
+      "actual_route": "/settings/notification",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Notifications SMS"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Contrat en cours",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--notification-b3361c7b.png"
+    },
+    {
+      "route": "/settings/pay-preferences",
+      "actual_route": "/settings/pay-preferences",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Paie",
+        "Périodes de paie",
+        "Matricules salariés",
+        "Rôles et permissions"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--pay-preferences-24fed85f.png"
+    },
+    {
+      "route": "/settings/payroll-software",
+      "actual_route": "/settings/locations",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Établissements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un établissement",
+        "Établissements actifs"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--payroll-software-1717bab5.png"
+    },
+    {
+      "route": "/settings/preferences",
+      "actual_route": "/settings/preferences",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Préférences",
+        "Plannings",
+        "Droits",
+        "Général"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Enregistrer",
+        "Euro"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--preferences-b8727be2.png"
+    },
+    {
+      "route": "/settings/print",
+      "actual_route": "/settings/print",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Impression",
+        "Impression PDF"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Enregistrer",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--print-9b059602.png"
+    },
+    {
+      "route": "/settings/productivity",
+      "actual_route": "/settings/productivity",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Productivité",
+        "Productivité des établissements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Enregistrer",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--productivity-816bbc7b.png"
+    },
+    {
+      "route": "/settings/roles-permissions",
+      "actual_route": "/settings/locations",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Établissements"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Ajouter un établissement",
+        "Établissements actifs",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--roles-permissions-e662af19.png"
+    },
+    {
+      "route": "/settings/subscription",
+      "actual_route": "/settings/subscription",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--subscription-91f95b49.png"
+    },
+    {
+      "route": "/settings/template-documents",
+      "actual_route": "/settings/template-documents",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Modèles de documents",
+        "Vos modèles de documents clé en main"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Utiliser les variables",
+        "Ajouter un modèle",
+        "Voir les modèles Combo",
+        "Modèles de document",
+        "Variables par établissement",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--template-documents-52623159.png"
+    },
+    {
+      "route": "/settings/timeclock",
+      "actual_route": "/settings/timeclock",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Pointeuse",
+        "La pointeuse Combo"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Activer l'option",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--timeclock-3b48f15d.png"
+    },
+    {
+      "route": "/settings/timeoff-policies",
+      "actual_route": "/settings/timeoff-policies",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Politique de RTT"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Politiques actives",
+        "Créer une politique de RTT",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--timeoff-policies-79b2d96e.png"
+    },
+    {
+      "route": "/settings/wage-ratio",
+      "actual_route": "/settings/wage-ratio",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Analyse du planning",
+        "Coût des shifts"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Enregistrer",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "settings--wage-ratio-5f9838f0.png"
+    },
+    {
+      "route": "/subscription",
+      "actual_route": "/subscriptions",
+      "title": "Combo : FROUARD DISTRIBUTION",
+      "headings": [
+        "Abonnement",
+        "People",
+        "Plan actuel",
+        "Paramètres de facturation",
+        "Factures",
+        "Suspendre l'abonnement"
+      ],
+      "buttons": [
+        "Mon suivi",
+        "Plannings",
+        "Équipe",
+        "Rapports",
+        "••",
+        "Articles",
+        "Messages",
+        "Changer de plan",
+        "Modifier les paramètres",
+        "1",
+        "2",
+        "Suspendre l'abonnement",
+        "Envoyer un commentaire"
+      ],
+      "links": [
+        {
+          "label": "",
+          "url": "https://app.combohr.com/"
+        },
+        {
+          "label": "Mon suivi",
+          "url": "https://app.combohr.com/home"
+        },
+        {
+          "label": "Plannings",
+          "url": "https://app.combohr.com/plannings/week"
+        },
+        {
+          "label": "Équipe",
+          "url": "https://app.combohr.com/members"
+        },
+        {
+          "label": "Rapports",
+          "url": "https://app.combohr.com/reports/payrolls"
+        },
+        {
+          "label": "••",
+          "url": "https://app.combohr.com/dashboard-rh/home"
+        },
+        {
+          "label": "Articles",
+          "url": "https://app.combohr.com/articles"
+        },
+        {
+          "label": "Messages",
+          "url": "https://app.combohr.com/conversations"
+        },
+        {
+          "label": "Abonnement",
+          "url": "https://app.combohr.com/subscription"
+        }
+      ],
+      "screenshot": "subscription-21669cd4.png"
+    }
+  ],
+  "errors": [],
+  "network_inventory": [
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/articles"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/conversations"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/country_configurations"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/dsn_events"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/labels"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/memberships"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/pay_periods"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/rests"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/shifts"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/user_contract_events"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/user_contracts"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/85220/weeklyschedules"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/accounts/billing_jwt"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/activity_logs"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/activity_logs/categories"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/collective_agreements"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/common_datas"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/accounts/jobs"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/document_templates"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/document_templates/available_attributes"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/incomplete_files"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/incomplete_files/count"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/memberships/85220/site_navigation_preferences"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/signable_documents"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/employee_management/work_permits"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/feature_flags"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/holidays"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/label_colors"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/locations"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/locations/100864"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/me"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/payroll_softwares"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/payslip/imports"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/planning"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/planning/alerts"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/planning/alerts/count"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/planning/rows"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/planning/weeklyschedules/14435809028/stats"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/planning/weeklyschedules/analysis"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/pos/integrations"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/rests_configurations"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/rtt/policies"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/schedule_engine/header"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/schedule_engine/rows"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/timeclocks"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/timeoffs"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/user_contracts/counters"
+    },
+    {
+      "method": "GET",
+      "host": "api.combohr.com",
+      "path": "/api/v2/users/816817/toucan_jwt"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/articles"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/conversations"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/absence-log"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/analytics/absence"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/analytics/summary"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/analytics/worked-hours"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/analytics/workforce"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/clock-in-out-follow-up"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/contracts-changes"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/document-signing"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/entries"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/exits"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/home"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/incomplete-profiles"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/paid-leaves"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/payslips"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/payslips/history"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/residence-permit"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/dashboard-rh/trial-end"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/electronic-signature"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/home"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/members"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/plannings/day"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/plannings/labels"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/plannings/week"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/reports/activities"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/reports/payrolls"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/reports/payrolls-history"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/reports/sick-leaves-status-report"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/reports/timeclock"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/adp"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/cash-register"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/collective-agreement"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/contact"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/job-title"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/legal/rgpd"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/locations"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/marketplace"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/notification"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/pay-preferences"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/payroll-software"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/preferences"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/print"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/productivity"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/roles-permissions"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/subscription"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/template-documents"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/timeclock"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/timeoff-policies"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/settings/wage-ratio"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/subscription"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/timeoffs"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/timeoffs/calendar"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/timeoffs/expired"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/timeoffs/pending"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/timeoffs/treated"
+    },
+    {
+      "method": "GET",
+      "host": "app.combohr.com",
+      "path": "/users/sign_in"
+    },
+    {
+      "method": "GET",
+      "host": "bat.bing.net",
+      "path": "/action/0"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/AbsenceLog-IK0O4efS.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Activities-DtbgaboE.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/AddLocationButton-CvGbX4AY.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/AnalyticsBoardBarsIcon-CtIAdKuP.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Articles-0NpE1YjH.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CashRegisterCard-BR7Og7Mk.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CertificateMedalDocumentIcon-DfJefYid.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ChemistryIcon-z94cDzpY.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ClockInOutFollowUp-CiC6sAk2.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CloseCircleIcon-B76J9puj.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CoffeeCupIcon-Cw4X-pLW.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CollectiveAgreementInfo-D2A7wdlc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CollectiveAgreementSetting-CFdQ5Jhi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ComboPayMissingInformationsAlert-Do4kXbMR.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ConfirmationModal-DSfzbqFn.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ContactDetails-DvXtZMvc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ContainerWrapper-CYHId3bn.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Content-E7u2tSio.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Conversations-Bxo8HVkM.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CountrySelectSourced-BR1HJaEI.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CreateJobTitleModal-Dqzk0tnw.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/CreditCardIcon-BYh2-LjU.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/DashboardContainer-D8p07-Pb.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/DayDatePicker-C0495DhP.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/DominoIcon-D0HC6HRD.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/DownloadBottomIcon-Dp_thMIj.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ElectronicSignature-DAowwecX.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ExpiredTimeoffs-CDck1gVt.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/FolderEmployeeIcon-N9J3MGbD.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/FolderIcon-CB-57y46.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/FormGroup-CWT8suVR.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/FormatContractName-B9bPC8di.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/HourglassIcon-C8ZZk_KJ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/HyperlinkIcon-DM8CYTbk.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ImportDocumentTemplateModal-BIVrTxtb.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/JobField-CPYLhps7.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Legend-BpdybOfo.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/LinkBrokenIcon-OHAZGr88.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/LinkToMemberPage-BnUyeJxV.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/LocationBasedSubscriptionLayout-DN6EBnXx.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/LocationSettingBreadcrumb-CJc6jVg3.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/LockUnlockBoldIcon-Djh80fim.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/LogoutIcon-5-uUYMhc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/MarketVideo-D6oj24Du.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/MedecineCodeTextField-FhNwR-Ki.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/MegaphoneIcon-D-OfF89Y.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/MultipleNeutralIcon-CaWL8IcK.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Navigation-CIG-3Iht.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/NavigationMenuBoldIcon-Blqwi9gJ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/NewContractCell-DcrHVuuM.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/NotSpecified-C3g2aU22.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/OfficesignDocumentIcon-BTC6BQNu.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PaddingAround-BqNMVziw.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PayrollSoftwareConfigurationModal-Btb9TuTk.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PayslipAddonSubscribeModal-CYH7Tg12.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PayslipMarketingPage-BG-HS9X1.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PayslipsHeader-CT7XWSf6.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PayslipsHistoryPage-BJIDmkYU.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PendingTimeoffs-DokV4bkX.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Planning-BR_8prTc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PrintTextIcon-BIJBSyuV.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/PuzzleIcon-C2qV5eEZ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/RGPDSetting-BfS1EDsJ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/RGPDSetting-DDWa1ODn.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/RatingStarIcon-CP6hoUDF.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ReportsExport.requests-CLcQeY_b.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/RolesPermissionsFlagGuard-D3uFjUQO.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SavingBankIcon-BQUoeL9t.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ScheduleEngineLayout-0GLqcZy-.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SendEmailIcon-CcOzsp9r.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/Settings-DopEzePh.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ShopIcon-DS1sr4QI.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SignIn-Fvydc4pj.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SingleActivateDraftAlert-BxqN6tYO.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SingleNeutralIcon-BeuAOm1I.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SingleNeutralIdCardIcon-BiESyOLR.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SparklesIcon-D-ETJXis.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SubscriptionsView-DXy6gUjw.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/SubtractCircleIcon-DhmGMqjr.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TagsDoubleIcon-BXu9Yi-n.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TeamsAndLocationsDropdown-LJP_D-2I.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TeamsAndLocationsDropdownLegacy-C-awU4di.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TimeOffPoliciesSettings-BzzUKAxy.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TimeoffInfoModalContent-B3UMiGeN.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TimeoffRequestFormModal-Dw-GrnTc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TimeoffsPage-CvSCbBZ5.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ToucanDashboard-CBCbC4AS.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/TreatedTimeoffs-DdDsqw1F.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/WageRatioForm-C6nGtN1P.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/WorkPermitPage-Vk388bKt.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/activities-DyO5n6vU.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/activities-OJa_pWcT.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/appNavbar-CQ-3NeJb.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/appNavbar-Czkbtpb8.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/arhiaIncompleteFilesService-BFOJ4YVH.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/articles-CPSWkJgi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/articles-CeWXCDkj.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/articlesService-NnpsAbYd.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/assets/index-DC2O51dN.css"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/atomEmailLogIn-DIXc7JEw.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/billing-2t6NxbEp.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/billing-nKnl_2e1.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/comboLedgerStatus-pDL0Rs32.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/comboPayService-wWhPs-5n.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.app-DeroKZQi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.app-DoJk1Ec7.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.dates-B9Uqh5oY.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.dates-BJvNXnqW.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.forms-D6WPT2FK.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.forms-Db9ZKUfr.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.notifications-BniCCoEP.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/common.notifications-DYbfCkPN.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/commonDatasService-CepqoAah.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/components-C0Mek-iq.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/components-C7hKqQpw.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/conversations-BHYS_l_3.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/conversations-CKZojNO1.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/countries-qmdsP9FA.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/createSelectGroupOption-DDogmsHR.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/dashboard-CBTQa1Ke.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/dashboard-DqpnN4_V.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/dashboardHRService-DVYfmp30.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/dashboardRH-BjfRStrr.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/dashboardRH-BlE8YEx8.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ds-BFBL1Xyi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ds-DXaKWTbt.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/electronicSignature-BRc7Q1Q_.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/electronicSignature-ni23EBad.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/electronicSignatureService-CedxfjUC.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/es-DXn8kvPZ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/exportFileService-BWrX7iRu.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/formatCounterValue-Bej1DG0Q.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/formatJobDefaultValue-CygvAVoa.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/formatPathParams-BELrkTKG.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/formatSearchParams-CDQTDLPl.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/fr-C2bkOlkw.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/getMeta-DO1Exne7.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/getMeta-DY2HrGZQ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/getPagination-hSAjw1Ck.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/getSearchedMembershipOptions-eRi6YZtH.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/helpMenu-BuVd4n8I.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/helpMenu-DcCr3ja0.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ia-CRAjy762.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/ia-DCfGMr7I.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-2aQbvLxg.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-3Z3zuXYo.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-B4KvfTzu.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-BEM5a_kG.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-BH1KvzMG.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-BL6xfrSx.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-BYoT1Bbd.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-B_oEauE4.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-BcrXnmDM.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-Be-sohjz.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-Be9y0VCd.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CF3A0OKn.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CLh9YAnD.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CMbrn8_k.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CVkft84V.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CWMM0bQx.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CZSLxwit.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CdyysAjU.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-ClV3EH4m.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CuBORMiB.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-CyN0tbpi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-D2cUrR8L.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-D9O49ln1.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-DF3OhsXo.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-DHXBZjwQ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-DJ6-uqjj.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-DP__TVg3.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-DRwHFUl7.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-DRzc56IF.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-KicyCl8-.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-RJ9Bb3d1.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-YTADDwDT.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-ewgH1dD2.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-gRxsgmFc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-r3NGlL_q.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/index-u2l2NFAV.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/integrations-BxEPz74N.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/integrations-RD3nkdeJ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/isBeforeDay--0XBruUb.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/it-Cf-yBrwq.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/marketplace-Ecmxxvne.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/marketplace-R_f0IP8e.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/memberList-C20wrTnz.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/memberList-nnTynVCJ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/memberPage-74-7ijJq.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/memberPage-Dl0W1KBY.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/membershipPage-BH10J51k.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/membershipPage-DN9NbqYR.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/nl-Cx7ptmgG.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/onboarding-BTZslkp0.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/onboarding-WZH0YcR1.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/payrollReport-B2qSui9Z.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/payrollReport-D_aSVIh8.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/payrollSoftwareService-BaSBVAnx.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/planning-DbnfhZJp.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/planning-DbzEHW-X.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/planningForm-A5Z6FA-u.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/planningForm-DZ6DfIDk.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/replaceURLSearchParams-CyPkk1yt.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/reports-tnD4Xh3E.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/reports-xyUaI9KG.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/reportsService-cnE-FHBT.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/restsService-BLshk4Xc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/rolesService-gIIZGKc8.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/searchParams-CAaRW7fz.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/selectors-xzO8jRvl.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/selectors-ypxIp7FG.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settings-ChO86ChW.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settings-Co___zkf.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsCompany-C0V1mkSg.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsCompany-D4koYRwe.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsContracts-C2cyI5zr.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsContracts-CcO5P5GZ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsGestion-Bt8RdOuw.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsGestion-ClaPajpY.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsIntegrations-BN4owJNZ.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsIntegrations-OqLhZDtI.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsNotification-CGG9Bkqi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsNotification-Dm4yfD93.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsPlanification-6i8GUs2S.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/settingsPlanification-I7fzD084.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/sortWorkPermits-CQyBAuhe.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/timeClockReport-B7nQ8h2f.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/timeClockReport-CzIt0mE7.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/timeclockReportService-CEGwUhPi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/timeoff-Co4UXnpR.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/timeoff-DWZbOoAv.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useAttachmentForm-BmCPMbSc.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useBrowserValidVersion-CYzJI965.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useCallAPI-BFNcG7Sd.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useCanCreatePlannablePoliciesByDay-DCTAUSP2.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useDefaultComboPayContractFilterValue-BvhLmfz4.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useDefaultContractFilterValue-BM7NxTDl.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useExportDownload-DgMwM-gl.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useExportTypeConfiguration-BzjefX5j.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useGetAccountFlipperFeatureFlags-CJnwyg-D.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useGetColumns-DhxdqPPU.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useGetExports-B8yno5YV.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useGetTimeoffs-nOz6TbI1.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useGetTimeoffsParams-CESsq2re.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useHistoryWrapper-DLCtcnV5.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useMembershipPageContext-DLyJRqFo.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/usePolicyAcquisitionMode-BCcaKQLH.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/usePolicyAcquisitionMonth-BjXJ5f6e.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useShouldDisplayPeopleUpsell-CevuZ2YH.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useStepper-OlASKGAD.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useStripe-CfepzfVq.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useSyncPageSearchParams-DD2m3uOi.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useTableState-DP4Eyv7y.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useThrottledFunction-DpVLYzO_.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/useTimeclockActivationToggle-CMUYvXO2.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/vendor-BlZb4A8T.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/welcome-B_IKdZ9o.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/welcome-BzW0QlpP.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/withRouter-B3I9oZ2-.js"
+    },
+    {
+      "method": "GET",
+      "host": "cdn.combohr.com",
+      "path": "/production/dist/apps/spa/withTeamAndLocationURLSync-CsKNH7FU.js"
+    },
+    {
+      "method": "GET",
+      "host": "connect.facebook.net",
+      "path": "/signals/config/614982798930413"
+    },
+    {
+      "method": "GET",
+      "host": "px.ads.linkedin.com",
+      "path": "/attribution_trigger"
+    },
+    {
+      "method": "GET",
+      "host": "px.ads.linkedin.com",
+      "path": "/collect"
+    },
+    {
+      "method": "GET",
+      "host": "www.googletagmanager.com",
+      "path": "/gtm.js"
+    },
+    {
+      "method": "GET",
+      "host": "www.googletagmanager.com",
+      "path": "/td"
+    },
+    {
+      "method": "POST",
+      "host": "api.combohr.com",
+      "path": "/api/v2/oauth/token"
+    },
+    {
+      "method": "POST",
+      "host": "region1.analytics.google.com",
+      "path": "/g/collect"
+    },
+    {
+      "method": "POST",
+      "host": "www.google-analytics.com",
+      "path": "/j/collect"
+    },
+    {
+      "method": "POST",
+      "host": "www.google.com",
+      "path": "/ccm/collect"
+    }
+  ]
+}
