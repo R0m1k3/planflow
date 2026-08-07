@@ -4,6 +4,8 @@
 **Périmètre :** employeur privé établi en France, salariés majeurs, application auto-hébergée. Les mineurs, le transport, la santé, les HCR, le BTP, le spectacle, les travailleurs de nuit, les équipes successives, l'Alsace-Moselle et le secteur public exigent des règles supplémentaires.
 
 > **Avertissement.** Cette matrice est un outil de cadrage produit et de collecte de preuves, pas un avis juridique définitif. Les règles doivent être validées avant mise en production avec la convention collective (IDCC), les accords d'entreprise/établissement, les contrats et usages, l'effectif, les catégories de personnel et les paramètres DSN à jour. Il ne suffit pas de copier la configuration d'un autre logiciel : il faut conserver la justification de chaque paramètre.
+>
+> **SIGNAL D’ARRÊT — salariés mineurs.** La présente matrice couvre uniquement les **salariés majeurs**. Elle ne source ni ne valide les règles applicables aux travailleurs mineurs. En conséquence, toute règle, constante ou configuration préfixée `MINOR_*` doit être considérée comme **non sourcée et non validée**. L’activation, l’utilisation en production ou la prise de décision automatique fondée sur une règle `MINOR_*` doit être bloquée jusqu’à la création d’un corpus juridique dédié, sourcé, daté, versionné et validé humainement (âge, durée du travail, pauses, repos, travail de nuit, travaux interdits ou réglementés, dérogations et règles conventionnelles applicables).
 
 ## Légende de priorité
 
