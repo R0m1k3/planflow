@@ -1,0 +1,42 @@
+name: planflow
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-planflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est requis}
+      POSTGRES_DB: ${POSTGRES_DB:-planflow}
+      # Deterministic collation: ordering of employee names must not depend on
+      # the host locale, or exports differ between machines.
+      LANG: C.UTF-8
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-planflow} -d ${POSTGRES_DB:-planflow}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Not published by default: nothing outside the compose network needs the
+    # database, and an HR dataset should not be one firewall rule from the world.
+    expose:
+      - '5432'
+
+  app:
+    build:
+      context: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-planflow}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-planflow}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY est requis — voir .env.example}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+    ports:
+      - '${APP_PORT:-3000}:3000'
+
+volumes:
+  db-data:
