@@ -17,11 +17,11 @@
 1. Lire les sections 1 à 9 en entier avant d'écrire la moindre ligne. Elles définissent des invariants transverses ; les découvrir à WP-03 impose de refaire WP-00 à WP-02.
 2. Exécuter les lots de travail (§10) **dans l'ordre**. Chaque lot déclare ses dépendances, ses livrables et ses **critères d'acceptation**. Un lot n'est terminé que si tous ses critères passent en test automatisé.
 3. **Signaux d'arrêt.** Interrompre et demander un arbitrage humain dans ces cas :
-   - une valeur numérique de convention collective est nécessaire (§6) ;
+   - une règle de convention **non couverte** par le jeu de paramètres IDCC 1517 de §6.3 est nécessaire, ou une valeur relevant d'un accord d'entreprise (taux dimanche notamment) ;
    - un code de rubrique Silae est nécessaire (§8) ;
    - une donnée personnelle réelle serait requise pour tester ;
    - un point marqué **`À VALIDER`** dans ce document bloque l'avancement.
-4. Ne jamais inventer de paramètre légal, de code de paie ou de règle métier. L'absence d'information est un signal d'arrêt, pas une invitation à choisir.
+4. Ne jamais inventer de paramètre légal, de code de paie ou de règle métier. L'absence d'information est un signal d'arrêt, pas une invitation à choisir. Les valeurs de §6.3 sont fournies **avec leur origine** (ordre public, convention, accord d'entreprise) : ne pas en ajouter par déduction.
    **Les énumérations de ce document proviennent de l'audit des menus déroulants et sont exhaustives.** Ne pas y ajouter de valeur « qui semble manquer » : une valeur absente de l'audit est une valeur à faire confirmer.
 5. Langue : **interface et libellés en français**, **identifiants de code en anglais**, commentaires en anglais.
 
@@ -32,9 +32,11 @@
 Le dépôt ne contient que l'audit ; il n'y a aucun code. L'objectif est de construire **PlanFlow**, une application de gestion du personnel et des plannings multi-établissements, reprenant les capacités de Combo pour l'organisation auditée, avec la paie **exportée vers Silae**.
 
 ### Ce que l'audit corrige
-Cinq constats structurants, qu'une lecture de la documentation publique de Combo aurait manqués ou faussés. Ils sont listés ici parce qu'ils conditionnent des choix qui coûtent cher à reprendre.
+Six constats structurants, qu'une lecture de la documentation publique de Combo aurait manqués ou faussés. Ils sont listés ici parce qu'ils conditionnent des choix qui coûtent cher à reprendre.
 
-**La convention collective n'est pas HCR.** Le compte audité est **FROUARD DISTRIBUTION / La Foir'Fouille**, configuré sur **« Commerces de détail non alimentaires (IDCC 1517) — JF 50 % et Dimanche 100 % »**. C'est du commerce de détail. Les durées maximales, coupures et majorations propres à l'hôtellerie-restauration ne s'appliquent pas.
+**La convention collective n'est pas HCR.** Le compte audité est **FROUARD DISTRIBUTION / La Foir'Fouille**, configuré sur **« Commerces de détail non alimentaires (IDCC 1517) — JF 50 % et Dimanche 100 % »**, code APE **4759B — commerce de détail d'autres équipements du foyer**. C'est du commerce de détail : les durées maximales, coupures et majorations propres à l'hôtellerie-restauration ne s'appliquent pas. Les paramètres réels de l'IDCC 1517 sont en §6.3.
+
+**Le libellé de configuration mêle deux niveaux de norme.** « JF 50 % » est bien une règle de l'IDCC 1517 ; « Dimanche 100 % » ne l'est pas — la convention ne fixe aucun taux dominical et renvoie à l'accord d'entreprise. Traiter les deux comme conventionnels reviendrait à figer dans le moteur une règle qui appartient au client et peut changer sans que la convention bouge.
 
 **L'autorisation est par capacités, pas par rôles.** L'audit relève des permissions granulaires et des rôles **configurables par le client** (`/settings/roles-permissions/:roleKey`). `Role`, `Permission` et `Scope` sont trois notions distinctes dès WP-01. Aucun écran ne teste un nom de rôle.
 
@@ -133,8 +135,9 @@ model Account {
   id                    String   @id @default(cuid())
   name                  String
   siren                 String?
-  apeCode               String?
+  apeCode               String?                 // organisation auditée : "4759B"
   collectiveAgreementId String
+  agreementOverrides    Json?                   // surcharges d'accord d'entreprise (§6.3) — ex. taux dimanche
   createdAt             DateTime @default(now())
 }
 
@@ -648,11 +651,72 @@ Aucun `Date` natif : tout passe par `src/lib/datetime.ts`.
 
 `OVERLAPPING_SHIFTS` et `SHIFT_DURING_ABSENCE` sont de sévérité **`BLOCKING`** : ce sont des incohérences de données, pas des arbitrages. Toutes les autres sont **`WARNING`**.
 
-### 6.3 Paramètres — signal d'arrêt
+### 6.3 Paramètres IDCC 1517
 
-> **Ce plan ne fixe aucune valeur numérique de convention.** L'audit est muet sur les paramètres réels et les sources publiques se contredisent d'une convention à l'autre. Les seules règles lisibles dans la configuration du compte audité sont les majorations **jour férié 50 %** et **dimanche 100 %**.
+Jeu de paramètres d'amorce, à charger en base comme `CollectiveAgreement { idcc: "1517", version: 1 }`. Chaque valeur porte son origine : **OP** = ordre public (code du travail, s'impose quelle que soit la convention), **CCN** = disposition propre à l'IDCC 1517, **ENT** = relève d'un accord d'entreprise.
+
+**Durées et repos**
+
+| Paramètre | Valeur | Origine |
+|---|---|---|
+| Durée hebdomadaire de référence | 35 h (151,67 h/mois ; 1 607 h/an) | OP |
+| `MAX_DAILY_WORK` | **10 h** | CCN |
+| `MAX_WEEKLY_WORK_ABSOLUTE` | **48 h** | CCN |
+| `MAX_WEEKLY_WORK_AVERAGED` | **44 h sur 12 semaines consécutives** | CCN |
+| `MIN_DAILY_REST` | 11 h consécutives | OP |
+| `MIN_WEEKLY_REST` | 35 h consécutives (24 + 11) | OP |
+| `MIN_BREAK_AFTER_THRESHOLD` | 20 min après 6 h de travail | OP |
+| `MAX_CONSECUTIVE_WORK_DAYS` | **10 jours** — en cas de semaines de 6 jours sur 2 semaines | CCN |
+
+**Temps partiel**
+
+| Paramètre | Valeur | Origine |
+|---|---|---|
+| `PART_TIME_MIN_WEEKLY_HOURS` | **24 h** | CCN |
+| Dérogation | 21 h (aide-étalagiste, employé niveau 2) | CCN |
+| Cas particuliers | 6 h (nettoyage, démonstrateurs, marchés) | CCN |
+| Heures complémentaires — jusqu'à 1/10 de la durée contractuelle | **+10 %** | CCN |
+| Heures complémentaires — au-delà, plafond 1/3 | **+25 %** | CCN |
+
+**Heures supplémentaires**
+
+| Tranche | Majoration | Origine |
+|---|---|---|
+| 36ᵉ à 43ᵉ heure (8 premières au-delà de 35 h) | **+25 %** | CCN |
+| À partir de la 44ᵉ | **+50 %** | CCN |
+| Contingent annuel | **180 h** | CCN |
+| Contrepartie obligatoire en repos au-delà du contingent | 50 % si ≤ 20 salariés · **100 % si > 20 salariés** | CCN |
+
+**Modulation** — plafond 1 600 h/an ; 44 h/semaine au plus sur des périodes de 10 semaines ; haute activité limitée à 5 semaines consécutives et 16 semaines par an. **CCN**
+
+**Jours fériés** — c'est la règle que le libellé « JF 50 % » du paramétrage désigne.
+
+| Paramètre | Valeur | Origine |
+|---|---|---|
+| 1er mai | Chômé obligatoire ; si travaillé, **+100 %** | OP |
+| Autres jours fériés chômés | **3 par année civile**, choisis par l'employeur | CCN |
+| `HOLIDAY_WORK` — travail un jour férié légal | Indemnité = **50 %** des heures effectuées, en sus du salaire | CCN |
+| Substitution | Sur **demande du salarié**, repos compensateur = **moitié** du temps travaillé ce jour-là, à prendre sous 6 mois, non cumulable avec les congés payés sauf accord de l'employeur | CCN |
+
+**Travail de nuit** — plage 21 h – 6 h ; non imposable aux salariés de 55 ans et plus. **CCN**
+
+**Dimanche — attention, ce n'est pas une règle conventionnelle**
+
+> Le libellé du paramétrage indique « Dimanche 100 % », mais **l'IDCC 1517 ne fixe aucun taux pour le dimanche** : elle renvoie à « repos compensateur et/ou majoration de salaire » définis par accord d'entreprise ou usages de la profession.
 >
-> **L'orchestrateur doit :** implémenter les règles et leurs tests avec des paramètres **de test explicitement fictifs**, livrer un écran de saisie des paramètres, et **demander les valeurs réelles de l'IDCC 1517 à un expert paie** avant toute mise en production. Ne jamais déduire une valeur d'une recherche web.
+> Le taux de 100 % appliqué chez Frouard Distribution relève donc d'un **accord d'entreprise**, que ce plan n'a pas. `SUNDAY_WORK` doit être implémentée avec un taux **paramétrable au niveau du compte**, initialisé à 100 % et marqué comme surcharge d'entreprise — pas comme valeur conventionnelle.
+>
+> Le travail dominical suppose par ailleurs une autorisation (zone touristique, dérogation préfectorale, dimanches du maire) et le refus d'un salarié ne peut être sanctionné. À traiter en règle informative, pas en blocage.
+
+#### Ce qui reste à valider — `À VALIDER`
+
+Ces valeurs proviennent de sources secondaires publiques (Code du travail numérique, LégiSocial, ressources conventionnelles), **pas du texte primaire sur Legifrance**. Elles sont suffisantes pour construire et tester le moteur ; elles ne le sont pas pour engager une paie. Avant mise en production :
+
+1. Recouper le jeu ci-dessus avec le **texte consolidé de l'IDCC 1517 sur Legifrance**, et dater la version chargée.
+2. Obtenir l'**accord d'entreprise Frouard Distribution** : il porte le taux dimanche, et peut déroger sur la modulation, le contingent et les repos.
+3. Faire confirmer par le gestionnaire de paie Silae, qui détient les usages effectivement appliqués.
+
+L'écran de paramètres (§9) reste donc indispensable : ces valeurs sont un **point de départ chargé en base**, jamais des constantes dans le code. Un test vérifie que le moteur produit des résultats différents avec deux jeux de paramètres distincts.
 
 ### 6.4 Exécution et restitution
 - À chaque mutation de shift : revalidation **ciblée** des couples (salarié, semaine) impactés, y compris les semaines adjacentes.
@@ -839,13 +903,16 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-05 — Moteur de règles
 **Dépend de :** WP-04
-**Livre :** moteur §6, les 17 règles, `ComplianceViolation`, revalidation ciblée, panneau d'alertes, confirmation tracée à la publication, écran de paramètres.
+**Livre :** moteur §6, les 17 règles, `ComplianceViolation`, revalidation ciblée, panneau d'alertes, confirmation tracée à la publication, écran de paramètres, **jeu IDCC 1517 de §6.3 semé en base** avec l'origine de chaque valeur (OP / CCN / ENT).
 **Critères d'acceptation**
 - Chaque règle a un test aux bornes : la valeur limite exacte passe, un cran au-delà déclenche.
 - Modifier un shift revalide la semaine **et ses voisines**.
 - Publier malgré un `WARNING` exige une confirmation et écrit l'acquittement et l'audit.
 - Un `BLOCKING` empêche l'enregistrement.
 - Aucune valeur de convention n'est codée en dur — vérifié par un test qui charge deux jeux de paramètres différents.
+- Les tranches d'heures supplémentaires IDCC 1517 sont exactes aux bornes : 43 h donne 8 h à +25 %, 45 h donne 8 h à +25 % et 2 h à +50 %.
+- Un jour férié travaillé produit l'indemnité de 50 % ; la substitution en repos n'est proposée que **sur demande du salarié**.
+- Le taux dimanche est lu depuis la surcharge de compte, pas depuis les paramètres conventionnels.
 
 ### WP-06 — Absences et compteurs
 **Dépend de :** WP-05
@@ -940,7 +1007,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 - **RGPD** — le dossier contient état civil, NIR, coordonnées bancaires, titres de séjour et arrêts de travail. Les arrêts sont des **données de santé, catégorie particulière**. Minimisation, chiffrement au repos, journalisation des accès, rétention, masquage, export et suppression. Traité dès WP-01.
 - **Matrice de conformité manquante** — `À VALIDER`, voir §1. Cette section reste incomplète tant que le document n'est pas fourni.
-- **Paramètres de convention** — signal d'arrêt §6.3.
+- **Paramètres de convention** — le jeu IDCC 1517 de §6.3 est chargé et utilisable, mais issu de sources secondaires. Recoupement Legifrance, accord d'entreprise et confirmation du gestionnaire de paie requis avant d'engager une paie réelle. Le taux dimanche en particulier n'est **pas** conventionnel.
 - **Codes de paie Silae** — signal d'arrêt §8.2.
 - **DPAE** — générée seulement. La transmission à l'URSSAF exige un raccordement déclaratif, hors périmètre.
 - **Signature électronique** — exige un prestataire de confiance qualifié. Hors périmètre ; ne pas implémenter de substitut maison, qui n'aurait aucune valeur probante.
