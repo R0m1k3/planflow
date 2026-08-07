@@ -1,1 +1,256 @@
 @import 'tailwindcss';
+
+/* ==========================================================================
+   PlanFlow — jetons de design
+   Portés depuis l'export Claude Design « PlanFlow Design System ».
+
+   Les valeurs de couleur sont en oklch : les paliers de clarté restent
+   perceptuellement réguliers d'une teinte à l'autre, ce dont dépend la palette
+   catégorielle de postes (§ plus bas).
+
+   Déclarés dans @theme pour que Tailwind génère les utilitaires correspondants
+   (bg-surface, text-ink-1, border-line-1…). Le thème sombre redéfinit les mêmes
+   variables : les utilitaires compilent vers var(--color-…) et suivent donc.
+   ========================================================================== */
+
+@theme {
+  --font-ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'Cascadia Mono', 'Segoe UI Mono',
+    'Liberation Mono', Menlo, monospace;
+
+  --text-micro: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 26px;
+  --text-3xl: 32px;
+
+  --radius-1: 3px;
+  --radius-2: 6px;
+  --radius-3: 10px;
+  --radius-4: 14px;
+  --radius-full: 999px;
+
+  --ease-organic: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-organic-out: cubic-bezier(0, 0.6, 0.35, 1);
+
+  /* Neutres chauds — la base « organique » du thème. */
+  --color-canvas: oklch(0.976 0.008 85);
+  --color-surface: oklch(0.996 0.005 85);
+  --color-surface-2: oklch(0.958 0.01 85);
+  --color-surface-3: oklch(0.932 0.012 85);
+  --color-line-1: oklch(0.905 0.012 85);
+  --color-line-2: oklch(0.852 0.014 85);
+  --color-line-3: oklch(0.735 0.016 85);
+  --color-ink-1: oklch(0.255 0.02 140);
+  --color-ink-2: oklch(0.445 0.016 135);
+  --color-ink-3: oklch(0.545 0.014 120);
+
+  --color-accent: oklch(0.44 0.078 158);
+  --color-accent-hover: oklch(0.385 0.08 158);
+  --color-accent-press: oklch(0.335 0.072 158);
+  --color-accent-ink: oklch(0.985 0.008 158);
+  --color-accent-soft: oklch(0.935 0.03 158);
+  --color-accent-soft-ink: oklch(0.315 0.06 158);
+
+  --color-focus: oklch(0.52 0.16 252);
+
+  --color-danger: oklch(0.475 0.145 30);
+  --color-danger-hover: oklch(0.415 0.145 30);
+  --color-danger-ink: oklch(0.985 0.006 30);
+  --color-danger-soft: oklch(0.94 0.035 30);
+  --color-danger-soft-ink: oklch(0.355 0.105 30);
+
+  --color-warn: oklch(0.745 0.125 78);
+  --color-warn-ink: oklch(0.255 0.055 60);
+  --color-warn-soft: oklch(0.945 0.045 82);
+  --color-warn-soft-ink: oklch(0.375 0.085 60);
+
+  --color-ok: oklch(0.475 0.095 148);
+  --color-ok-soft: oklch(0.935 0.035 148);
+  --color-ok-soft-ink: oklch(0.315 0.07 148);
+
+  --color-info: oklch(0.475 0.105 245);
+  --color-info-soft: oklch(0.935 0.035 245);
+  --color-info-soft-ink: oklch(0.325 0.08 245);
+
+  --shadow-e1: 0 1px 2px oklch(0.3 0.02 85 / 0.08);
+  --shadow-e2:
+    0 1px 2px oklch(0.3 0.02 85 / 0.06), 0 6px 14px oklch(0.3 0.02 85 / 0.07);
+  --shadow-e3:
+    0 2px 6px oklch(0.3 0.02 85 / 0.08), 0 16px 40px oklch(0.3 0.02 85 / 0.14);
+}
+
+:root {
+  --focus-halo: oklch(0.52 0.16 252 / 0.22);
+
+  --lh-tight: 1.2;
+  --lh-ui: 1.35;
+  --lh-table: 1.4;
+  --lh-prose: 1.55;
+
+  --d-1: 80ms;
+  --d-2: 130ms;
+  --d-3: 200ms;
+  --d-4: 280ms;
+
+  /* Hauteur d'une ligne de grille. Change avec la densité. */
+  --row-h: 38px;
+
+  /* ---- Palette catégorielle de postes -----------------------------------
+     Douze teintes dérivées d'une même formule : la clarté et le chroma sont
+     communs, seule la teinte varie, plus un palier alterné (--post-*-t) qui
+     écarte les teintes voisines. Deux postes ne peuvent donc pas se retrouver
+     à la même clarté avec des teintes proches — c'est ce qui les garde
+     distinguables en vision daltonienne, où la teinte seule ne suffit pas.
+
+     La couleur ne porte jamais l'information seule : le code du poste est
+     toujours écrit dans le bloc (voir ShiftChip).
+     --------------------------------------------------------------------- */
+  --tier-dir: -1;
+  --chip-bg-l: 0.905;
+  --chip-bg-c: 0.042;
+  --chip-fg-l: 0.315;
+  --chip-fg-c: 0.055;
+  --chip-edge-l: 0.52;
+  --chip-edge-c: 0.12;
+
+  --post-cai-h: 250;
+  --post-cai-t: 0;
+  --post-vte-h: 162;
+  --post-vte-t: 0.045;
+  --post-res-h: 30;
+  --post-res-t: 0;
+  --post-acc-h: 205;
+  --post-acc-t: 0.045;
+  --post-cab-h: 100;
+  --post-cab-t: 0;
+  --post-rss-h: 308;
+  --post-rss-t: 0.045;
+  --post-inv-h: 138;
+  --post-inv-t: 0;
+  --post-liv-h: 52;
+  --post-liv-t: 0.045;
+  --post-enc-h: 276;
+  --post-enc-t: 0;
+  --post-clc-h: 340;
+  --post-clc-t: 0.045;
+  --post-net-h: 185;
+  --post-net-t: 0;
+  --post-for-h: 68;
+  --post-for-t: 0.045;
+}
+
+/* Thème sombre : redéfinit les mêmes variables. --tier-dir s'inverse pour que
+   le palier de clarté pousse vers le clair au lieu du sombre. */
+:root[data-theme='dark'] {
+  --tier-dir: 1;
+  --chip-bg-l: 0.315;
+  --chip-bg-c: 0.048;
+  --chip-fg-l: 0.905;
+  --chip-fg-c: 0.032;
+  --chip-edge-l: 0.66;
+  --chip-edge-c: 0.105;
+
+  --color-canvas: oklch(0.185 0.01 150);
+  --color-surface: oklch(0.225 0.012 150);
+  --color-surface-2: oklch(0.265 0.012 150);
+  --color-surface-3: oklch(0.305 0.013 150);
+  --color-line-1: oklch(0.325 0.012 150);
+  --color-line-2: oklch(0.395 0.014 150);
+  --color-line-3: oklch(0.52 0.016 150);
+  --color-ink-1: oklch(0.955 0.008 95);
+  --color-ink-2: oklch(0.815 0.012 100);
+  --color-ink-3: oklch(0.67 0.013 105);
+
+  --color-accent: oklch(0.735 0.105 158);
+  --color-accent-hover: oklch(0.795 0.095 158);
+  --color-accent-press: oklch(0.68 0.1 158);
+  --color-accent-ink: oklch(0.195 0.04 158);
+  --color-accent-soft: oklch(0.3 0.045 158);
+  --color-accent-soft-ink: oklch(0.87 0.07 158);
+
+  --color-focus: oklch(0.76 0.14 252);
+  --focus-halo: oklch(0.76 0.14 252 / 0.28);
+
+  --color-danger: oklch(0.69 0.15 32);
+  --color-danger-hover: oklch(0.745 0.14 32);
+  --color-danger-ink: oklch(0.185 0.045 32);
+  --color-danger-soft: oklch(0.305 0.06 32);
+  --color-danger-soft-ink: oklch(0.885 0.075 32);
+
+  --color-warn: oklch(0.79 0.13 80);
+  --color-warn-ink: oklch(0.21 0.05 60);
+  --color-warn-soft: oklch(0.32 0.055 75);
+  --color-warn-soft-ink: oklch(0.895 0.08 82);
+
+  --color-ok: oklch(0.71 0.1 148);
+  --color-ok-soft: oklch(0.295 0.05 148);
+  --color-ok-soft-ink: oklch(0.885 0.075 148);
+
+  --color-info: oklch(0.705 0.11 245);
+  --color-info-soft: oklch(0.3 0.05 245);
+  --color-info-soft-ink: oklch(0.88 0.07 245);
+
+  --shadow-e1: 0 1px 2px oklch(0 0 0 / 0.4);
+  --shadow-e2: 0 1px 2px oklch(0 0 0 / 0.35), 0 6px 14px oklch(0 0 0 / 0.4);
+  --shadow-e3: 0 2px 6px oklch(0 0 0 / 0.35), 0 16px 40px oklch(0 0 0 / 0.55);
+}
+
+/* Densité confortable : une seule variable pilote la hauteur de ligne. */
+:root[data-density='confortable'] {
+  --row-h: 46px;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-canvas);
+  color: var(--color-ink-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: var(--lh-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Anneau de focus unique, contraste ≥ 3:1 sur tous les fonds y compris les
+   aplats de poste. La grille se pilote au clavier : il doit rester visible. */
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Compteurs, horaires, écarts : sans chiffres tabulaires les colonnes dansent
+   d'une ligne à l'autre et la comparaison devient pénible. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
