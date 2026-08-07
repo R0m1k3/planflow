@@ -8,7 +8,7 @@ Pages capturées : **58**
 - [Cartographie fonctionnelle et technique](FUNCTIONAL_MAP.md)
 - [Inventaire structuré du crawl](inventory.json)
 - [Chemins applicatifs extraits des bundles](bundle-paths.txt)
-- [Matrice de conformité juridique française](../../matrice-conformite-rh-france-2026.md)
+- [Matrice de conformité juridique française](../matrice-conformite-rh-france-2026.md)
 
 
 | Route | Titre | Capture |
