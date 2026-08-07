@@ -40,12 +40,12 @@ export default defineConfig({
     // Parcours d'authentification : doit partir d'un navigateur vierge.
     {
       name: 'anonyme',
-      testMatch: /auth\.spec\.ts/,
+      testMatch: /(auth|reglages)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], ...chromiumOverride },
     },
     {
       name: 'chromium',
-      testIgnore: /auth\.(setup|spec)\.ts/,
+      testIgnore: /(auth\.setup|auth\.spec|reglages\.spec)\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],

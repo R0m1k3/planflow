@@ -75,9 +75,10 @@ export const NAVIGATION: NavSection[] = [
     id: 'reglages',
     label: 'Réglages',
     items: [
+      { id: 'sites', label: 'Établissements', href: '/reglages/etablissements' },
+      { id: 'registre', label: 'Registre de paramétrage', href: '/reglages/registre' },
       { id: 'convention', label: 'Convention collective' },
       { id: 'postes', label: 'Postes et étiquettes' },
-      { id: 'sites', label: 'Établissements' },
       { id: 'roles', label: 'Rôles et permissions' },
     ],
   },

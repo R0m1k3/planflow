@@ -31,6 +31,10 @@ model Account {
   auditLogs   AuditLog[]
   retention   RetentionPolicy[]
   featureFlags FeatureFlag[]
+  jobTitles   JobTitle[]
+  labels      Label[]
+  absenceTypes AbsenceType[]
+  legalConfig LegalConfigEntry[]
 }
 
 model Location {
@@ -285,4 +289,91 @@ model FeatureFlag {
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@unique([accountId, key])
+}
+
+// ============================================================================
+// Référentiels — PLAN.md §4.3 et WP-02
+// ============================================================================
+
+/// Intitulé d'emploi. Distinct du poste de planning : l'emploi qualifie le
+/// contrat, le poste qualifie une occupation dans la journée.
+model JobTitle {
+  id         String    @id @default(cuid())
+  accountId  String
+  name       String
+  archivedAt DateTime?
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, name])
+  @@index([accountId])
+}
+
+/// Étiquette de planning — le « poste » coloré de la grille.
+model Label {
+  id         String    @id @default(cuid())
+  accountId  String
+  code       String
+  name       String
+  /// Code de la palette catégorielle (voir src/lib/design/postes.ts).
+  paletteKey String
+  position   Int       @default(0)
+  archivedAt DateTime?
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, code])
+  @@index([accountId])
+}
+
+/// Type d'absence. `isSocialSecurity` isole maladie, maternité et AT : le
+/// journal des absences les filtre séparément, et ce sont des données de santé.
+model AbsenceType {
+  id                      String  @id @default(cuid())
+  accountId               String
+  code                    String
+  name                    String
+  colorKey                String
+  isPaid                  Boolean @default(true)
+  countsAsWorkTime        Boolean @default(false)
+  affectsPaidLeaveAccrual Boolean @default(true)
+  isSocialSecurity        Boolean @default(false)
+  requiresJustification   Boolean @default(false)
+  minNoticeDays           Int?
+  /// Partie <code> de AB-<code> à l'export Silae. Null tant qu'elle n'a pas
+  /// été fournie par le dossier du client (PLAN.md §8.2).
+  silaeCode               String?
+  archivedAt              DateTime?
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, code])
+  @@index([accountId])
+}
+
+/// Registre de paramétrage juridique — PLAN.md §12.7.
+///
+/// La matrice impose de faire **signer** chaque paramètre avant migration, avec
+/// sa valeur, sa source, sa date d'effet, sa population et son approbateur. Un
+/// paramètre sans cette traçabilité n'est pas opposable : c'est ce registre qui
+/// distingue une configuration justifiée d'une valeur recopiée d'un autre
+/// logiciel.
+model LegalConfigEntry {
+  id            String   @id @default(cuid())
+  accountId     String
+  domain        String
+  key           String
+  value         String
+  source        String
+  effectiveFrom DateTime @db.Date
+  population    String
+  approvedBy    String?
+  approvedAt    DateTime?
+  attachmentRef String?
+  createdAt     DateTime @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, domain, key, effectiveFrom])
+  @@index([accountId])
 }

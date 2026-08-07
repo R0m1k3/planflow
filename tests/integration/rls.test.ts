@@ -173,3 +173,56 @@ describeIfDb('immutabilité du journal d’audit', () => {
     ).rejects.toThrow(/append-only/i);
   });
 });
+
+describeIfDb('couverture des politiques', () => {
+  let client: Client;
+
+  beforeAll(async () => {
+    client = new Client({ connectionString: adminUrl });
+    await client.connect();
+  }, 30_000);
+
+  afterAll(async () => {
+    await client?.end().catch(() => undefined);
+  }, 30_000);
+
+  it('toute table portant accountId est protégée', async () => {
+    // Le mode de défaillance de la RLS n'est pas d'écrire une mauvaise règle,
+    // c'est d'oublier d'en écrire une : la table répond alors à tout le monde,
+    // en silence. Ce test échoue quand une table est ajoutée sans politique.
+    const { rows } = await client.query<{
+      table_name: string;
+      relrowsecurity: boolean;
+      relforcerowsecurity: boolean;
+      policies: number;
+    }>(`
+      SELECT c.relname AS table_name,
+             c.relrowsecurity,
+             c.relforcerowsecurity,
+             (SELECT count(*)::int FROM pg_policy p WHERE p.polrelid = c.oid) AS policies
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind = 'r'
+        AND EXISTS (
+          SELECT 1 FROM information_schema.columns col
+          WHERE col.table_schema = 'public'
+            AND col.table_name = c.relname
+            AND col.column_name = 'accountId'
+        )
+      ORDER BY c.relname
+    `);
+
+    expect(rows.length).toBeGreaterThan(0);
+
+    const unprotected = rows.filter(
+      (row) =>
+        !row.relrowsecurity || !row.relforcerowsecurity || row.policies < 2,
+    );
+
+    expect(
+      unprotected.map((row) => row.table_name),
+      'tables sans RLS forcée ou sans politique de lecture et d’écriture',
+    ).toEqual([]);
+  });
+});
