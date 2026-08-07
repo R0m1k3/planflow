@@ -18,7 +18,23 @@ export default defineConfig({
   },
 
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Certains environnements fournissent déjà un Chromium dont la révision
+        // ne correspond pas à celle qu'attend cette version de Playwright.
+        // PLAYWRIGHT_CHROMIUM_PATH permet de le réutiliser plutôt que d'en
+        // télécharger un second.
+        ...(process.env.PLAYWRIGHT_CHROMIUM_PATH
+          ? {
+              launchOptions: {
+                executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
+              },
+            }
+          : {}),
+      },
+    },
   ],
 
   webServer: {

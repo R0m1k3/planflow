@@ -11,7 +11,9 @@ import { cx } from '@/lib/cx';
 import {
   isActive,
   NAVIGATION,
+  placeholderHref,
   sectionForPath,
+  sectionHref,
   type NavItem,
 } from '@/components/shell/navigation';
 
@@ -36,12 +38,11 @@ export function AppShell({ children }: AppShellProps) {
 
         <nav aria-label="Sections" className="flex h-full gap-0.5">
           {NAVIGATION.map((entry) => {
-            const target = entry.items.find((item) => item.href);
             const current = entry.id === section.id;
             return (
               <Link
                 key={entry.id}
-                href={target?.href ?? '/'}
+                href={sectionHref(entry)}
                 aria-current={current ? 'page' : undefined}
                 className={cx(
                   'flex h-full items-center border-b-2 px-3.5 text-sm font-medium whitespace-nowrap',
@@ -118,10 +119,7 @@ function SidebarLink({ item, pathname }: { item: NavItem; pathname: string }) {
 
   if (!item.href) {
     return (
-      <Link
-        href={`/bientot?ecran=${encodeURIComponent(item.label)}`}
-        className={cx(className, 'text-ink-3')}
-      >
+      <Link href={placeholderHref(item.label)} className={cx(className, 'text-ink-3')}>
         {content}
       </Link>
     );

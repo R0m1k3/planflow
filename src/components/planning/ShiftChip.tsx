@@ -87,7 +87,13 @@ export function ShiftChip({
       </span>
 
       {alert ? (
-        <span className="mt-px flex items-center gap-1 font-medium text-danger-soft-ink">
+        // Le motif est tronqué dans une cellule étroite : le `title` garde le
+        // texte complet accessible, sinon l'alerte dit qu'il y a un problème
+        // sans jamais dire lequel.
+        <span
+          className="mt-px flex items-center gap-1 font-medium text-danger-soft-ink"
+          title={alert}
+        >
           <span aria-hidden>▲</span>
           <span className="truncate">{alert}</span>
         </span>

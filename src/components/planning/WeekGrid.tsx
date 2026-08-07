@@ -106,6 +106,7 @@ function Row({ row, days }: { row: DemoWeekRow; days: readonly string[] }) {
         <CounterStrip
           counters={counters}
           forfaitJours={row.employee.forfaitJours ?? false}
+          unassigned={row.unassigned ?? false}
           className="mt-1"
         />
       </div>

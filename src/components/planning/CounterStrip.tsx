@@ -12,6 +12,8 @@ export interface CounterStripProps {
   counters: WeekCountersView;
   /** Vrai si le contrat est au forfait jours : pas de comparaison horaire. */
   forfaitJours?: boolean;
+  /** Ligne des besoins sans titulaire : il n'y a pas de contrat à comparer. */
+  unassigned?: boolean;
   className?: string;
 }
 
@@ -32,8 +34,23 @@ function Cell({ label, value }: { label: string; value: string }) {
 export function CounterStrip({
   counters,
   forfaitJours = false,
+  unassigned = false,
   className,
 }: CounterStripProps) {
+  // Un besoin non couvert n'a pas de contrat : afficher un écart le compare à
+  // zéro et fait lire « +14 h » comme un dépassement, alors que c'est
+  // simplement le volume à pourvoir.
+  if (unassigned) {
+    return (
+      <div className={cx('flex items-center gap-2 text-micro', className)}>
+        <span className="text-ink-3">À pourvoir</span>
+        <span className="tnum font-semibold text-ink-2">
+          {counters.plannedLabel}
+        </span>
+      </div>
+    );
+  }
+
   if (forfaitJours) {
     return (
       <div className={cx('flex items-center gap-2 text-micro', className)}>
