@@ -2,7 +2,11 @@
 
 > **Destinataire : un orchestrateur automatisé.** Ce document est la seule source d'instructions nécessaire pour construire l'application. Il est normatif : ce qui y est écrit fait foi, ce qui n'y est pas doit être demandé, jamais inventé.
 >
-> **Source fonctionnelle :** [`Audit Combo/`](Audit%20Combo/INDEX.md) — 58 écrans, cartographie fonctionnelle et inventaire de crawl du 7 août 2026.
+> **Sources fonctionnelles :**
+> - [`Audit Combo/`](Audit%20Combo/INDEX.md) — 58 écrans, cartographie fonctionnelle et inventaire de crawl.
+> - [`Audit Combo/dropdowns/`](Audit%20Combo/dropdowns/DROPDOWN-AUDIT.md) — 172 déclencheurs, 51 menus ouverts. **Fait foi sur les énumérations** : rôles, types de contrat, vues, statuts, actions.
+>
+> Le dossier `dropdowns/` à la racine du dépôt est un **doublon exact** de `Audit Combo/dropdowns/` (vérifié par comparaison binaire). Supprimer la copie racine pour qu'il n'existe qu'une source ; ce plan ne référence que celle sous `Audit Combo/`.
 >
 > **Régime : clean room.** L'audit et ce plan décrivent des *capacités* et des *invariants*. Ne recopier ni code, ni CSS, ni icônes, ni illustrations, ni wording propriétaire au-delà des libellés métier nécessaires. Concevoir une API, un schéma, des textes et une interface originaux.
 
@@ -18,6 +22,7 @@
    - une donnée personnelle réelle serait requise pour tester ;
    - un point marqué **`À VALIDER`** dans ce document bloque l'avancement.
 4. Ne jamais inventer de paramètre légal, de code de paie ou de règle métier. L'absence d'information est un signal d'arrêt, pas une invitation à choisir.
+   **Les énumérations de ce document proviennent de l'audit des menus déroulants et sont exhaustives.** Ne pas y ajouter de valeur « qui semble manquer » : une valeur absente de l'audit est une valeur à faire confirmer.
 5. Langue : **interface et libellés en français**, **identifiants de code en anglais**, commentaires en anglais.
 
 ---
@@ -93,7 +98,20 @@ Point d'entrée unique `can(membership, permissionCode, resource?)` dans `src/do
 - Fichiers servis par **URL signée à durée courte**, jamais par chemin public.
 - Toute lecture d'une donnée de catégorie particulière est journalisée.
 
-### 3.7 États d'écran
+### 3.7 Télémétrie — ce qu'il ne faut pas reproduire
+L'audit des menus a intercepté **2102 requêtes non sûres**, toutes de télémétrie tierce : Segment, LinkedIn Ads, Google Ads et Analytics, DoubleClick, Microsoft Clarity, Bing, Bugsnag, Hotjar, SatisMeter, Zendesk. Aucune n'était une requête métier.
+
+C'est un anti-modèle à ne pas reprendre. Une application RH fait naviguer des managers sur des écrans dont l'URL et le contexte trahissent des informations sur des salariés identifiables ; les envoyer à des régies publicitaires est un problème de conformité, pas une préférence.
+
+**Règles :**
+- **Aucun traceur publicitaire ni analytique tiers.** Interdit par défaut.
+- La télémétrie technique (erreurs, performance) passe par une **interface abstraite** et reste auto-hébergée ou désactivable.
+- Toute sortie réseau vers un tiers est déclarée explicitement et soumise à consentement.
+- Une **Content-Security-Policy** restrictive est livrée dès WP-00 et testée : elle constitue le garde-fou qui rend cette règle vérifiable plutôt que déclarative.
+
+À noter également : dans le produit audité, les tableaux de bord d'analyse RH sont servis par un outil de BI tiers embarqué (ToucanToco). PlanFlow les construit **nativement** (WP-09) ; c'est une divergence assumée, qui évite une dépendance et une sortie de données.
+
+### 3.8 États d'écran
 Chaque écran implémente **chargement, vide, erreur, interdit**. Accessibilité clavier et contraste conformes WCAG 2.2 AA. Les bandeaux transverses sont dismissibles et non bloquants — l'audit relève explicitement que des surcouches masquaient des contrôles dans le produit observé ; ne pas reproduire ce défaut.
 
 ---
@@ -248,7 +266,18 @@ model UserContract {
   version        Int          @default(0)
 }
 
-enum ContractType { CDI CDD SAISONNIER APPRENTISSAGE PROFESSIONNALISATION STAGE INTERIM EXTRA }
+// Liste exhaustive relevée dans le filtre « Tous les types de contrats » (/members).
+enum ContractType {
+  APPRENTISSAGE
+  CDD
+  CDI
+  DIRIGEANT_ASSIMILE_SALARIE
+  DIRIGEANT_NON_SALARIE
+  EXTRA
+  INTERIM
+  STAGIAIRE
+  SAISONNIER
+}
 enum ContractStatus { DRAFT ACTIVE ENDED }
 
 model Amendment {
@@ -348,6 +377,7 @@ model AbsenceType {
   isPaid                Boolean
   countsAsWorkTime      Boolean
   affectsPaidLeaveAccrual Boolean
+  isSocialSecurity      Boolean @default(false)  // maladie, maternité, AT — filtre dédié au journal des absences
   silaeCode             String?              // partie <code> de AB-<code>
   requiresJustification Boolean @default(false)
   minNoticeDays         Int?
@@ -470,7 +500,18 @@ model PayrollExport {
 enum ExportFormat { SILAE GENERIC_CSV RAW }
 ```
 
-**Invariant période** — le verrouillage écrit les `PayPeriodSnapshot` et interdit toute mutation de `Shift`, `TimeOff` ou heures réelles dont la `localDate` tombe dans la période. Une correction postérieure passe par une **régularisation sur la période ouverte suivante**, jamais par réécriture.
+**Invariant période** — le verrouillage écrit les `PayPeriodSnapshot` et interdit toute mutation de `Shift`, `TimeOff` ou heures réelles dont la `localDate` tombe dans la période.
+
+**Le déverrouillage existe.** L'audit montre un menu d'actions dépendant de l'état : une période ouverte propose « Verrouiller la période de paie », une période verrouillée propose « **Déverrouiller** la période de paie ». Les deux proposent « Supprimer la période de paie ».
+
+Conséquences normatives :
+- `payroll.period.unlock` rouvre la période aux mutations. L'action est journalisée avec justification obligatoire.
+- Un **nouveau verrouillage recalcule intégralement** les instantanés. Ils ne sont donc pas immuables au sens strict : c'est le couple (instantané, `PayrollExport`) qui porte la preuve, et `PayrollExport` reste append-only.
+- Un export déjà généré pour une période ensuite déverrouillée doit être signalé comme **périmé** dans l'historique. Sans cela, un fichier transmis à Silae ne correspond plus aux données, sans que rien ne l'indique.
+- La suppression reste possible sur une période verrouillée : elle exige `payroll.period.delete`, une confirmation explicite et une entrée d'audit conservant le périmètre supprimé.
+- Une correction sur période close **sans** déverrouillage passe par une régularisation sur la période ouverte suivante.
+
+**Carte de période** — chaque période s'affiche avec son libellé, ses bornes, les compteurs **Entrées**, **Sorties** et **Extras**, la liste des populations incluses, un menu **Actions** (verrouiller/déverrouiller, supprimer) et un menu **Exports** distinct.
 
 ### 4.7 Documents, conformité, transverse
 
@@ -567,7 +608,17 @@ model Notification { id String @id @default(cuid()); membershipId String; notifi
 **Communication (lot 5)** — `articles.view`, `articles.manage`, `conversations.access`
 
 ### Rôles semés
-`employee`, `team_manager`, `hr_manager`, `payroll_manager`, `admin`, `owner`. Ces jeux de permissions sont un **point de départ modifiable par le client** ; ils ne doivent jamais être codés en dur dans les écrans. Seul `owner` détient `role_config.assign_owner_level`.
+Liste exhaustive relevée dans le filtre « Tous les rôles » (`/members`) — **cinq rôles, pas davantage** :
+
+| Clé | Libellé |
+|---|---|
+| `owner` | Propriétaire |
+| `admin` | Admin |
+| `director` | Directeur |
+| `manager` | Manager |
+| `employee` | Employé |
+
+Ces jeux de permissions sont un **point de départ modifiable par le client** ; ils ne doivent jamais être codés en dur dans les écrans. Seul `owner` détient `role_config.assign_owner_level`.
 
 ---
 
@@ -670,7 +721,7 @@ Structure de navigation cible. Les routes sont propres à PlanFlow ; l'audit ser
 |---|---|
 | **Auth** | `/connexion`, `/mot-de-passe/oubli`, `/mot-de-passe/reinitialisation`, `/invitation/:token` |
 | **Accueil** | `/` — suivi hebdomadaire, raccourcis, alertes |
-| **Planning** | `/planning/semaine`, `/planning/jour`, `/planning/etiquettes`, `/planning/impression` |
+| **Planning** | `/planning/semaine`, `/planning/jour`, `/planning/etiquettes`, `/planning/mois`, `/planning/presences`, `/planning/impression` |
 | **Équipe** | `/equipe`, `/equipe/:id/profil`, `/contrats`, `/documents`, `/absences`, `/temps`, `/acces`, `/compteurs/:counterId` |
 | **Absences** | `/absences/a-traiter`, `/calendrier`, `/traitees`, `/expirees` |
 | **Rapports** | `/rapports/paies`, `/rapports/historique`, `/rapports/heures`, `/rapports/activite` |
@@ -678,6 +729,38 @@ Structure de navigation cible. Les routes sont propres à PlanFlow ; l'audit ser
 | **Réglages** | `/reglages/compte`, `/etablissements`, `/equipes`, `/convention`, `/emplois`, `/etiquettes`, `/types-absence`, `/politiques-rtt`, `/modeles-documents`, `/roles`, `/roles/:roleKey`, `/integrations/silae`, `/preferences`, `/impression`, `/productivite`, `/rgpd` |
 
 **Écrans du produit audité volontairement absents** : pointeuse et ses réglages, bulletins de paie et distribution, signature électronique, abonnement et facturation, marketplace et connecteurs de caisse, ADP.
+
+### Filtres et énumérations d'écran
+Relevés à l'audit des menus, exhaustifs. À implémenter tels quels.
+
+| Écran | Filtre | Valeurs |
+|---|---|---|
+| Équipe | Rôle | Tous · Propriétaire · Admin · Directeur · Manager · Employé |
+| Équipe | Type de contrat | Tous · les 9 valeurs de `ContractType` |
+| Établissements | État | Établissements actifs · Établissements archivés |
+| Profils incomplets | Complétude | Informations RUP et DPAE manquantes · RUP manquantes · DPAE manquantes |
+| Journal des absences | Nature | Toutes les absences · Uniquement les absences Sécurité sociale |
+| Politiques RTT | Actions de ligne | Assigner des employés · Archiver |
+| Période de paie | Actions | Verrouiller **ou** Déverrouiller selon l'état · Supprimer |
+
+**Conséquence sur le modèle** — le filtre « profils incomplets » impose de distinguer, champ par champ, ce qui est **requis pour le registre du personnel (RUP)** de ce qui est **requis pour la DPAE**. Deux jeux de champs obligatoires distincts, tous deux calculables sur un dossier. À porter dans `src/domain/compliance/completeness.ts`.
+
+**Modèles de documents** — les variables disponibles sont **scopées par établissement** (« Variables par établissement »). Un modèle rendu pour un salarié résout ses variables dans le contexte de l'établissement de son contrat.
+
+**Statuts de signature** *(hors périmètre v1, à respecter si le module est construit plus tard)* : Échoué · En attente · En cours d'envoi · Expiré · Signé.
+
+### Vues de planning
+Le sélecteur de vue expose **cinq** entrées, liste exhaustive relevée à l'audit :
+
+| Vue | Contenu |
+|---|---|
+| **Vue par employés** | Grille semaine, lignes = salariés. Vue par défaut. |
+| **Vue par jour** | Chronologie horaire d'une journée, groupée par équipe, avec courbe d'effectif. |
+| **Vue par étiquettes** | Grille semaine, lignes = étiquettes/postes plutôt que salariés. |
+| **Vue par mois** | Vue mensuelle condensée. |
+| **Vue des présences et absences** | Vue centrée sur qui est présent et qui est absent. |
+
+Les cinq vues lisent le **même modèle** et partagent règles de validation et état de publication. Ne pas dupliquer la logique par vue — c'est la première source de divergence entre écrans.
 
 ### Grille de planning — comportement normatif
 Reproduire ces comportements observés à l'écran, avec une interface originale :
@@ -699,11 +782,12 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-00 — Socle
 **Dépend de :** rien
-**Livre :** `docker-compose.yml` (app + Postgres 16), projet Next.js 15 TypeScript strict, Prisma, Tailwind + shadcn/ui, Vitest, Playwright, CI GitHub Actions (lint, typecheck, test, build), `.env.example`, `README.md`.
+**Livre :** `docker-compose.yml` (app + Postgres 16), projet Next.js 15 TypeScript strict, Prisma, Tailwind + shadcn/ui, Vitest, Playwright, CI GitHub Actions (lint, typecheck, test, build), **Content-Security-Policy restrictive** (§3.7), `.env.example`, `README.md`.
 **Critères d'acceptation**
 - `docker compose up` démarre l'application et la base, migrations appliquées.
 - CI verte sur un dépôt propre.
 - `pnpm typecheck` sans erreur en mode strict.
+- Un test vérifie que la CSP interdit toute origine tierce et qu'aucune dépendance de traçage n'est installée.
 
 ### WP-01 — Tenancy, identité, autorisation
 **Dépend de :** WP-00
@@ -735,9 +819,10 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-04 — Planning
 **Dépend de :** WP-03
-**Livre :** `WeeklySchedule`, `Shift`, `Rest`, `DailyNote`, `Label` ; vues semaine, jour, étiquettes ; création, déplacement, redimensionnement, duplication, actions de masse ; shifts non assignés ; brouillon → validé → publié **par équipe** ; notifications de publication ; impression PDF.
+**Livre :** `WeeklySchedule`, `Shift`, `Rest`, `DailyNote`, `Label` ; **les cinq vues** (employés, jour, étiquettes, mois, présences et absences) ; création, déplacement, redimensionnement, duplication, actions de masse ; shifts non assignés ; brouillon → validé → publié **par équipe** ; notifications de publication ; impression PDF.
 **Critères d'acceptation**
 - Grille conforme à §9, y compris lignes notes et non-assignés.
+- Les cinq vues lisent le même modèle : une modification faite dans une vue est immédiatement correcte dans les quatre autres — test croisé obligatoire.
 - La publication est par équipe et notifie les salariés concernés.
 - `planning.view_unpublished` absente masque les semaines non publiées côté serveur.
 - Deux sessions modifiant la même semaine → conflit détecté, aucune perte silencieuse.
@@ -772,7 +857,9 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 **Critères d'acceptation**
 - Sans heures réelles, le prévu fait foi partout.
 - Le verrouillage fige les instantanés et **refuse** toute mutation dans la période.
-- Une correction après verrouillage produit une régularisation sur la période suivante, sans réécrire le passé.
+- Le déverrouillage rouvre les mutations, exige une justification et journalise l'action.
+- Un nouveau verrouillage recalcule les instantanés ; tout export antérieur est marqué **périmé**.
+- Une correction après verrouillage, sans déverrouiller, produit une régularisation sur la période suivante, sans réécrire le passé.
 - Grille, rapport d'heures et instantané donnent des chiffres **identiques** sur un même jeu de données — test croisé obligatoire.
 
 ### WP-08 — Export Silae
@@ -783,6 +870,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 - Un matricule ou un code manquant fait **échouer** l'export avec la liste des manques ; aucun fichier partiel.
 - Réexport de la même période → `checksum` identique.
 - Export refusé sur une période non verrouillée.
+- Déverrouiller une période marque ses exports antérieurs comme périmés, et l'historique le montre.
 
 ### WP-09 — Tableau de bord RH
 **Dépend de :** WP-08
@@ -847,6 +935,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 - **Paie et DSN** — hors périmètre. Responsabilité réglementaire majeure et veille législative permanente.
 - **Conservation des bulletins** — hors périmètre : PlanFlow ne détient pas de bulletins.
 - **Auditabilité** — auteur, horodatage, avant/après et justification sur toutes les opérations sensibles ; agrégats explicables depuis leurs sources.
+- **Traceurs tiers** — voir §3.7. Interdits par défaut, CSP restrictive livrée et testée dès WP-00. C'est le point sur lequel PlanFlow diverge le plus délibérément du produit audité.
 
 ---
 
