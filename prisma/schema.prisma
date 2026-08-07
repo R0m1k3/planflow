@@ -1,14 +1,288 @@
-// PlanFlow — schéma de données.
+// PlanFlow — schéma de données. Voir PLAN.md §4.
 //
-// WP-00 n'installe que la plomberie : datasource, generator et les extensions
-// PostgreSQL dont les lots suivants dépendent. Les modèles métier arrivent au
-// WP-01 (tenancy, identité, autorisation) — voir PLAN.md §4.
+// Prisma 7 : l'URL de connexion vit dans prisma.config.ts, plus ici.
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Prisma 7 : l'URL de connexion vit dans prisma.config.ts, plus ici.
 datasource db {
   provider = "postgresql"
+}
+
+// ============================================================================
+// Tenancy — PLAN.md §4.1
+// ============================================================================
+
+model Account {
+  id                    String   @id @default(cuid())
+  name                  String
+  siren                 String?
+  apeCode               String?
+  collectiveAgreementId String?
+  /// Surcharges d'accord d'entreprise (PLAN.md §6.3). Vide aujourd'hui :
+  /// l'organisation auditée n'a pas d'accord d'entreprise.
+  agreementOverrides    Json?
+  createdAt             DateTime @default(now())
+
+  locations   Location[]
+  memberships Membership[]
+  roles       Role[]
+  auditLogs   AuditLog[]
+  retention   RetentionPolicy[]
+  featureFlags FeatureFlag[]
+}
+
+model Location {
+  id        String  @id @default(cuid())
+  accountId String
+  name      String
+  siret     String?
+  timezone  String  @default("Europe/Paris")
+
+  /// Taux moyen de cotisations patronales, en pourcentage.
+  employerContributionRate Decimal @default(0) @db.Decimal(5, 2)
+  silaeDossier             String?
+  archivedAt               DateTime?
+
+  account Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  teams   Team[]
+  scopes  MembershipScope[]
+
+  @@index([accountId])
+}
+
+model Team {
+  id         String    @id @default(cuid())
+  accountId  String
+  locationId String
+  name       String
+  position   Int       @default(0)
+  archivedAt DateTime?
+
+  location Location          @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  scopes   MembershipScope[]
+
+  @@index([accountId])
+  @@index([locationId])
+}
+
+// ============================================================================
+// Identité
+// ============================================================================
+
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  passwordHash String?
+  firstName    String
+  lastName     String
+  locale       String  @default("fr")
+
+  /// Deuxième facteur, exigé des rôles administrateur et RH (matrice n° 15).
+  mfaSecretEnc     Bytes?
+  mfaEnrolledAt    DateTime?
+  lastSignInAt     DateTime?
+  failedAttempts   Int      @default(0)
+  lockedUntil      DateTime?
+  createdAt        DateTime @default(now())
+
+  memberships Membership[]
+  sessions    Session[]
+}
+
+/// Lien User ↔ Account. Porte le salarié : `userId` est nullable, car tous les
+/// salariés ne se connectent pas — ils doivent rester plannifiables et
+/// exportables sans compte (PLAN.md §4.1).
+model Membership {
+  id             String           @id @default(cuid())
+  accountId      String
+  userId         String?
+  roleId         String
+  lineManagerId  String?
+  employeeNumber String
+  silaeMatricule String?
+  status         MembershipStatus @default(INVITED)
+  invitedAt      DateTime?
+  archivedAt     DateTime?
+  createdAt      DateTime         @default(now())
+
+  account     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  user        User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  role        Role              @relation(fields: [roleId], references: [id])
+  lineManager Membership?       @relation("LineManager", fields: [lineManagerId], references: [id], onDelete: SetNull)
+  reports     Membership[]      @relation("LineManager")
+  scopes      MembershipScope[]
+  invitations Invitation[]
+  auditLogs   AuditLog[]
+
+  @@unique([accountId, employeeNumber])
+  @@index([accountId])
+  @@index([userId])
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  ARCHIVED
+}
+
+/// Périmètre d'un membership. `allLocations` évite d'énumérer 34 établissements
+/// pour un directeur — et de rater le 35ᵉ le jour de son ouverture.
+model MembershipScope {
+  id           String  @id @default(cuid())
+  accountId    String
+  membershipId String
+  allLocations Boolean @default(false)
+  locationId   String?
+  teamId       String?
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  location   Location?  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  team       Team?      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([membershipId])
+}
+
+/// Session serveur. En base plutôt qu'en JWT : la matrice n° 23 impose de
+/// pouvoir révoquer une session, ce qu'un jeton signé ne permet pas.
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  ip         String?
+  userAgent  String?
+  revokedAt  DateTime?
+  revokedBy  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Invitation {
+  id           String    @id @default(cuid())
+  accountId    String
+  membershipId String
+  tokenHash    String    @unique
+  email        String
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdBy    String
+  createdAt    DateTime  @default(now())
+
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+// ============================================================================
+// Autorisation — PLAN.md §4.2 et §5
+// ============================================================================
+
+/// Rôle configurable par le client. Le code référence `key`, jamais `name` :
+/// renommer « Manager » en « Responsable » ne doit rien casser.
+model Role {
+  id        String  @id @default(cuid())
+  accountId String
+  key       String
+  name      String
+  isSystem  Boolean @default(false)
+
+  account     Account          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  permissions RolePermission[]
+  memberships Membership[]
+
+  @@unique([accountId, key])
+  @@index([accountId])
+}
+
+/// Capacité stable, nommée `ressource.action.qualificatif`. Référentiel global :
+/// les capacités sont définies par le produit, seule leur attribution varie.
+model Permission {
+  id       String @id @default(cuid())
+  code     String @unique
+  category String
+  label    String
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+// ============================================================================
+// Traçabilité — PLAN.md §3.5
+// ============================================================================
+
+/// Journal d'audit. Append-only, imposé par un trigger PostgreSQL : une piste
+/// qu'on peut réécrire ne prouve rien.
+model AuditLog {
+  id                String   @id @default(cuid())
+  accountId         String
+  actorMembershipId String?
+  action            String
+  entityType        String
+  entityId          String
+  before            Json?
+  after             Json?
+  reason            String?
+  ip                String?
+  userAgent         String?
+  occurredAt        DateTime @default(now())
+
+  account Account     @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  actor   Membership? @relation(fields: [actorMembershipId], references: [id], onDelete: SetNull)
+
+  @@index([accountId, entityType, entityId])
+  @@index([accountId, occurredAt])
+}
+
+/// Durées de conservation par objet — PLAN.md §12.5.
+/// « 5 ans partout » est explicitement proscrit : chaque durée porte son point
+/// de départ et sa justification.
+model RetentionPolicy {
+  id             String   @id @default(cuid())
+  accountId      String
+  objectType     String
+  durationMonths Int
+  startPoint     String
+  justification  String
+  legalHold      Boolean  @default(false)
+  effectiveFrom  DateTime @db.Date
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, objectType, effectiveFrom])
+  @@index([accountId])
+}
+
+/// Verrou de conformité — PLAN.md §12.4.
+/// Une fonctionnalité de contrôle reste inactive tant que la notice au salarié
+/// et l'avis du CSE ne sont pas enregistrés.
+model FeatureFlag {
+  id                String    @id @default(cuid())
+  accountId         String
+  key               String
+  enabled           Boolean   @default(false)
+  noticeDocumentRef String?
+  noticeDeliveredAt DateTime?
+  cseOpinionAt      DateTime?
+  activatedAt       DateTime?
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, key])
 }

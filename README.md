@@ -12,7 +12,9 @@ La spécification de construction est [`PLAN.md`](PLAN.md). Elle est normative :
 
 ## État
 
-**WP-00 — socle.** Next.js, Prisma, base de données, en-têtes de sécurité, tests, CI, image Docker. Aucun écran métier : ils arrivent à partir de WP-01 (tenancy, identité, autorisation).
+**WP-00 — socle** et **implémentation du design** : six écrans sur données de démonstration.
+
+**WP-01 — tenancy, identité, autorisation** : en cours. Modèle de données, RLS, journal d'audit append-only, catalogue de 70 capacités, cinq rôles, sessions en base. Les écrans lisent encore `src/lib/demo`.
 
 ## Démarrer
 
@@ -56,6 +58,22 @@ pnpm test:e2e    # build, serveur standalone, tests de bout en bout
 ```
 
 `pnpm verify` est ce que la CI exécute sur chaque *pull request*, suivi du build et des tests end-to-end.
+
+## Configuration de la base — à ne pas rater
+
+**L'application ne doit pas se connecter en superutilisateur PostgreSQL.**
+
+Un superutilisateur contourne la *row-level security*, y compris déclarée en `FORCE`. Connecter PlanFlow avec un tel compte désactive silencieusement la seconde couche d'isolation multi-tenant : les requêtes fonctionnent, les tests applicatifs passent, et rien n'indique que la protection a disparu — jusqu'au jour où quelqu'un lit les données d'un autre établissement.
+
+```sql
+CREATE ROLE planflow_app LOGIN PASSWORD '…' NOSUPERUSER NOBYPASSRLS;
+GRANT USAGE ON SCHEMA public TO planflow_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO planflow_app;
+```
+
+Les migrations, elles, s'appliquent avec un compte propriétaire distinct.
+
+L'application vérifie ce point au démarrage : elle refuse de démarrer en production sur une base mal configurée, et se contente d'un avertissement en développement. `GET /api/sante` expose l'état sous `tenantIsolation`.
 
 ## Choix structurants
 
