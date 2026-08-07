@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 
 import { prisma } from '@/server/db';
 
@@ -17,18 +17,24 @@ import { prisma } from '@/server/db';
  * dire pourquoi ; la seconde seule tomberait avec le premier `$queryRaw`.
  */
 
-/** Tables portant une colonne `accountId`. */
-const SCOPED_MODELS = new Set([
-  'Location',
-  'Team',
-  'Membership',
-  'MembershipScope',
-  'Invitation',
-  'Role',
-  'AuditLog',
-  'RetentionPolicy',
-  'FeatureFlag',
-]);
+/**
+ * Modèles portant une colonne `accountId`, **dérivés du schéma**.
+ *
+ * Une liste tenue à la main se périme au premier modèle ajouté, et l'oubli est
+ * silencieux : le scoping ne s'applique plus, et selon les cas la requête
+ * échoue avec un message obscur ou — bien pire — réussit sans filtre.
+ * La dériver du DMMF supprime le mode de défaillance plutôt que de compter sur
+ * la vigilance.
+ */
+const SCOPED_MODELS = new Set(
+  Prisma.dmmf.datamodel.models
+    .filter((model) =>
+      model.fields.some(
+        (field) => field.name === 'accountId' && field.kind === 'scalar',
+      ),
+    )
+    .map((model) => model.name),
+);
 
 const READ_OPERATIONS = new Set([
   'findFirst',
@@ -135,4 +141,3 @@ export function unscoped(): PrismaClient {
   return prisma;
 }
 
-export type { Prisma };
