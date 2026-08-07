@@ -67,10 +67,13 @@ test('un salarié sans compte applicatif est créable', async ({ page }) => {
   // L'effectif vient de la base, pas du module de démonstration.
   await expect(page.getByText('E0001')).toBeVisible();
 
+  // Nom unique par exécution : la base de test n'est pas remise à zéro entre
+  // deux passages, et un nom fixe finirait par désigner plusieurs salariés.
   const matricule = `E9${Date.now() % 100000}`;
+  const nom = `Sanscompte${matricule}`;
   const form = page.locator('form').filter({ hasText: 'Ajouter' });
   await form.locator('input[name="firstName"]').fill('Sans');
-  await form.locator('input[name="lastName"]').fill('Compte');
+  await form.locator('input[name="lastName"]').fill(nom);
   await form.locator('input[name="employeeNumber"]').fill(matricule);
   await page.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
@@ -87,5 +90,7 @@ test('un salarié sans compte applicatif est créable', async ({ page }) => {
   ).toBeVisible();
   // Le nom vit sur le dossier, pas sur le compte : un salarié sans accès
   // applicatif doit tout de même figurer nommément au registre du personnel.
-  await expect(page.getByRole('link', { name: /Sans Compte/ })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: new RegExp(`Sans ${nom}`) }),
+  ).toBeVisible();
 });

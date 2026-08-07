@@ -9,6 +9,13 @@ import {
   PERMISSION_DEFINITIONS,
   SYSTEM_ROLES,
 } from '../src/domain/access/permissions';
+import {
+  isoWeekOf,
+  previousIsoWeek,
+  weekDates,
+  zonedInstant,
+} from '../src/domain/planning/week';
+import { POSTE_CODES, POSTE_LABELS } from '../src/lib/design/postes';
 
 /**
  * Jeu de données de départ — PLAN.md §11.
@@ -240,6 +247,165 @@ async function main() {
   }
   console.log(`  ${contractSpecs.length} contrats`);
 
+
+  console.log('→ Étiquettes de planning');
+  for (const [index, code] of POSTE_CODES.entries()) {
+    await prisma.label.upsert({
+      where: { accountId_code: { accountId: account.id, code: code.toUpperCase() } },
+      update: { name: POSTE_LABELS[code], paletteKey: code, position: index },
+      create: {
+        accountId: account.id,
+        code: code.toUpperCase(),
+        name: POSTE_LABELS[code],
+        paletteKey: code,
+        position: index,
+      },
+    });
+  }
+  console.log(`  ${POSTE_CODES.length} étiquettes`);
+
+  console.log('→ Intitulés de poste');
+  const jobTitles = [
+    'Responsable de magasin',
+    'Adjoint·e de direction',
+    'Vendeur·se conseil',
+    'Hôte·sse de caisse',
+    'Employé·e de réserve',
+  ];
+  const jobTitleIds = new Map<string, string>();
+  for (const name of jobTitles) {
+    const created = await prisma.jobTitle.upsert({
+      where: { accountId_name: { accountId: account.id, name } },
+      update: {},
+      create: { accountId: account.id, name },
+    });
+    jobTitleIds.set(name, created.id);
+  }
+
+  console.log('→ Salariés sans compte applicatif');
+  // La majorité d'une équipe de vente ne se connecte jamais à l'outil : ces
+  // salariés existent en planning et en paie, sans identifiants.
+  const staff = [
+    { number: 'E0005', first: 'Sofia', last: 'Marchetti', job: 'Vendeur·se conseil', hours: 35, team: 0, location: 'loc-nantes' },
+    { number: 'E0006', first: 'Yanis', last: 'Trabelsi', job: 'Vendeur·se conseil', hours: 30, team: 0, location: 'loc-nantes' },
+    { number: 'E0007', first: 'Léa', last: 'Nguyen', job: 'Hôte·sse de caisse', hours: 24, team: 1, location: 'loc-nantes' },
+    { number: 'E0008', first: 'Marius', last: 'Kowalski', job: 'Hôte·sse de caisse', hours: 35, team: 1, location: 'loc-nantes' },
+    { number: 'E0009', first: 'Awa', last: 'Diallo', job: 'Employé·e de réserve', hours: 35, team: 2, location: 'loc-nantes' },
+    { number: 'E0010', first: 'Théo', last: 'Berger', job: 'Vendeur·se conseil', hours: 28, team: 0, location: 'loc-rennes' },
+    { number: 'E0011', first: 'Clara', last: 'Fontaine', job: 'Hôte·sse de caisse', hours: 35, team: 1, location: 'loc-rennes' },
+    { number: 'E0012', first: 'Noé', last: 'Perrin', job: 'Employé·e de réserve', hours: 20, team: 2, location: 'loc-rennes' },
+  ] as const;
+
+  for (const person of staff) {
+    const membership = await prisma.membership.upsert({
+      where: {
+        accountId_employeeNumber: {
+          accountId: account.id,
+          employeeNumber: person.number,
+        },
+      },
+      update: { status: 'ACTIVE' },
+      create: {
+        accountId: account.id,
+        roleId: roleIds.get('employee') as string,
+        employeeNumber: person.number,
+        status: 'ACTIVE',
+      },
+    });
+
+    await prisma.employeeProfile.upsert({
+      where: { membershipId: membership.id },
+      update: { firstName: person.first, lastName: person.last },
+      create: {
+        membershipId: membership.id,
+        accountId: account.id,
+        firstName: person.first,
+        lastName: person.last,
+        city: person.location === 'loc-rennes' ? 'Rennes' : 'Nantes',
+      },
+    });
+
+    const existing = await prisma.userContract.findFirst({
+      where: { membershipId: membership.id },
+    });
+    if (!existing) {
+      await prisma.userContract.create({
+        data: {
+          accountId: account.id,
+          membershipId: membership.id,
+          locationId: person.location,
+          contractType: 'CDI',
+          startDate: new Date('2024-09-02'),
+          workTimeArrangement: 'HOURLY',
+          weeklyHours: person.hours,
+          jobTitleId: jobTitleIds.get(person.job) ?? null,
+          monthlySalary: 1900,
+        },
+      });
+    }
+
+    await prisma.teamMember.upsert({
+      where: {
+        teamId_membershipId: {
+          teamId: `${person.location}-${person.team}`,
+          membershipId: membership.id,
+        },
+      },
+      update: {},
+      create: {
+        accountId: account.id,
+        teamId: `${person.location}-${person.team}`,
+        membershipId: membership.id,
+      },
+    });
+  }
+  console.log(`  ${staff.length} salariés`);
+
+  console.log('→ Rattachements des titulaires de comptes');
+  // Les quatre comptes applicatifs planifient aussi : sans rattachement, ils
+  // n'apparaîtraient pas dans la grille.
+  const accountHolders = [
+    { number: 'E0001', team: 'loc-nantes-0', job: 'Responsable de magasin' },
+    { number: 'E0002', team: 'loc-nantes-0', job: 'Adjoint·e de direction' },
+    { number: 'E0003', team: 'loc-rennes-0', job: 'Responsable de magasin' },
+    { number: 'E0004', team: 'loc-nantes-1', job: 'Hôte·sse de caisse' },
+  ] as const;
+
+  for (const holder of accountHolders) {
+    const membership = await prisma.membership.findUnique({
+      where: {
+        accountId_employeeNumber: {
+          accountId: account.id,
+          employeeNumber: holder.number,
+        },
+      },
+    });
+    if (!membership) continue;
+
+    await prisma.userContract.updateMany({
+      where: { membershipId: membership.id },
+      data: { jobTitleId: jobTitleIds.get(holder.job) ?? null },
+    });
+
+    await prisma.teamMember.upsert({
+      where: {
+        teamId_membershipId: {
+          teamId: holder.team,
+          membershipId: membership.id,
+        },
+      },
+      update: {},
+      create: {
+        accountId: account.id,
+        teamId: holder.team,
+        membershipId: membership.id,
+      },
+    });
+  }
+
+  console.log('→ Plannings');
+  await seedPlanning(account.id);
+
   console.log('→ Durées de conservation');
   const retention = [
     ['Shift', 12, 'creation', 'Décompte des horaires : 1 an minimum (matrice n° 21).'],
@@ -272,6 +438,127 @@ async function main() {
   console.log(`  ${retention.length} politiques`);
 
   console.log(`\nMot de passe de démonstration : ${DEMO_PASSWORD}`);
+}
+
+/**
+ * Deux semaines de planning : la précédente publiée, la courante en brouillon.
+ *
+ * Semer les deux états est délibéré — c'est la seule façon de voir en un coup
+ * d'œil que la publication est bien **par équipe** et que les créneaux d'une
+ * semaine publiée se distinguent d'un brouillon.
+ */
+async function seedPlanning(accountId: string): Promise<void> {
+  const current = isoWeekOf(new Date());
+  const previous = previousIsoWeek(current);
+
+  const teams = await prisma.team.findMany({
+    where: { accountId },
+    orderBy: [{ locationId: 'asc' }, { position: 'asc' }],
+  });
+  const locations = await prisma.location.findMany({ where: { accountId } });
+  const timezoneOf = new Map(locations.map((l) => [l.id, l.timezone]));
+
+  const labels = await prisma.label.findMany({ where: { accountId } });
+  const labelOf = new Map(labels.map((label) => [label.paletteKey, label.id]));
+
+  /** Poste dominant de l'équipe, par position. */
+  const teamPoste = ['vte', 'cai', 'res'];
+
+  /** Trois plages types du commerce de détail. */
+  const patterns = [
+    { start: '09:00', end: '17:00', pause: 60 },
+    { start: '11:00', end: '19:00', pause: 60 },
+    { start: '13:00', end: '20:00', pause: 30 },
+  ];
+
+  let shiftsCreated = 0;
+
+  for (const week of [previous, current]) {
+    const dates = weekDates(week);
+
+    for (const team of teams) {
+      const timezone = timezoneOf.get(team.locationId) ?? 'Europe/Paris';
+      const members = await prisma.teamMember.findMany({
+        where: { teamId: team.id },
+        orderBy: { position: 'asc' },
+      });
+      if (members.length === 0) continue;
+
+      const schedule = await prisma.weeklySchedule.upsert({
+        where: {
+          teamId_isoYear_isoWeek: {
+            teamId: team.id,
+            isoYear: week.isoYear,
+            isoWeek: week.isoWeek,
+          },
+        },
+        update: {},
+        create: {
+          accountId,
+          teamId: team.id,
+          locationId: team.locationId,
+          isoYear: week.isoYear,
+          isoWeek: week.isoWeek,
+          status: week === previous ? 'PUBLISHED' : 'DRAFT',
+          publishedAt: week === previous ? new Date() : null,
+        },
+      });
+
+      const already = await prisma.shift.count({
+        where: { weeklyScheduleId: schedule.id },
+      });
+      if (already > 0) continue;
+
+      const poste = teamPoste[team.position] ?? 'vte';
+      const labelId = labelOf.get(poste) ?? null;
+
+      for (const [index, member] of members.entries()) {
+        const pattern = patterns[index % patterns.length] as (typeof patterns)[number];
+        // Deux jours de repos glissants : la semaine de six jours consécutifs
+        // est justement ce que les règles de convention interdisent.
+        const rest = new Set([(index * 2) % 7, ((index * 2) + 1) % 7]);
+
+        for (const [dayIndex, date] of dates.entries()) {
+          if (rest.has(dayIndex)) continue;
+          await prisma.shift.create({
+            data: {
+              accountId,
+              weeklyScheduleId: schedule.id,
+              membershipId: member.membershipId,
+              localDate: new Date(`${date}T00:00:00Z`),
+              startAt: zonedInstant(date, pattern.start, timezone),
+              endAt: zonedInstant(date, pattern.end, timezone),
+              breakMinutes: pattern.pause,
+              labelId,
+              isValidated: week === previous,
+            },
+          });
+          shiftsCreated += 1;
+        }
+      }
+
+      // Un besoin non couvert par équipe sur la semaine courante : c'est l'état
+      // normal d'un planning en construction, et la ligne dédiée doit s'afficher.
+      if (week === current) {
+        const saturday = dates[5] as string;
+        await prisma.shift.create({
+          data: {
+            accountId,
+            weeklyScheduleId: schedule.id,
+            membershipId: null,
+            localDate: new Date(`${saturday}T00:00:00Z`),
+            startAt: zonedInstant(saturday, '10:00', timezone),
+            endAt: zonedInstant(saturday, '18:00', timezone),
+            breakMinutes: 60,
+            labelId,
+          },
+        });
+        shiftsCreated += 1;
+      }
+    }
+  }
+
+  console.log(`  ${shiftsCreated} créneaux sur 2 semaines`);
 }
 
 main()

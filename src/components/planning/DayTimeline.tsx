@@ -1,12 +1,14 @@
 import { posteShort, posteTokens } from '@/lib/design/postes';
 import { cx } from '@/lib/cx';
-import { clock, initials, type DemoEmployee, type DemoShift } from '@/lib/demo/types';
+import type { DayLane } from '@/server/planning/queries';
 
-export interface DayLane {
-  employee: DemoEmployee;
-  shifts: DemoShift[];
-  unassigned?: boolean;
+/** « 09:00 » depuis des minutes après minuit ; 25 h devient 01:00. */
+function clock(minutes: number): string {
+  const hours = Math.floor(minutes / 60) % 24;
+  return `${String(hours).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 }
+
+export type { DayLane };
 
 export interface DayTimelineProps {
   lanes: DayLane[];
@@ -32,7 +34,9 @@ export function DayTimeline({ lanes, fromHour, toHour }: DayTimelineProps) {
     return lanes.filter(
       (lane) =>
         !lane.unassigned &&
-        lane.shifts.some((shift) => shift.start < end && shift.end > start),
+        lane.shifts.some(
+          (shift) => shift.startMinutes < end && shift.endMinutes > start,
+        ),
     ).length;
   });
   const peak = Math.max(1, ...coverage);
@@ -95,7 +99,7 @@ export function DayTimeline({ lanes, fromHour, toHour }: DayTimelineProps) {
 
         {lanes.map((lane) => (
           <div
-            key={lane.employee.id}
+            key={lane.id}
             className={cx(
               'flex border-b border-line-1 last:border-b-0',
               lane.unassigned && 'bg-surface-2',
@@ -111,7 +115,7 @@ export function DayTimeline({ lanes, fromHour, toHour }: DayTimelineProps) {
                     : 'bg-surface-3 text-ink-2',
                 )}
               >
-                {lane.unassigned ? '?' : initials(lane.employee)}
+                {lane.initials}
               </span>
               <span className="min-w-0">
                 <span
@@ -120,12 +124,10 @@ export function DayTimeline({ lanes, fromHour, toHour }: DayTimelineProps) {
                     lane.unassigned ? 'text-ink-3' : 'text-ink-1',
                   )}
                 >
-                  {lane.unassigned
-                    ? 'Non assigné'
-                    : `${lane.employee.firstName} ${lane.employee.lastName}`}
+                  {lane.name}
                 </span>
                 <span className="block truncate text-micro text-ink-3">
-                  {lane.employee.job}
+                  {lane.job}
                 </span>
               </span>
             </div>
@@ -140,29 +142,29 @@ export function DayTimeline({ lanes, fromHour, toHour }: DayTimelineProps) {
                 />
               ))}
 
-              {lane.shifts.map((shift, index) => {
+              {lane.shifts.map((shift) => {
                 const tokens = posteTokens(shift.poste);
                 const ghost = shift.state === 'unassigned';
                 return (
                   <div
-                    key={index}
+                    key={shift.id}
                     className="absolute top-1 bottom-1 flex items-center gap-1.5 overflow-hidden rounded-2 px-2 text-micro"
                     style={{
-                      left: offset(shift.start),
-                      width: `calc(${offset(shift.end)} - ${offset(shift.start)})`,
+                      left: offset(shift.startMinutes),
+                      width: `calc(${offset(shift.endMinutes)} - ${offset(shift.startMinutes)})`,
                       background: ghost ? 'transparent' : tokens.bg,
                       color: ghost ? 'var(--color-ink-2)' : tokens.fg,
                       border: ghost
                         ? `1px dashed ${tokens.edge}`
                         : '1px solid transparent',
                     }}
-                    title={`${posteShort(shift.poste)} · ${clock(shift.start)}–${clock(shift.end)}`}
+                    title={`${posteShort(shift.poste)} · ${clock(shift.startMinutes)}–${clock(shift.endMinutes)}`}
                   >
                     <span className="font-semibold tracking-wide">
                       {posteShort(shift.poste)}
                     </span>
                     <span className="tnum truncate opacity-90">
-                      {clock(shift.start)}–{clock(shift.end)}
+                      {clock(shift.startMinutes)}–{clock(shift.endMinutes)}
                     </span>
                   </div>
                 );

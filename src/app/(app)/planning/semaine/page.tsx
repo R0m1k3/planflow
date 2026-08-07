@@ -1,38 +1,120 @@
-import { WeekGrid } from '@/components/planning/WeekGrid';
+import Link from 'next/link';
+
+import { TeamSection } from '@/components/planning/TeamSection';
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import { can } from '@/domain/access/authorize';
+import { formatMinutes } from '@/domain/counters/week';
+import { isoWeekOf, parseWeekParam } from '@/domain/planning/week';
 import { POSTE_CODES, POSTE_LABELS, posteTokens } from '@/lib/design/postes';
-import { UNASSIGNED_ROW, WEEK_DAYS, WEEK_LABEL, WEEK_ROWS } from '@/lib/demo/semaine';
+import { requireSession } from '@/server/context';
+import { getWeekBoard } from '@/server/planning/queries';
 
-export const metadata = { title: 'Planning · semaine 33 · PlanFlow' };
+export const metadata = { title: 'Planning · semaine · PlanFlow' };
 
-export default function SemainePage() {
+interface PageProps {
+  searchParams: Promise<{ semaine?: string; etablissement?: string }>;
+}
+
+export default async function SemainePage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const session = await requireSession();
+
+  // Semaine courante par défaut : ouvrir le planning sur une semaine arbitraire
+  // obligerait à naviguer avant de voir quoi que ce soit d'utile.
+  const week = parseWeekParam(params.semaine) ?? isoWeekOf(new Date());
+  const board = await getWeekBoard(week, params.etablissement);
+
+  if (!board) {
+    return (
+      <PageBody>
+        <PageHeader
+          title="Planning"
+          subtitle="Aucun établissement n'est encore créé."
+        />
+        <p className="text-sm text-ink-2">
+          Créez un établissement dans{' '}
+          <Link href="/reglages/etablissements" className="underline">
+            Réglages · Établissements
+          </Link>{' '}
+          pour commencer à planifier.
+        </p>
+      </PageBody>
+    );
+  }
+
+  const canEdit = can(session.actor, 'planning.create');
+  const canPublish = can(session.actor, 'planning.publish');
+  const href = (semaine: string, etablissement = board.location.id) =>
+    `/planning/semaine?semaine=${semaine}&etablissement=${etablissement}`;
+
   return (
     <PageBody>
       <PageHeader
-        title="Planning · semaine 33"
-        subtitle={`Nantes Atlantis · ${WEEK_LABEL.split('·')[1]?.trim()} · ${WEEK_ROWS.length} salariés planifiés`}
+        title={`Planning · semaine ${week.isoWeek}`}
+        subtitle={`${board.location.name} · ${board.label.split('·')[1]?.trim()} · ${formatMinutes(board.totals.plannedMinutes)} planifiées`}
         actions={
           <>
-            <Button>Dupliquer S‑32</Button>
-            <Button>Imprimer</Button>
-            <Button variant="primary">Publier la semaine</Button>
+            <Link
+              href={href(board.previousParam)}
+              className="flex h-8 items-center rounded-2 border border-line-3 px-3 text-sm text-ink-1 hover:bg-surface-2"
+            >
+              ← Semaine précédente
+            </Link>
+            <Link
+              href={href(board.nextParam)}
+              className="flex h-8 items-center rounded-2 border border-line-3 px-3 text-sm text-ink-1 hover:bg-surface-2"
+            >
+              Semaine suivante →
+            </Link>
           </>
         }
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone="warn">2 alertes de convention</Badge>
-        <Badge tone="info">Samedi non publié</Badge>
-        <Badge tone="neutral">5 besoins non couverts</Badge>
+        {board.locations.map((location) => (
+          <Link
+            key={location.id}
+            href={href(board.weekParam, location.id)}
+            aria-current={
+              location.id === board.location.id ? 'page' : undefined
+            }
+            className={
+              location.id === board.location.id
+                ? 'rounded-2 border border-accent bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-soft-ink'
+                : 'rounded-2 border border-line-2 px-2.5 py-1 text-xs text-ink-2 hover:bg-surface-2'
+            }
+          >
+            {location.name}
+          </Link>
+        ))}
+        {board.totals.unassigned > 0 ? (
+          <Badge tone="warn">
+            {board.totals.unassigned} besoin
+            {board.totals.unassigned > 1 ? 's' : ''} non couvert
+            {board.totals.unassigned > 1 ? 's' : ''}
+          </Badge>
+        ) : null}
       </div>
 
-      <WeekGrid
-        days={WEEK_DAYS}
-        rows={WEEK_ROWS}
-        unassignedRow={UNASSIGNED_ROW}
-      />
+      {board.sections.length === 0 ? (
+        <p className="rounded-3 border border-line-1 bg-surface p-4 text-sm text-ink-2">
+          Cet établissement n’a pas encore d’équipe.
+        </p>
+      ) : null}
+
+      {board.sections.map((section) => (
+        <TeamSection
+          key={section.teamId}
+          section={section}
+          days={board.headings}
+          dates={board.dates}
+          labels={board.labels}
+          weekParam={board.weekParam}
+          canEdit={canEdit}
+          canPublish={canPublish}
+        />
+      ))}
 
       <PosteLegend />
     </PageBody>
