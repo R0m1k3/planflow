@@ -142,6 +142,117 @@
   --post-net-t: 0;
   --post-for-h: 68;
   --post-for-t: 0.045;
+
+  /* Dérivation : une seule formule pour les douze postes. Ajouter un poste
+     revient à déclarer sa teinte et son palier, puis ces trois lignes. */
+  --post-cai-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-cai-t)) var(--chip-bg-c)
+      var(--post-cai-h)
+  );
+  --post-cai-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-cai-h));
+  --post-cai-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-cai-t)) var(--chip-edge-c)
+      var(--post-cai-h)
+  );
+  --post-vte-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-vte-t)) var(--chip-bg-c)
+      var(--post-vte-h)
+  );
+  --post-vte-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-vte-h));
+  --post-vte-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-vte-t)) var(--chip-edge-c)
+      var(--post-vte-h)
+  );
+  --post-res-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-res-t)) var(--chip-bg-c)
+      var(--post-res-h)
+  );
+  --post-res-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-res-h));
+  --post-res-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-res-t)) var(--chip-edge-c)
+      var(--post-res-h)
+  );
+  --post-acc-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-acc-t)) var(--chip-bg-c)
+      var(--post-acc-h)
+  );
+  --post-acc-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-acc-h));
+  --post-acc-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-acc-t)) var(--chip-edge-c)
+      var(--post-acc-h)
+  );
+  --post-cab-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-cab-t)) var(--chip-bg-c)
+      var(--post-cab-h)
+  );
+  --post-cab-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-cab-h));
+  --post-cab-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-cab-t)) var(--chip-edge-c)
+      var(--post-cab-h)
+  );
+  --post-rss-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-rss-t)) var(--chip-bg-c)
+      var(--post-rss-h)
+  );
+  --post-rss-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-rss-h));
+  --post-rss-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-rss-t)) var(--chip-edge-c)
+      var(--post-rss-h)
+  );
+  --post-inv-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-inv-t)) var(--chip-bg-c)
+      var(--post-inv-h)
+  );
+  --post-inv-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-inv-h));
+  --post-inv-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-inv-t)) var(--chip-edge-c)
+      var(--post-inv-h)
+  );
+  --post-liv-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-liv-t)) var(--chip-bg-c)
+      var(--post-liv-h)
+  );
+  --post-liv-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-liv-h));
+  --post-liv-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-liv-t)) var(--chip-edge-c)
+      var(--post-liv-h)
+  );
+  --post-enc-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-enc-t)) var(--chip-bg-c)
+      var(--post-enc-h)
+  );
+  --post-enc-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-enc-h));
+  --post-enc-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-enc-t)) var(--chip-edge-c)
+      var(--post-enc-h)
+  );
+  --post-clc-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-clc-t)) var(--chip-bg-c)
+      var(--post-clc-h)
+  );
+  --post-clc-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-clc-h));
+  --post-clc-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-clc-t)) var(--chip-edge-c)
+      var(--post-clc-h)
+  );
+  --post-net-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-net-t)) var(--chip-bg-c)
+      var(--post-net-h)
+  );
+  --post-net-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-net-h));
+  --post-net-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-net-t)) var(--chip-edge-c)
+      var(--post-net-h)
+  );
+  --post-for-bg: oklch(
+    calc(var(--chip-bg-l) + var(--tier-dir) * var(--post-for-t)) var(--chip-bg-c)
+      var(--post-for-h)
+  );
+  --post-for-fg: oklch(var(--chip-fg-l) var(--chip-fg-c) var(--post-for-h));
+  --post-for-edge: oklch(
+    calc(var(--chip-edge-l) + var(--tier-dir) * var(--post-for-t)) var(--chip-edge-c)
+      var(--post-for-h)
+  );
 }
 
 /* Thème sombre : redéfinit les mêmes variables. --tier-dir s'inverse pour que

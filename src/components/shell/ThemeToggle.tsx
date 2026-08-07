@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 import { Button } from '@/components/ui/Button';
 
@@ -29,20 +29,34 @@ export const THEME_INIT_SCRIPT = `
 })();
 `.trim();
 
-function readTheme(): Theme {
-  if (typeof document === 'undefined') return 'light';
+/**
+ * L'attribut `data-theme` du document est la source de vérité : il est posé par
+ * le script ci-dessus avant l'hydratation, donc avant que React n'existe.
+ * On s'y abonne plutôt que d'en tenir une copie, qui serait fausse au premier
+ * rendu et devrait être rattrapée après coup.
+ */
+function subscribe(onChange: () => void): () => void {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+  return () => observer.disconnect();
+}
+
+function getSnapshot(): Theme {
   return document.documentElement.getAttribute('data-theme') === 'dark'
     ? 'dark'
     : 'light';
 }
 
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('light');
+/** Le serveur rend toujours le thème clair, que le script corrige aussitôt. */
+function getServerSnapshot(): Theme {
+  return 'light';
+}
 
-  // Le thème réel est posé par THEME_INIT_SCRIPT avant l'hydratation ; on le
-  // lit après montage plutôt que de le deviner au rendu serveur, où
-  // localStorage n'existe pas.
-  useEffect(() => setTheme(readTheme()), []);
+export function ThemeToggle() {
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function toggle() {
     const next: Theme = theme === 'dark' ? 'light' : 'dark';
@@ -51,9 +65,8 @@ export function ThemeToggle() {
       localStorage.setItem(THEME_STORAGE_KEY, next);
     } catch {
       // Stockage indisponible (navigation privée) : le thème reste valable
-      // pour la session, ce qui est préférable à une erreur.
+      // pour la session, ce qui vaut mieux qu'une erreur.
     }
-    setTheme(next);
   }
 
   return (
