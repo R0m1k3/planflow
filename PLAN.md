@@ -32,11 +32,13 @@
 Le dépôt ne contient que l'audit ; il n'y a aucun code. L'objectif est de construire **PlanFlow**, une application de gestion du personnel et des plannings multi-établissements, reprenant les capacités de Combo pour l'organisation auditée, avec la paie **exportée vers Silae**.
 
 ### Ce que l'audit corrige
-Sept constats structurants, qu'une lecture de la documentation publique de Combo aurait manqués ou faussés. Ils sont listés ici parce qu'ils conditionnent des choix qui coûtent cher à reprendre.
+Huit constats structurants, qu'une lecture de la documentation publique de Combo aurait manqués ou faussés. Ils sont listés ici parce qu'ils conditionnent des choix qui coûtent cher à reprendre.
 
 **La convention collective n'est pas HCR.** Le compte audité est **FROUARD DISTRIBUTION / La Foir'Fouille**, configuré sur **« Commerces de détail non alimentaires (IDCC 1517) — JF 50 % et Dimanche 100 % »**, code APE **4759B — commerce de détail d'autres équipements du foyer**. C'est du commerce de détail : les durées maximales, coupures et majorations propres à l'hôtellerie-restauration ne s'appliquent pas. Les paramètres réels de l'IDCC 1517 sont en §6.3.
 
-**Le libellé de configuration mêle deux niveaux de norme.** « JF 50 % » est bien une règle de l'IDCC 1517 ; « Dimanche 100 % » ne l'est pas — la convention ne fixe aucun taux dominical et renvoie à l'accord d'entreprise. Traiter les deux comme conventionnels reviendrait à figer dans le moteur une règle qui appartient au client et peut changer sans que la convention bouge.
+**Le libellé de configuration mêle deux niveaux de norme.** « JF 50 % » est une règle de l'IDCC 1517. « Dimanche 100 % » n'en est pas une : la convention ne fixe aucun taux dominical, et **il n'existe pas d'accord d'entreprise**. Le taux vient du code du travail — article L3132-27, dimanches du maire — qui impose une rémunération au moins double **et** un repos compensateur équivalent. Les deux règles vivent donc dans des référentiels différents, et la seconde emporte une obligation que le libellé ne dit pas (§6.3).
+
+**Une partie de l'encadrement relève du forfait jours.** Certains cadres y sont, ce que l'IDCC 1517 autorise pour les cadres autonomes de niveaux VII à IX. Un salarié au forfait jours ne se planifie pas en heures et sort des règles de durée hebdomadaire — mais reste soumis aux repos. Traiter tout l'effectif en heures produirait des alertes fausses sur ces contrats et masquerait le vrai contrôle, celui de la charge (§6.5).
 
 **L'autorisation est par capacités, pas par rôles.** L'audit relève des permissions granulaires et des rôles **configurables par le client** (`/settings/roles-permissions/:roleKey`). `Role`, `Permission` et `Scope` sont trois notions distinctes dès WP-01. Aucun écran ne teste un nom de rôle.
 
@@ -262,7 +264,13 @@ model UserContract {
   startDate      DateTime     @db.Date
   endDate        DateTime?    @db.Date
   trialEndDate   DateTime?    @db.Date
-  weeklyHours    Decimal      @db.Decimal(5,2)
+
+  // Organisation du temps de travail — le forfait jours exclut le décompte horaire (§6.5)
+  workTimeArrangement WorkTimeArrangement @default(HOURLY)
+  weeklyHours    Decimal      @db.Decimal(5,2)   // 35,00 par défaut ; ignoré si FORFAIT_JOURS
+  forfaitDaysPerYear Decimal? @db.Decimal(5,1)   // 218 max, journée de solidarité incluse
+  forfaitAgreementDocumentId String?             // convention individuelle écrite — obligatoire
+  forfaitAgreedAt DateTime?                      // accord du salarié
   isModulated    Boolean      @default(false)
   hourlyRate     Decimal?     @db.Decimal(10,4)
   monthlySalary  Decimal?     @db.Decimal(10,2)
@@ -287,6 +295,27 @@ enum ContractType {
   SAISONNIER
 }
 enum ContractStatus { DRAFT ACTIVE ENDED }
+enum WorkTimeArrangement { HOURLY FORFAIT_JOURS }
+
+// Suivi de charge des salariés au forfait jours (matrice n° 7).
+model ForfaitDayEntry {
+  id             String   @id @default(cuid())
+  userContractId String
+  localDate      DateTime @db.Date
+  quantity       Decimal  @db.Decimal(2,1)   // 1,0 ou 0,5
+  createdBy      String
+  createdAt      DateTime @default(now())
+  @@unique([userContractId, localDate])
+}
+
+model WorkloadReview {
+  id             String   @id @default(cuid())
+  userContractId String
+  heldAt         DateTime @db.Date
+  summary        String
+  actions        String?
+  documentId     String?
+}
 
 model Amendment {
   id             String   @id @default(cuid())
@@ -669,7 +698,7 @@ type Rule = (ctx: ComplianceContext) => Violation[]
 Aucun `Date` natif : tout passe par `src/lib/datetime.ts`.
 
 ### 6.2 Codes de règles à implémenter
-`MAX_DAILY_WORK` · `MAX_DAILY_AMPLITUDE` · `MIN_DAILY_REST` · `MIN_WEEKLY_REST` · `MAX_WEEKLY_WORK_ABSOLUTE` · `MAX_WEEKLY_WORK_AVERAGED` · `MAX_CONSECUTIVE_WORK_DAYS` · `MIN_BREAK_AFTER_THRESHOLD` · `PART_TIME_MIN_WEEKLY_HOURS` · `CONTRACT_HOURS_DEVIATION` · `OVERLAPPING_SHIFTS` · `SHIFT_DURING_ABSENCE` · `SUNDAY_WORK` · `HOLIDAY_WORK` · `MINOR_MAX_DAILY_WORK` · `MINOR_MIN_DAILY_REST` · `MINOR_NIGHT_WORK`
+`MAX_DAILY_WORK` · `MAX_DAILY_AMPLITUDE` · `MIN_DAILY_REST` · `MIN_WEEKLY_REST` · `MAX_WEEKLY_WORK_ABSOLUTE` · `MAX_WEEKLY_WORK_AVERAGED` · `MAX_CONSECUTIVE_WORK_DAYS` · `MIN_BREAK_AFTER_THRESHOLD` · `PART_TIME_MIN_WEEKLY_HOURS` · `CONTRACT_HOURS_DEVIATION` · `OVERLAPPING_SHIFTS` · `SHIFT_DURING_ABSENCE` · `SUNDAY_WORK` · `SUNDAY_MAYOR_QUOTA` · `HOLIDAY_WORK` · `FORFAIT_DAYS_EXCEEDED` · `FORFAIT_WORKLOAD_REVIEW_MISSING` · `FORFAIT_REST_INSUFFICIENT` · `MINOR_MAX_DAILY_WORK` · `MINOR_MIN_DAILY_REST` · `MINOR_NIGHT_WORK`
 
 `OVERLAPPING_SHIFTS` et `SHIFT_DURING_ABSENCE` sont de sévérité **`BLOCKING`** : ce sont des incohérences de données, pas des arbitrages. Toutes les autres sont **`WARNING`**.
 
@@ -681,7 +710,7 @@ Jeu de paramètres d'amorce, à charger en base comme `CollectiveAgreement { idc
 
 | Paramètre | Valeur | Origine |
 |---|---|---|
-| Durée hebdomadaire de référence | 35 h (151,67 h/mois ; 1 607 h/an) | OP |
+| Durée hebdomadaire de référence | **35 h** (151,67 h/mois ; 1 607 h/an) — confirmée par l'employeur, aucune annualisation d'entreprise | OP |
 | `MAX_DAILY_WORK` | **10 h** | CCN |
 | `MAX_WEEKLY_WORK_ABSOLUTE` | **48 h** | CCN |
 | `MAX_WEEKLY_WORK_AVERAGED` | **44 h sur 12 semaines consécutives** | CCN |
@@ -722,13 +751,25 @@ Jeu de paramètres d'amorce, à charger en base comme `CollectiveAgreement { idc
 
 **Travail de nuit** — plage 21 h – 6 h ; non imposable aux salariés de 55 ans et plus. **CCN**
 
-**Dimanche — attention, ce n'est pas une règle conventionnelle**
+**Dimanche — le taux vient du code du travail, pas de la convention**
 
-> Le libellé du paramétrage indique « Dimanche 100 % », mais **l'IDCC 1517 ne fixe aucun taux pour le dimanche** : elle renvoie à « repos compensateur et/ou majoration de salaire » définis par accord d'entreprise ou usages de la profession.
->
-> Le taux de 100 % appliqué chez Frouard Distribution relève donc d'un **accord d'entreprise**, que ce plan n'a pas. `SUNDAY_WORK` doit être implémentée avec un taux **paramétrable au niveau du compte**, initialisé à 100 % et marqué comme surcharge d'entreprise — pas comme valeur conventionnelle.
->
-> Le travail dominical suppose par ailleurs une autorisation (zone touristique, dérogation préfectorale, dimanches du maire) et le refus d'un salarié ne peut être sanctionné. À traiter en règle informative, pas en blocage.
+L'IDCC 1517 ne fixe aucun taux dominical. **Il n'existe pas d'accord d'entreprise chez Frouard Distribution.** Le « Dimanche 100 % » du paramétrage s'explique donc par l'**article L3132-27** du code du travail, qui régit les *dimanches du maire* :
+
+| Paramètre | Valeur | Origine |
+|---|---|---|
+| `SUNDAY_WORK` — rémunération | **Au moins le double** de la rémunération normalement due, soit +100 % | OP (L3132-27) |
+| `SUNDAY_WORK` — repos | **Repos compensateur équivalent en durée**, en plus de la majoration | OP (L3132-27) |
+| `SUNDAY_MAYOR_QUOTA` | **12 dimanches maximum par année civile**, liste arrêtée avant le 31 décembre pour l'année suivante | OP (L3132-26) |
+
+Trois conséquences pour l'implémentation :
+
+1. La majoration **et** le repos compensateur sont dus. Ne générer que la majoration serait un manquement — le repos est un droit distinct, à écrire au ledger `COMPENSATORY_REST`.
+2. Le quota de 12 dimanches est **comptable et opposable**. Chaque `Location` porte la liste des dimanches autorisés pour l'année ; planifier au-delà déclenche une violation.
+3. Le refus d'un salarié de travailler le dimanche ne peut être sanctionné. Règle informative, jamais bloquante.
+
+> **`À VALIDER` — quel régime dominical ?** L3132-27 s'applique aux dimanches du maire. Les zones touristiques, zones commerciales et ZTI relèvent de régimes distincts, dont les contreparties sont fixées par accord — inexistant ici. Confirmer sous quel régime ouvrent les magasins : c'est ce qui détermine si le taux de 100 % et le repos compensateur sont bien les bons.
+
+Le mécanisme de surcharge `Account.agreementOverrides` reste en place pour d'éventuelles règles d'entreprise futures, mais **n'est pas utilisé aujourd'hui** : aucune règle du périmètre ne relève d'un accord d'entreprise.
 
 #### Ce qui reste à valider — `À VALIDER`
 
@@ -740,7 +781,28 @@ Ces valeurs proviennent de sources secondaires publiques (Code du travail numér
 
 L'écran de paramètres (§9) reste donc indispensable : ces valeurs sont un **point de départ chargé en base**, jamais des constantes dans le code. Un test vérifie que le moteur produit des résultats différents avec deux jeux de paramètres distincts.
 
-### 6.4 Exécution et restitution
+### 6.4 Forfait jours
+
+L'IDCC 1517 est l'**accord collectif habilitant** — aucun accord d'entreprise n'est nécessaire.
+
+| Paramètre | Valeur | Origine |
+|---|---|---|
+| Éligibilité | Cadres autonomes, **niveaux VII, VIII et IX** | CCN |
+| Plafond annuel | **218 jours** (ou 436 demi-journées), **journée de solidarité incluse** | CCN |
+| Période | Année civile ou toute période de 12 mois de date à date | CCN |
+| Formalisme | **Convention individuelle écrite** + accord du salarié | OP |
+| Conservation du décompte | **3 ans minimum** | Matrice n° 7 |
+
+**Règles d'implémentation :**
+- Le forfait s'active **contrat par contrat** depuis la fiche salarié, via `workTimeArrangement`. C'est un attribut du contrat, pas du salarié : un changement d'organisation passe par un avenant.
+- Activation **refusée** tant que `forfaitAgreementDocumentId` et `forfaitAgreedAt` ne sont pas renseignés. La convention individuelle n'est pas une formalité : sans elle le forfait est inopposable.
+- Un contrat au forfait jours est **exclu** des règles horaires — `MAX_DAILY_WORK`, `MAX_WEEKLY_WORK_*`, heures supplémentaires, heures complémentaires — et de la comparaison au contrat hebdomadaire. Les appliquer produirait un bruit d'alertes qui masquerait le vrai contrôle.
+- Il reste **soumis aux repos** : `MIN_DAILY_REST`, `MIN_WEEKLY_REST`, et à une surveillance d'amplitude.
+- Règles propres : `FORFAIT_DAYS_EXCEEDED` (dépassement du plafond), `FORFAIT_WORKLOAD_REVIEW_MISSING` (entretien annuel non tenu), `FORFAIT_REST_INSUFFICIENT`.
+- Le décompte se fait en jours et demi-journées via `ForfaitDayEntry` ; l'entretien annuel de charge est tracé par `WorkloadReview`.
+- Export Silae : les jours de forfait ne sont pas des heures. Le mapping utilise un code dédié, à obtenir du dossier Silae (§8.2).
+
+### 6.5 Exécution et restitution
 - À chaque mutation de shift : revalidation **ciblée** des couples (salarié, semaine) impactés, y compris les semaines adjacentes.
 - À la publication : validation complète du périmètre publié.
 - Restitution **non bloquante** pour les `WARNING` : badge sur la cellule, panneau latéral listant les violations. La publication reste possible **après confirmation explicite**, qui écrit `acknowledgedBy`, `acknowledgedAt`, `acknowledgementReason` et une entrée `AuditLog`.
@@ -913,12 +975,14 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 
 ### WP-03 — Personnel et contrats
 **Dépend de :** WP-02
-**Livre :** `Membership`, `EmployeeProfile`, `UserContract`, `Amendment`, `WorkPermit` ; annuaire filtrable et trié ; dossier salarié ; invitation ; salarié sans compte ; export du registre unique du personnel.
+**Livre :** `Membership`, `EmployeeProfile`, `UserContract`, `Amendment`, `WorkPermit` ; annuaire filtrable et trié ; dossier salarié ; invitation ; salarié sans compte ; export du registre unique du personnel ; **bascule forfait jours dans la fiche salarié** (§6.4) avec `ForfaitDayEntry` et `WorkloadReview`.
 **Critères d'acceptation**
 - Un salarié **sans `userId`** est créable, plannifiable et contractualisable.
 - Deux contrats actifs chevauchants sont refusés.
 - Un avenant conserve l'historique et n'écrase pas le contrat.
 - `members.salary.view` absente masque la rémunération **et** la refuse côté API.
+- Le passage au forfait jours est **refusé** sans convention individuelle jointe et date d'accord du salarié.
+- Un contrat au forfait jours n'est plus planifiable en heures et n'apparaît pas dans les compteurs horaires.
 - L'export du registre contient les mentions légales attendues.
 
 ### WP-04 — Planning
@@ -944,7 +1008,9 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 - Aucune valeur de convention n'est codée en dur — vérifié par un test qui charge deux jeux de paramètres différents.
 - Les tranches d'heures supplémentaires IDCC 1517 sont exactes aux bornes : 43 h donne 8 h à +25 %, 45 h donne 8 h à +25 % et 2 h à +50 %.
 - Un jour férié travaillé produit l'indemnité de 50 % ; la substitution en repos n'est proposée que **sur demande du salarié**.
-- Le taux dimanche est lu depuis la surcharge de compte, pas depuis les paramètres conventionnels.
+- Le dimanche produit **à la fois** la majoration de 100 % et le repos compensateur équivalent ; l'un sans l'autre est un échec.
+- Planifier un 13ᵉ dimanche du maire dans l'année déclenche `SUNDAY_MAYOR_QUOTA`.
+- Un contrat au forfait jours ne déclenche **aucune** règle horaire, mais déclenche bien les règles de repos et de charge.
 
 ### WP-06 — Absences et compteurs
 **Dépend de :** WP-05
@@ -1039,6 +1105,8 @@ Repris de sa section « Jeux de tests d'acceptation indispensables ». Ceux hors
 - correction rétroactive d'un pointage **après clôture**, avec piste avant-après ;
 - heures supplémentaires à cheval sur deux mois mais dans la même semaine civile ;
 - temps partiel et heures complémentaires ;
+- forfait jours dépassant le plafond, repos insuffisant, entretien annuel manquant ;
+- 13ᵉ dimanche du maire planifié dans l'année civile ;
 - congés acquis pendant un arrêt maladie, information au retour, report de 15 mois ;
 - départ d'un salarié : RUP, purge progressive, export, conservation des pièces dues ;
 - restauration d'une sauvegarde ancienne **suivie de l'application des suppressions échues** ;
@@ -1114,6 +1182,7 @@ La matrice est explicite : les minima légaux ne sont ni universels ni une autor
 | Objet | Durée | Portée PlanFlow |
 |---|---|---|
 | Décompte des horaires et astreintes | **1 an minimum** | Oui — `Shift`, heures réelles |
+| Décompte des jours de forfait | **3 ans minimum** | Oui — `ForfaitDayEntry` |
 | Jours des forfaits jours | **3 ans** | Conditionnel (§12.6) |
 | Contrats, salaires, primes, indemnités | **5 ans** | Oui — `UserContract`, `Amendment` |
 | Registre unique du personnel | **5 ans après le départ** | Oui |
@@ -1132,7 +1201,7 @@ Base active et archive intermédiaire sont **séparées**. Les purges sont autom
 | **Bulletins et bulletin électronique** (n° 10, 11) | Hors périmètre — Silae les produit et les conserve. PlanFlow n'hérite d'aucune obligation de disponibilité longue. |
 | **DSN, événements, PAS** (n° 12) | Hors périmètre. PlanFlow **alimente** l'assiette : ses variables exportées relèvent donc de la conservation à 6 ans. |
 | **Astreintes** (n° 6, P1) | Non modélisées. `À VALIDER` : y a-t-il des astreintes en magasin ? Si oui, entité dédiée, délai de prévenance de 15 jours et requalification des interventions en travail effectif. |
-| **Forfait jours** (n° 7, P1) | Non modélisé. `À VALIDER` : les directeurs de magasin sont-ils au forfait jours ? Si oui, plafond 218 jours, convention individuelle écrite, suivi de charge et entretien annuel. |
+| **Forfait jours** (n° 7, P1) | **Au périmètre** — §6.4. Certains cadres y sont ; l'IDCC 1517 est l'accord habilitant. Décompte conservé 3 ans. |
 | **Géolocalisation** (n° 20, P2) | Non collectée. Ne pas l'introduire sans AIPD. |
 | **AIPD** (n° 18) | Requise avant biométrie, géolocalisation, scoring ou planning algorithmique. Aucun de ces éléments n'est au périmètre v1. |
 
@@ -1145,6 +1214,7 @@ Ce registre est un **livrable de WP-02**, pas une note : un écran d'administrat
 ### 12.8 Autres risques
 
 - **Paramètres de convention** — le jeu IDCC 1517 de §6.3 vient de sources secondaires. Recoupement Legifrance daté, accord d'entreprise et confirmation du gestionnaire Silae avant d'engager une paie. Le taux dimanche n'est **pas** conventionnel.
+- **Absence d'accord d'entreprise** — confirmée par l'employeur. Aucune règle du périmètre ne repose donc sur une norme d'entreprise : tout vient de l'ordre public ou de l'IDCC 1517. Conséquence directe — pas de dérogation à 12 h/jour, pas de moyenne portée à 46 h, pas d'annualisation propre. Le mécanisme de surcharge existe mais reste vide.
 - **Codes de paie Silae** — signal d'arrêt §8.2.
 - **DPAE** — générée seulement ; la transmission URSSAF exige un raccordement déclaratif, hors périmètre.
 - **Signature électronique** — exige un prestataire qualifié. Ne pas implémenter de substitut maison, qui n'aurait aucune valeur probante.
