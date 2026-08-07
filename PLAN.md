@@ -6,8 +6,6 @@
 > - [`Audit Combo/`](Audit%20Combo/INDEX.md) — 58 écrans, cartographie fonctionnelle et inventaire de crawl.
 > - [`Audit Combo/dropdowns/`](Audit%20Combo/dropdowns/DROPDOWN-AUDIT.md) — 172 déclencheurs, 51 menus ouverts. **Fait foi sur les énumérations** : rôles, types de contrat, vues, statuts, actions.
 >
-> Le dossier `dropdowns/` à la racine du dépôt est un **doublon exact** de `Audit Combo/dropdowns/` (vérifié par comparaison binaire). Supprimer la copie racine pour qu'il n'existe qu'une source ; ce plan ne référence que celle sous `Audit Combo/`.
->
 > **Régime : clean room.** L'audit et ce plan décrivent des *capacités* et des *invariants*. Ne recopier ni code, ni CSS, ni icônes, ni illustrations, ni wording propriétaire au-delà des libellés métier nécessaires. Concevoir une API, un schéma, des textes et une interface originaux.
 
 ---
@@ -1006,7 +1004,7 @@ Ordre imposé. Chaque lot est livrable, testé et mergeable seul.
 ## 12. Conformité et risques
 
 - **RGPD** — le dossier contient état civil, NIR, coordonnées bancaires, titres de séjour et arrêts de travail. Les arrêts sont des **données de santé, catégorie particulière**. Minimisation, chiffrement au repos, journalisation des accès, rétention, masquage, export et suppression. Traité dès WP-01.
-- **Matrice de conformité manquante** — `À VALIDER`, voir §1. Cette section reste incomplète tant que le document n'est pas fourni.
+- **Matrice de conformité manquante** — `À VALIDER`, voir §1. C'est le dernier point bloquant du document ; il conditionne WP-03.
 - **Paramètres de convention** — le jeu IDCC 1517 de §6.3 est chargé et utilisable, mais issu de sources secondaires. Recoupement Legifrance, accord d'entreprise et confirmation du gestionnaire de paie requis avant d'engager une paie réelle. Le taux dimanche en particulier n'est **pas** conventionnel.
 - **Codes de paie Silae** — signal d'arrêt §8.2.
 - **DPAE** — générée seulement. La transmission à l'URSSAF exige un raccordement déclaratif, hors périmètre.
