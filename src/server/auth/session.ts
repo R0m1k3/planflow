@@ -138,9 +138,19 @@ export async function revokeAllSessions(
   return result.count;
 }
 
+export interface SessionUser {
+  firstName: string;
+  lastName: string;
+  email: string;
+  initials: string;
+}
+
 export interface SessionContext {
   actor: Actor;
   sessionId: string;
+  user: SessionUser;
+  accountName: string;
+  roleName: string;
 }
 
 /**
@@ -162,6 +172,7 @@ export async function resolveSession(
           memberships: {
             where: { status: 'ACTIVE', archivedAt: null },
             include: {
+              account: { select: { name: true } },
               role: { include: { permissions: { include: { permission: true } } } },
               scopes: true,
             },
@@ -199,7 +210,20 @@ export async function resolveSession(
     scope,
   };
 
-  return { actor, sessionId: session.id };
+  const { firstName, lastName, email } = session.user;
+
+  return {
+    actor,
+    sessionId: session.id,
+    user: {
+      firstName,
+      lastName,
+      email,
+      initials: `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase(),
+    },
+    accountName: membership.account.name,
+    roleName: membership.role.name,
+  };
 }
 
 /** Session courante depuis le cookie, ou `null`. */

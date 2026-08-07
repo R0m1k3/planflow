@@ -134,7 +134,10 @@ async function main() {
   for (const [index, person] of people.entries()) {
     const user = await prisma.user.upsert({
       where: { email: person.email },
-      update: {},
+      // Remet le compteur d'échecs à zéro : sans cela, des exécutions
+      // répétées des tests finissent par verrouiller le compte au bout de
+      // huit tentatives, et l'échec suivant est incompréhensible.
+      update: { failedAttempts: 0, lockedUntil: null, passwordHash },
       create: {
         email: person.email,
         firstName: person.firstName,

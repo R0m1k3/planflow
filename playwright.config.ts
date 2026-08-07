@@ -1,5 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
 
+import { STORAGE_STATE } from './tests/e2e/storage';
+
+/**
+ * Certains environnements fournissent déjà un Chromium dont la révision ne
+ * correspond pas à celle qu'attend cette version de Playwright.
+ * PLAYWRIGHT_CHROMIUM_PATH permet de le réutiliser plutôt que d'en télécharger
+ * un second.
+ */
+const chromiumOverride = process.env.PLAYWRIGHT_CHROMIUM_PATH
+  ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } }
+  : {};
+
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://127.0.0.1:${PORT}`;
 
@@ -18,21 +30,27 @@ export default defineConfig({
   },
 
   projects: [
+    // Ouvre une session et enregistre le cookie ; les autres projets
+    // le réutilisent.
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices['Desktop Chrome'], ...chromiumOverride },
+    },
+    // Parcours d'authentification : doit partir d'un navigateur vierge.
+    {
+      name: 'anonyme',
+      testMatch: /auth\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], ...chromiumOverride },
+    },
     {
       name: 'chromium',
+      testIgnore: /auth\.(setup|spec)\.ts/,
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
-        // Certains environnements fournissent déjà un Chromium dont la révision
-        // ne correspond pas à celle qu'attend cette version de Playwright.
-        // PLAYWRIGHT_CHROMIUM_PATH permet de le réutiliser plutôt que d'en
-        // télécharger un second.
-        ...(process.env.PLAYWRIGHT_CHROMIUM_PATH
-          ? {
-              launchOptions: {
-                executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
-              },
-            }
-          : {}),
+        ...chromiumOverride,
+        storageState: STORAGE_STATE,
       },
     },
   ],

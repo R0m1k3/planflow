@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/shell/ThemeToggle';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/lib/cx';
+import { signOutAction } from '@/server/auth/actions';
 import {
   isActive,
   NAVIGATION,
@@ -19,9 +20,19 @@ import {
 
 export interface AppShellProps {
   children: ReactNode;
+  initials: string;
+  fullName: string;
+  roleName: string;
+  accountName: string;
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({
+  children,
+  initials,
+  fullName,
+  roleName,
+  accountName,
+}: AppShellProps) {
   const pathname = usePathname();
   const section = sectionForPath(pathname);
 
@@ -67,11 +78,17 @@ export function AppShell({ children }: AppShellProps) {
         </Button>
         <ThemeToggle />
         <span
-          aria-hidden
           className="flex size-7 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent-soft-ink"
+          title={`${fullName} · ${roleName}`}
         >
-          MR
+          <span aria-hidden>{initials}</span>
+          <span className="sr-only">{`${fullName}, ${roleName}`}</span>
         </span>
+        <form action={signOutAction}>
+          <Button size="sm" type="submit">
+            Déconnexion
+          </Button>
+        </form>
       </header>
 
       <div className="flex min-h-0 flex-1">
@@ -86,7 +103,7 @@ export function AppShell({ children }: AppShellProps) {
           <p className="border-t border-line-1 px-2.5 pt-3 text-micro leading-relaxed text-ink-3">
             Instance auto-hébergée
             <br />
-            Maison Rivage · 34 établissements
+            {accountName}
           </p>
         </aside>
 
