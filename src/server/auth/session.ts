@@ -53,8 +53,24 @@ export interface SignInInput {
   userAgent?: string | null;
 }
 
+/**
+ * Durée d'une session en attente du second facteur.
+ *
+ * Elle ne donne accès à rien, mais elle atteste d'un mot de passe juste : lui
+ * laisser douze heures offrirait autant de temps pour éprouver les six chiffres
+ * depuis un poste laissé ouvert.
+ */
+const MFA_CHALLENGE_MS = 10 * 60 * 1000;
+
 export type SignInResult =
-  | { ok: true; token: string; expiresAt: Date; userId: string }
+  | {
+      ok: true;
+      token: string;
+      expiresAt: Date;
+      userId: string;
+      /** Vrai quand la session attend encore le second facteur. */
+      mfaPending: boolean;
+    }
   | { ok: false; reason: 'invalid' | 'locked' };
 
 export async function signIn(input: SignInInput): Promise<SignInResult> {
@@ -94,7 +110,13 @@ export async function signIn(input: SignInInput): Promise<SignInResult> {
   }
 
   const token = generateToken();
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  // Le second facteur est exigé dès qu'il est enregistré, quel que soit le
+  // rôle : un salarié qui a pris la peine de l'activer ne doit pas pouvoir
+  // entrer sans lui.
+  const mfaPending = user.mfaEnrolledAt !== null && user.mfaSecretEnc !== null;
+  const expiresAt = new Date(
+    Date.now() + (mfaPending ? MFA_CHALLENGE_MS : SESSION_DURATION_MS),
+  );
 
   await db.$transaction([
     db.session.create({
@@ -104,6 +126,7 @@ export async function signIn(input: SignInInput): Promise<SignInResult> {
         expiresAt,
         ip: input.ip ?? null,
         userAgent: input.userAgent ?? null,
+        mfaSatisfied: !mfaPending,
       },
     }),
     db.user.update({
@@ -111,12 +134,70 @@ export async function signIn(input: SignInInput): Promise<SignInResult> {
       data: {
         failedAttempts: 0,
         lockedUntil: null,
-        lastSignInAt: new Date(),
+        // La date de dernière connexion n'est posée qu'une fois les deux
+        // facteurs présentés : un mot de passe juste seul n'est pas une
+        // connexion.
+        ...(mfaPending ? {} : { lastSignInAt: new Date() }),
       },
     }),
   ]);
 
-  return { ok: true, token, expiresAt, userId: user.id };
+  return { ok: true, token, expiresAt, userId: user.id, mfaPending };
+}
+
+export interface PendingChallenge {
+  sessionId: string;
+  userId: string;
+  email: string;
+}
+
+/**
+ * Session ouverte mais en attente du second facteur.
+ *
+ * Distincte de `resolveSession`, qui refuse ces sessions : l'écran de défi est
+ * le seul endroit où elles ont un sens, et les confondre reviendrait à laisser
+ * une session à demi ouverte circuler dans l'application.
+ */
+export async function pendingChallenge(
+  token: string,
+): Promise<PendingChallenge | null> {
+  const session = await unscoped().session.findUnique({
+    where: { tokenHash: hashToken(token) },
+    include: { user: { select: { id: true, email: true } } },
+  });
+
+  if (
+    !session ||
+    session.mfaSatisfied ||
+    session.revokedAt ||
+    session.expiresAt < new Date()
+  ) {
+    return null;
+  }
+
+  return {
+    sessionId: session.id,
+    userId: session.user.id,
+    email: session.user.email,
+  };
+}
+
+/** Promeut une session en attente en session pleine. */
+export async function satisfyMfa(token: string): Promise<Date> {
+  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS);
+  const db = unscoped();
+
+  const session = await db.session.update({
+    where: { tokenHash: hashToken(token) },
+    data: { mfaSatisfied: true, expiresAt },
+  });
+
+  await db.user.update({
+    where: { id: session.userId },
+    data: { lastSignInAt: new Date() },
+  });
+
+  return expiresAt;
 }
 
 export async function signOut(token: string): Promise<void> {
@@ -143,6 +224,8 @@ export interface SessionUser {
   lastName: string;
   email: string;
   initials: string;
+  /** Un second facteur est enregistré pour ce compte. */
+  mfaEnrolled: boolean;
 }
 
 export interface SessionContext {
@@ -182,7 +265,15 @@ export async function resolveSession(
     },
   });
 
-  if (!session || session.revokedAt || session.expiresAt < new Date()) {
+  // Une session en attente du second facteur ne résout aucun acteur : elle ne
+  // porte qu'un défi. C'est ici, au point de passage unique, que la garantie
+  // tient — pas dans chaque écran.
+  if (
+    !session ||
+    !session.mfaSatisfied ||
+    session.revokedAt ||
+    session.expiresAt < new Date()
+  ) {
     return null;
   }
 
@@ -220,6 +311,7 @@ export async function resolveSession(
       lastName,
       email,
       initials: `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase(),
+      mfaEnrolled: session.user.mfaEnrolledAt !== null,
     },
     accountName: membership.account.name,
     roleName: membership.role.name,

@@ -110,13 +110,33 @@ model User {
   /// Deuxième facteur, exigé des rôles administrateur et RH (matrice n° 15).
   mfaSecretEnc     Bytes?
   mfaEnrolledAt    DateTime?
+  /// Dernier pas TOTP employé. Interdit le rejeu d'un code dans sa fenêtre :
+  /// sans lui, le facteur protège du mot de passe volé, pas du code lu
+  /// par-dessus l'épaule.
+  mfaLastStep      Int?
   lastSignInAt     DateTime?
   failedAttempts   Int      @default(0)
   lockedUntil      DateTime?
   createdAt        DateTime @default(now())
 
-  memberships Membership[]
-  sessions    Session[]
+  memberships   Membership[]
+  sessions      Session[]
+  recoveryCodes MfaRecoveryCode[]
+}
+
+/// Code de secours à usage unique. Perdre son téléphone ne doit pas fermer
+/// définitivement l'accès — et la parade ne doit pas être de désactiver le
+/// second facteur par un simple courriel au support.
+model MfaRecoveryCode {
+  id       String    @id @default(cuid())
+  userId   String
+  codeHash String    @unique
+  usedAt   DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Lien User ↔ Account. Porte le salarié : `userId` est nullable, car tous les
@@ -190,6 +210,9 @@ model Session {
   userAgent  String?
   revokedAt  DateTime?
   revokedBy  String?
+  /// Faux tant que le second facteur n'a pas été présenté. Une session en
+  /// attente ne donne accès à rien : elle sert seulement à porter le défi.
+  mfaSatisfied Boolean @default(true)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
