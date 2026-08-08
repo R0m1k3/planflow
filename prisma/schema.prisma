@@ -595,6 +595,7 @@ model WeeklySchedule {
   shifts     Shift[]
   rests      Rest[]
   dailyNotes DailyNote[]
+  violations ComplianceViolation[]
 
   @@unique([teamId, isoYear, isoWeek])
   @@index([accountId])
@@ -671,5 +672,107 @@ model DailyNote {
 
   schedule WeeklySchedule @relation(fields: [weeklyScheduleId], references: [id], onDelete: Cascade)
 
+  @@index([accountId])
+}
+
+// ============================================================================
+// Conformité conventionnelle — PLAN.md §6 et §12.2, WP-05
+// ============================================================================
+
+/// Convention collective, **effectif-datée**.
+///
+/// Les versions coexistent et ne se remplacent pas : la matrice n° 1 impose de
+/// pouvoir reproduire à l'identique une paie antérieure après un changement de
+/// règle. Une mise à jour en place rendrait cette reproduction impossible, et
+/// l'impossibilité ne se découvrirait qu'au premier contrôle.
+model CollectiveAgreement {
+  id            String   @id @default(cuid())
+  accountId     String
+  idcc          String
+  name          String
+  /// Jeu de paramètres validé par `agreementParametersSchema`.
+  parameters    Json
+  version       Int
+  effectiveFrom DateTime @db.Date
+  /// Origine du texte : URL Legifrance, référence de PDF, note d'entretien.
+  source        String?
+  approvedBy    String?
+  approvedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@unique([accountId, idcc, version])
+  @@index([accountId, idcc, effectiveFrom])
+  @@index([accountId])
+}
+
+/// Constat produit par le moteur de règles.
+///
+/// Reconstruit à chaque évaluation d'une semaine : ce n'est pas un journal mais
+/// l'état courant. L'acquittement, lui, survit — c'est la décision d'un manager
+/// de publier malgré une alerte, et elle doit rester opposable.
+model ComplianceViolation {
+  id               String    @id @default(cuid())
+  accountId        String
+  weeklyScheduleId String
+  membershipId     String?
+  ruleCode         String
+  severity         Severity
+  localDate        DateTime? @db.Date
+  message          String
+  context          Json
+  /// Créneaux mis en cause, pour poser le badge sur la bonne cellule.
+  shiftIds         String[]
+  /// Version de convention appliquée : sans elle, un constat ancien devient
+  /// inexplicable dès que les paramètres changent.
+  agreementId      String?
+  detectedAt       DateTime  @default(now())
+
+  acknowledgedBy        String?
+  acknowledgedAt        DateTime?
+  acknowledgementReason String?
+
+  schedule WeeklySchedule @relation(fields: [weeklyScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([weeklyScheduleId])
+  @@index([membershipId, localDate])
+}
+
+enum Severity {
+  INFO
+  WARNING
+  BLOCKING
+}
+
+/// Jour férié d'un établissement.
+///
+/// Par établissement et non par compte : l'Alsace-Moselle a deux jours fériés
+/// de plus, et une chaîne peut ouvrir un magasin de l'autre côté de la limite.
+model Holiday {
+  id         String   @id @default(cuid())
+  accountId  String
+  locationId String
+  localDate  DateTime @db.Date
+  name       String
+  /// Chômé par décision de l'employeur, au titre des jours garantis.
+  isPaidOff  Boolean  @default(false)
+
+  @@unique([locationId, localDate])
+  @@index([accountId])
+}
+
+/// Dimanche du maire autorisé — L3132-26.
+///
+/// La liste est arrêtée avant le 31 décembre pour l'année suivante. La stocker
+/// rend le quota opposable au lieu de purement indicatif.
+model AuthorisedSunday {
+  id         String   @id @default(cuid())
+  accountId  String
+  locationId String
+  localDate  DateTime @db.Date
+  /// Arrêté municipal ou décision de référence.
+  reference  String?
+
+  @@unique([locationId, localDate])
   @@index([accountId])
 }

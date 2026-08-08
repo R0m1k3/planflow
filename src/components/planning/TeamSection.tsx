@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react';
 
+import { AlertPanel } from '@/components/planning/AlertPanel';
 import { WeekGrid } from '@/components/planning/WeekGrid';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -68,6 +69,16 @@ export function TeamSection({
 }: TeamSectionProps) {
   const [target, setTarget] = useState<Target | null>(null);
 
+  const names = new Map(
+    section.rows
+      .filter((row) => row.membershipId)
+      .map((row) => [row.membershipId as string, displayName(row)]),
+  );
+  const flagged = new Set(section.flaggedShiftIds);
+  const pendingWarnings = section.alerts.filter(
+    (alert) => alert.severity === 'WARNING' && !alert.acknowledged,
+  ).length;
+
   const published = section.status === 'PUBLISHED';
   const plannedMinutes = section.rows.reduce(
     (total, row) => total + row.counters.plannedMinutes,
@@ -121,6 +132,7 @@ export function TeamSection({
               weekParam={weekParam}
               version={section.version}
               published={published}
+              pendingWarnings={pendingWarnings}
             />
           ) : null}
         </div>
@@ -131,6 +143,7 @@ export function TeamSection({
         dates={dates}
         rows={section.rows}
         unassignedRow={section.unassignedRow}
+        flaggedShiftIds={flagged}
         {...(canEdit
           ? {
               cellAction: (row: BoardRow, dayIndex: number) => (
@@ -176,6 +189,8 @@ export function TeamSection({
           : {})}
       />
 
+      <AlertPanel alerts={section.alerts} names={names} />
+
       {target ? (
         <ShiftComposer
           key={target.kind === 'edit' ? target.shift.id : 'create'}
@@ -198,11 +213,13 @@ function PublishControl({
   weekParam,
   version,
   published,
+  pendingWarnings,
 }: {
   teamId: string;
   weekParam: string;
   version: number;
   published: boolean;
+  pendingWarnings: number;
 }) {
   const [state, formAction, pending] = useActionState(
     published ? unpublishWeekAction : publishWeekAction,
@@ -210,11 +227,28 @@ function PublishControl({
   );
 
   return (
-    <form action={formAction} className="flex items-center gap-2">
+    <form action={formAction} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="week" value={weekParam} />
       {/* Verrou optimiste : la version lue au rendu est renvoyée telle quelle. */}
       <input type="hidden" name="expectedVersion" value={version} />
+
+      {/* Le motif n'apparaît que s'il y a quelque chose à assumer : demander
+          une justification quand tout est conforme apprendrait à la remplir
+          machinalement. */}
+      {!published && pendingWarnings > 0 ? (
+        <label className="flex items-center gap-1.5 text-xs text-ink-2">
+          <span className="sr-only">Motif de publication malgré les alertes</span>
+          <input
+            name="acknowledgement"
+            type="text"
+            maxLength={500}
+            placeholder={`Motif — ${pendingWarnings} alerte${pendingWarnings > 1 ? 's' : ''}`}
+            className="h-8 w-56 rounded-2 border border-warn bg-surface px-2 text-sm text-ink-1"
+          />
+        </label>
+      ) : null}
+
       {state.error ? (
         <span role="alert" className="text-xs text-danger">
           {state.error}

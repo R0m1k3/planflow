@@ -99,6 +99,11 @@ test('un manager pose un créneau, publie, puis dépublie', async ({ page }) => 
   await expect(composer.getByText(/recouvre cette plage/)).toBeVisible();
   await composer.getByRole('button', { name: 'Annuler' }).click();
 
+  // Une semaine d'un seul créneau s'écarte forcément de la durée
+  // contractuelle : le moteur le signale, et publier suppose de l'assumer.
+  await section
+    .getByPlaceholder(/^Motif —/)
+    .fill('Semaine partielle, reprise progressive');
   await section.getByRole('button', { name: 'Publier' }).click();
   await expect(section.getByText('Publiée')).toBeVisible();
 
@@ -158,4 +163,63 @@ test('un créneau posé se retrouve dans les quatre vues', async ({ page }) => {
   // deux vues doivent dire la même durée. `first()` parce que l'autre test de
   // ce fichier planifie le même salarié ailleurs dans le mois.
   await expect(row.getByText('7,3').first()).toBeVisible();
+});
+
+/**
+ * Publier malgré une alerte de convention.
+ *
+ * Le critère d'acceptation de WP-05 : un avertissement ne bloque pas, mais il
+ * exige une justification, qui reste attachée au constat. C'est ce qui
+ * distingue une dérogation assumée d'une alerte ignorée.
+ */
+test('une alerte de convention exige une justification pour publier', async ({
+  page,
+}) => {
+  const week = '2027-W24';
+  await resetWeek(page, week);
+  const section = venteSection(page);
+
+  // 12 h de travail dans la journée : au-delà du maximum conventionnel de
+  // 10 h, et sans les 20 min de pause dues au-delà de 6 h.
+  await addShift(page, section, { start: '07:00', end: '19:00', pause: '0' });
+
+  await expect(
+    section.getByText(/au-delà du maximum de 10 h/).first(),
+  ).toBeVisible();
+
+  await section.getByRole('button', { name: 'Publier' }).click();
+  await expect(section.getByText(/non justifiée/).first()).toBeVisible();
+  await expect(section.getByText('Brouillon')).toBeVisible();
+
+  await section
+    .getByPlaceholder(/^Motif —/)
+    .fill('Inventaire annuel, accord du salarié');
+  await section.getByRole('button', { name: 'Publier' }).click();
+
+  await expect(section.getByText('Publiée')).toBeVisible();
+  // Le motif reste attaché au constat : l'alerte ne disparaît pas, elle est
+  // assumée.
+  await expect(
+    section.getByText(/Inventaire annuel, accord du salarié/).first(),
+  ).toBeVisible();
+});
+
+test('un créneau qui recouvre un autre est refusé, pas seulement signalé', async ({
+  page,
+}) => {
+  const week = '2027-W26';
+  await resetWeek(page, week);
+  const section = venteSection(page);
+
+  await addShift(page, section, { start: '09:00', end: '13:00' });
+  await expect(section.getByText('09:00–13:00').first()).toBeVisible();
+
+  const composer = await addShift(page, section, {
+    start: '12:00',
+    end: '17:00',
+  });
+  // Le chevauchement est une incohérence de données : la saisie est refusée,
+  // pas enregistrée avec un badge.
+  await expect(composer.getByText(/recouvre cette plage/)).toBeVisible();
+  await expect(section.getByText('12:00–17:00')).toHaveCount(0);
 });
