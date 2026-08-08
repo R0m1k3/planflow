@@ -197,6 +197,8 @@ model Session {
   @@index([expiresAt])
 }
 
+/// Invitation à créer un accès. Le jeton n'existe en clair que dans le message
+/// envoyé : seule son empreinte est conservée, comme pour une session.
 model Invitation {
   id           String    @id @default(cuid())
   accountId    String
@@ -205,12 +207,18 @@ model Invitation {
   email        String
   expiresAt    DateTime
   acceptedAt   DateTime?
+  /// Révocation explicite. Distincte de l'expiration : « je retire cet accès »
+  /// et « personne n'a répondu » ne se lisent pas de la même façon dans un
+  /// dossier.
+  revokedAt    DateTime?
+  revokedBy    String?
   createdBy    String
   createdAt    DateTime  @default(now())
 
   membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
+  @@index([membershipId])
 }
 
 // ============================================================================

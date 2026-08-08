@@ -66,7 +66,10 @@ export default defineConfig({
       `node .next/standalone/server.js`,
     ].join(' && '),
     url: baseURL,
-    env: { PORT: String(PORT), HOSTNAME: '127.0.0.1' },
+    // APP_URL fabrique les liens des messages — invitations comprises. Le
+    // laisser sur sa valeur par défaut ferait pointer les liens vers un port
+    // où rien n'écoute pendant les tests.
+    env: { PORT: String(PORT), HOSTNAME: '127.0.0.1', APP_URL: baseURL },
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },
