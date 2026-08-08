@@ -20,6 +20,7 @@ import {
   IDCC_1517_PARAMETERS,
   IDCC_1517_PROVENANCE,
 } from '../src/domain/compliance/idcc1517';
+import { PAYROLL_ELEMENT_DEFINITIONS } from '../src/domain/payroll/elements';
 import { evaluateSchedule } from '../src/server/compliance/evaluate';
 import { withTenant } from '../src/server/tenant';
 
@@ -564,6 +565,48 @@ async function main() {
     });
   }
   console.log(`  ${retention.length} politiques`);
+
+
+  console.log('→ Correspondances Silae');
+  // Semées **non confirmées**, y compris quand le code se lit dans son libellé
+  // (`EV-HDimanche`). Proposer n'est pas confirmer : seul le gestionnaire de
+  // paie sait si le code est le bon dans ce dossier, et l'export refuse de
+  // tourner tant qu'il ne l'a pas dit.
+  for (const definition of PAYROLL_ELEMENT_DEFINITIONS) {
+    if (!definition.suggestedCode) continue;
+    const existing = await prisma.silaeCodeMapping.findFirst({
+      where: { accountId: account.id, sourceKey: definition.key },
+    });
+    if (existing) continue;
+
+    await prisma.silaeCodeMapping.create({
+      data: {
+        accountId: account.id,
+        sourceKey: definition.key,
+        silaeCode: definition.suggestedCode,
+        label: definition.label,
+        kind: definition.kind,
+        confirmed: false,
+      },
+    });
+  }
+  console.log(
+    `  ${PAYROLL_ELEMENT_DEFINITIONS.filter((d) => d.suggestedCode).length} proposées, aucune confirmée`,
+  );
+
+  console.log('→ Matricules Silae');
+  // Fictifs, à la forme observée dans le dossier : cinq chiffres cadrés à zéro.
+  const withoutMatricule = await prisma.membership.findMany({
+    where: { accountId: account.id, silaeMatricule: null },
+    orderBy: { employeeNumber: 'asc' },
+  });
+  for (const [index, membership] of withoutMatricule.entries()) {
+    await prisma.membership.update({
+      where: { id: membership.id },
+      data: { silaeMatricule: String(90_000 + index + 1).padStart(5, '0') },
+    });
+  }
+  console.log(`  ${withoutMatricule.length} matricules attribués`);
 
   console.log('→ Évaluation de conformité');
   // Le seed produit des plannings, donc des constats : les laisser à calculer

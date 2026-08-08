@@ -866,28 +866,71 @@ Coût prévisionnel = somme des heures × taux horaire du contrat × (1 + `emplo
 
 ## 8. Export Silae
 
-Seule intégration de paie du périmètre v1. `src/domain/payroll/adapters/silae.ts`, derrière une interface `PayrollExportAdapter` qui laisse la place à d'autres formats.
+Seule intégration de paie du périmètre v1. `src/domain/payroll/silae.ts`, derrière une interface `PayrollExportAdapter` qui laisse la place à d'autres formats.
 
-### 8.1 Format
-- **CSV, UTF-8, séparateur `;`**
-- En-tête : `matricule;code paie;décompte;date début;date fin;`
-- Une ligne par couple (salarié, code de paie) sur la période.
+### 8.1 Format — **relevé sur un export réel**
+
+Le format ci-dessous n'est pas déduit d'une documentation : il est vérifié octet par octet sur un export du dossier (période 01/07/2026 – 31/07/2026, 55 lignes). Un contrôle d'aller-retour a reproduit ce fichier **sans aucune ligne divergente**.
+
+| Élément | Valeur constatée |
+|---|---|
+| En-tête | `Matricule;Code;Valeur;Date debut;Date fin` — sans accent, sans point-virgule final |
+| Encodage | **ASCII pur** — aucun caractère accentué ni composé, y compris dans les libellés |
+| Fins de ligne | **CRLF**, y compris après la dernière ligne |
+| Séparateur | `;` — aucun guillemet, aucune échappement |
+| Décimale | **point**, jamais virgule |
+| Dates | **JJ/MM/AAAA** |
+| Heures | au moins une décimale, au plus deux : `96.0`, `52.5`, `69.67` |
+| Jours | entier nu : `14`, `22`, `3` |
+| Arrondi | heures décimales au centième, **par ligne** : 4 h 50 → `4.83`, 69 h 40 → `69.67` |
+
+> L'arrondi par ligne fait que la somme des lignes peut s'écarter de quelques centièmes du total réel. C'est le comportement de l'export existant : le reproduire est délibéré. Le « corriger » ferait diverger du fichier que le gestionnaire de paie sait relire.
+
+**Encodage ASCII :** émettre de l'UTF-8 accenté s'écarterait de ce que le dossier reçoit. Le sérialiseur translittère (`toAscii`), pour qu'un salarié nommé « Rémi » n'introduise pas le premier octet non-ASCII du fichier.
 
 ### 8.2 Codes
-Trois familles, préfixées :
-| Famille | Préfixe | Source du code |
-|---|---|---|
-| Heures | `HS-` | `SilaeCodeMapping` kind `HOURS` |
-| Absences | `AB-` | `AbsenceType.silaeCode` |
-| Éléments variables | `EV-` | `SilaeCodeMapping` kind `VARIABLE` |
 
-> **Signal d'arrêt.** Les codes réels appartiennent au dossier Silae du client et se lisent dans « Saisie des éléments variables ». **Ne pas les inventer.** Livrer l'écran de correspondance (`/settings/integrations/silae`) et une table vide ; demander les codes avant la première mise en production.
+Deux familles cohabitent dans l'export réel.
+
+**Codes de service** — décrivent le décompte, sans préfixe :
+
+| Code | Nature | Portée constatée |
+|---|---|---|
+| `Nombre total de jours travailles` | jours entiers | période de paie entière |
+| `Heures travaillees` | heures | période de paie entière |
+| `Heures manquantes au contrat` | heures | période de paie entière |
+| `Entree / Sortie` | heures | période d'emploi sur le mois |
+
+**Codes de rubrique** — préfixés :
+
+| Famille | Préfixe | Codes relevés |
+|---|---|---|
+| Heures supplémentaires | `HS-` | `HS-HS25` |
+| Absences | `AB-` | `AB-100`, `AB-200`, `AB-300`, `AB-630` |
+| Éléments variables | `EV-` | `EV-HDimanche`, `EV-HFerie` |
+
+> **Signal d'arrêt maintenu — les codes sont connus, leur *sens* ne l'est pas.** Savoir que `AB-300` existe ne dit pas quel type d'absence il désigne. Cette correspondance appartient au dossier Silae du client et se lit dans « Saisie des éléments variables ». Elle se saisit dans l'écran de correspondance ; **elle ne se devine pas**.
+>
+> Observations à faire confirmer, sans les traiter comme acquises :
+> - Un même salarié enchaîne `AB-100` (01–10/07) puis `AB-200` (11–31/07) : deux natures distinctes, ou une prolongation ?
+> - `AB-300` apparaît sur des périodes courtes avec des volumes modestes.
+> - `AB-630` n'apparaît que sur une journée isolée.
+> - `Entree / Sortie` accompagne un départ en cours de mois — quelle grandeur porte sa valeur ?
+> - Aucun code de **forfait jours** n'apparaît : il reste à obtenir.
+
+**Portée des périodes.** Les agrégats couvrent la période de paie entière ; une absence couvre **ses propres dates**. Les confondre décalerait le décompte d'un mois.
+
+**Salariés sans planning.** L'export de référence contient des salariés portant uniquement `Heures manquantes au contrat` égal à leur durée mensuelle : un contrat existe, aucun temps n'est planifié. L'export doit produire ces lignes plutôt que d'omettre le salarié.
 
 ### 8.3 Règles d'export
-- **Pré-contrôle bloquant** : tout salarié inclus doit avoir un `silaeMatricule` et tout élément exporté un code mappé. À défaut, l'export échoue en listant précisément les manques — il ne produit jamais un fichier partiel silencieux.
+- **Pré-contrôle bloquant** : tout salarié inclus doit avoir un `silaeMatricule` et tout élément exporté un code mappé. À défaut, l'export échoue en **listant** les manques — il ne produit jamais un fichier partiel silencieux, qui se chargerait sans erreur et rendrait la paie fausse pour les salariés absents du fichier.
 - L'export ne porte que sur une `PayPeriod` **verrouillée**, et lit exclusivement les `PayPeriodSnapshot`.
-- **Idempotence** : un réexport de la même période produit le même fichier et le même `checksum`. L'import Silae écrase les données de la même période pour les mêmes salariés ; l'export doit donc être rejouable sans effet de bord.
+- **Idempotence** : ordre déterministe (matricule, puis code, puis date), donc même fichier et même `checksum` à chaque réexport. L'import Silae écrase les données de la période pour les salariés concernés ; l'export doit être rejouable sans effet de bord.
 - Chaque génération écrit un `PayrollExport` et une entrée d'audit.
+
+### 8.4 Données réelles — ce qui ne rentre pas au dépôt
+
+L'export ayant servi de référence contient les heures et les absences de salariés identifiables. **Il n'est pas versionné**, ni comme fixture de test, ni comme donnée de démonstration. Ce sont les *règles de forme* qui sont figées dans `tests/unit/silae.test.ts`, avec les valeurs exactes observées mais sans les matricules ni les volumes réels.
 
 ---
 
