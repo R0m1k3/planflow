@@ -1094,3 +1094,74 @@ model PayPeriodSnapshot {
   @@unique([payPeriodId, membershipId])
   @@index([accountId])
 }
+
+// ============================================================================
+// Envoi d'e-mails — configuration par compte
+// ============================================================================
+
+/// Serveur d'envoi du compte.
+///
+/// En base et non dans les variables d'environnement : chaque client
+/// auto-hébergé a sa propre boîte, et la changer ne doit pas exiger un accès au
+/// serveur ni un redémarrage.
+///
+/// Le mot de passe est **chiffré au repos** avec la même clé que le NIR et
+/// l'IBAN (PLAN.md §3.6). Un accès SMTP volé permet d'écrire au nom de
+/// l'entreprise : c'est un secret, pas un réglage.
+model EmailSettings {
+  id          String  @id @default(cuid())
+  accountId   String  @unique
+  host        String
+  port        Int     @default(587)
+  /// STARTTLS sur 587, TLS implicite sur 465.
+  secure      Boolean @default(false)
+  username    String?
+  passwordEnc Bytes?
+  /// Expéditeur affiché. Doit appartenir au domaine authentifié, sinon les
+  /// messages partent en indésirable.
+  fromName    String
+  fromAddress String
+  replyTo     String?
+  /// Faux tant qu'un envoi de test n'a pas abouti : un réglage non éprouvé
+  /// n'est pas un réglage, c'est une intention.
+  verifiedAt  DateTime?
+  lastError   String?
+  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now())
+
+  @@index([accountId])
+}
+
+/// Trace d'un message émis.
+///
+/// Sans elle, « le salarié dit qu'il n'a rien reçu » est indécidable. Le corps
+/// n'est pas conservé : il porte des données personnelles et se régénère.
+model EmailLog {
+  id           String      @id @default(cuid())
+  accountId    String
+  to           String
+  subject      String
+  kind         EmailKind
+  status       EmailStatus
+  error        String?
+  /// Identifiant rendu par le serveur d'envoi, utile au dépannage.
+  messageId    String?
+  membershipId String?
+  sentAt       DateTime    @default(now())
+
+  @@index([accountId, sentAt])
+}
+
+enum EmailKind {
+  TEST
+  INVITATION
+  PASSWORD_RESET
+  PLANNING_PUBLISHED
+  TIMEOFF_DECISION
+  LEAVE_NOTICE
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+}
