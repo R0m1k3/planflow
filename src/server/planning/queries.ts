@@ -178,6 +178,32 @@ export async function getWeekBoard(
 
       const people = await loadPeople(db, teams.map((team) => team.id));
 
+      // Les absences acceptées s'affichent sur la grille : planifier quelqu'un
+      // qui est en congé est l'erreur que cette bande empêche.
+      const allMemberIds = [...people.values()]
+        .flat()
+        .map((person) => person.membershipId);
+      const absences = await db.timeOff.findMany({
+        where: {
+          membershipId: { in: allMemberIds },
+          status: 'ACCEPTED',
+          startDate: { lte: new Date(`${dates[6]}T00:00:00Z`) },
+          endDate: { gte: new Date(`${dates[0]}T00:00:00Z`) },
+        },
+        include: { absenceType: true },
+      });
+      const absenceInputs = absences.map((absence) => ({
+        membershipId: absence.membershipId,
+        startDate: absence.startDate.toISOString().slice(0, 10),
+        endDate: absence.endDate.toISOString().slice(0, 10),
+        // La grille n'a jamais besoin du motif médical : « Absence » suffit à
+        // ne pas planifier quelqu'un, et c'est une donnée de santé.
+        label: absence.absenceType.isSocialSecurity
+          ? 'Absence'
+          : absence.absenceType.name,
+        colorKey: absence.absenceType.colorKey,
+      }));
+
       // Les constats sont lus, jamais recalculés à l'affichage : ils datent de
       // la dernière écriture, avec la version de convention qui s'appliquait
       // alors. Les recalculer ici les ferait diverger de ce qui a été acquitté.
@@ -209,6 +235,7 @@ export async function getWeekBoard(
           dates,
           location.timezone,
           isPublished,
+          absenceInputs,
         );
 
         const teamAlerts = alerts

@@ -1,3 +1,4 @@
+import { AbsenceBar, type AbsenceKind } from '@/components/planning/AbsenceBar';
 import { CounterStrip } from '@/components/planning/CounterStrip';
 import { ShiftChip } from '@/components/planning/ShiftChip';
 import { computeWeekCounters } from '@/domain/counters/week';
@@ -182,6 +183,18 @@ function Row({
       </div>
 
       <div className="relative grid flex-1 grid-cols-7">
+        {row.absences.map((absence, position) => (
+          <AbsenceBar
+            key={`${absence.startDay}-${position}`}
+            kind={absenceKind(absence.colorKey)}
+            label={absence.label}
+            duration={`${absence.span} j`}
+            startDay={absence.startDay}
+            span={absence.span}
+            className="top-1.5"
+          />
+        ))}
+
         {days.map((day, index) => {
           const shifts = row.days[index] ?? [];
           return (
@@ -191,6 +204,13 @@ function Row({
               className={cx(
                 'group/cell flex min-h-[var(--row-h)] flex-col gap-1 border-r border-line-1 p-1 last:border-r-0',
                 index > 4 && 'bg-surface-2',
+                // La bande d'absence flotte au-dessus : la case lui laisse la
+                // place plutôt que de la faire recouvrir un créneau.
+                row.absences.some(
+                  (absence) =>
+                    index >= absence.startDay &&
+                    index < absence.startDay + absence.span,
+                ) && 'pt-7',
               )}
             >
               {shifts.map((shift) => (
@@ -217,4 +237,17 @@ function Row({
       </div>
     </div>
   );
+}
+
+/**
+ * Teinte de la bande d'absence.
+ *
+ * Reprend la clé de couleur du type d'absence configuré par le client, avec un
+ * repli neutre : une teinte inconnue vaut mieux affichée en gris qu'absente.
+ */
+function absenceKind(colorKey: string): AbsenceKind {
+  const known: AbsenceKind[] = ['cp', 'rtt', 'maladie', 'sans-solde', 'attente'];
+  return known.includes(colorKey as AbsenceKind)
+    ? (colorKey as AbsenceKind)
+    : 'sans-solde';
 }
