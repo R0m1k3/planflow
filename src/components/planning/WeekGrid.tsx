@@ -14,6 +14,8 @@ export interface WeekGridProps {
   dates: readonly string[];
   rows: BoardRow[];
   unassignedRow?: BoardRow | null;
+  /** Créneaux portant un constat de convention : ils prennent le liseré. */
+  flaggedShiftIds?: ReadonlySet<string>;
   /** Rendu de la case d'un jour : sert à greffer l'ajout d'un créneau. */
   cellAction?: (row: BoardRow, dayIndex: number) => React.ReactNode;
   /** Rendu attaché à un créneau : suppression, édition. */
@@ -37,6 +39,7 @@ export function WeekGrid({
   dates,
   rows,
   unassignedRow,
+  flaggedShiftIds,
   cellAction,
   shiftAction,
 }: WeekGridProps) {
@@ -52,6 +55,7 @@ export function WeekGrid({
             row={unassignedRow}
             days={days}
             dates={dates}
+            {...(flaggedShiftIds ? { flaggedShiftIds } : {})}
             {...(cellAction ? { cellAction } : {})}
             {...(shiftAction ? { shiftAction } : {})}
           />
@@ -67,6 +71,7 @@ export function WeekGrid({
             row={row}
             days={days}
             dates={dates}
+            {...(flaggedShiftIds ? { flaggedShiftIds } : {})}
             {...(cellAction ? { cellAction } : {})}
             {...(shiftAction ? { shiftAction } : {})}
           />
@@ -110,12 +115,14 @@ function Row({
   row,
   days,
   dates,
+  flaggedShiftIds,
   cellAction,
   shiftAction,
 }: {
   row: BoardRow;
   days: readonly string[];
   dates: readonly string[];
+  flaggedShiftIds?: ReadonlySet<string>;
   cellAction?: (row: BoardRow, dayIndex: number) => React.ReactNode;
   shiftAction?: (
     shift: BoardShift,
@@ -191,7 +198,11 @@ function Row({
                   <ShiftChip
                     poste={shift.poste}
                     time={shift.time}
-                    state={shift.state}
+                    // Le liseré d'alerte prime sur l'état : un créneau
+                    // publié mais non conforme doit se voir comme tel.
+                    state={
+                      flaggedShiftIds?.has(shift.id) ? 'alert' : shift.state
+                    }
                     {...(shift.breakMinutes
                       ? { breakMinutes: shift.breakMinutes }
                       : {})}

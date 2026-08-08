@@ -14,6 +14,7 @@ import {
   zonedInstant,
 } from '@/domain/planning/week';
 import { recordAudit } from '@/server/audit';
+import { evaluateAround, evaluateSchedule } from '@/server/compliance/evaluate';
 import { mutate } from '@/server/context';
 import type { ScopedClient } from '@/server/tenant';
 
@@ -186,6 +187,8 @@ export async function createShiftAction(
           minutes: worked,
         },
       });
+
+      await assertNoBlocking(db, schedule.id);
     });
   } catch (error) {
     return toState(error, 'Vous ne pouvez pas créer de créneau ici.');
@@ -290,6 +293,8 @@ export async function updateShiftAction(
           endAt: endAt.toISOString(),
         },
       });
+
+      await assertNoBlocking(db, shift.weeklyScheduleId);
     });
   } catch (error) {
     return toState(error, 'Vous ne pouvez pas modifier ce créneau.');
@@ -333,6 +338,11 @@ export async function deleteShiftAction(
       });
 
       await db.shift.delete({ where: { id: shift.id } });
+
+      // Supprimer ne peut pas créer d'incohérence, mais peut en résoudre une :
+      // la semaine et ses voisines sont réévaluées pour que les badges
+      // disparaissent avec le créneau.
+      await evaluateAround(db, shift.weeklyScheduleId);
     });
   } catch (error) {
     return toState(error, 'Vous ne pouvez pas supprimer ce créneau.');
@@ -346,6 +356,8 @@ const publishInput = z.object({
   teamId: z.string().min(1),
   week: z.string().min(1),
   expectedVersion: z.coerce.number().int().min(0),
+  /** Justification exigée dès qu'une alerte non acquittée subsiste. */
+  acknowledgement: z.string().trim().max(500).optional(),
 });
 
 export async function publishWeekAction(
@@ -480,6 +492,8 @@ export async function duplicateWeekAction(
         copied += 1;
       }
 
+      await assertNoBlocking(db, to.id);
+
       await recordAudit(db, {
         actorMembershipId: actor.membershipId,
         action: 'planning.week.duplicate',
@@ -516,6 +530,7 @@ async function setPublication(
     teamId: formData.get('teamId'),
     week: formData.get('week'),
     expectedVersion: formData.get('expectedVersion') ?? 0,
+    acknowledgement: formData.get('acknowledgement') || undefined,
   });
 
   if (!parsed.success) {
@@ -545,6 +560,16 @@ async function setPublication(
             'Cette semaine ne contient aucun créneau : rien à publier.',
           );
         }
+
+        // Contrôle complet du périmètre publié, pas seulement des créneaux
+        // touchés depuis la dernière saisie : publier est l'engagement.
+        await evaluateSchedule(db, schedule.id);
+        await acknowledgeBeforePublishing(
+          db,
+          schedule.id,
+          actor.membershipId,
+          parsed.data.acknowledgement ?? null,
+        );
       }
 
       const updated = await db.weeklySchedule.updateMany({
@@ -588,6 +613,94 @@ async function setPublication(
 
   revalidatePath('/planning/semaine');
   return { ok: true };
+}
+
+
+
+/**
+ * Publier malgré une alerte suppose de l'assumer.
+ *
+ * Un `BLOCKING` interdit la publication : c'est une incohérence, pas un choix.
+ * Un `WARNING` reste franchissable, mais la justification est enregistrée sur
+ * chaque constat et laisse une entrée d'audit — c'est ce qui distingue une
+ * dérogation assumée d'une alerte ignorée.
+ */
+async function acknowledgeBeforePublishing(
+  db: ScopedClient,
+  scheduleId: string,
+  actorMembershipId: string,
+  reason: string | null,
+): Promise<void> {
+  const blocking = await db.complianceViolation.findFirst({
+    where: { weeklyScheduleId: scheduleId, severity: 'BLOCKING' },
+    select: { message: true },
+  });
+  if (blocking) {
+    throw new ValidationError(
+      `Publication impossible — ${blocking.message}`,
+    );
+  }
+
+  const pending = await db.complianceViolation.findMany({
+    where: {
+      weeklyScheduleId: scheduleId,
+      severity: 'WARNING',
+      acknowledgedAt: null,
+    },
+    select: { id: true, ruleCode: true, message: true },
+  });
+  if (pending.length === 0) return;
+
+  if (!reason) {
+    throw new ValidationError(
+      `${pending.length} alerte${pending.length > 1 ? 's' : ''} de convention non justifiée${pending.length > 1 ? 's' : ''} : ${pending[0]?.message ?? ''} Indiquez un motif pour publier malgré tout.`,
+    );
+  }
+
+  const now = new Date();
+  await db.complianceViolation.updateMany({
+    where: { id: { in: pending.map((entry) => entry.id) } },
+    data: {
+      acknowledgedBy: actorMembershipId,
+      acknowledgedAt: now,
+      acknowledgementReason: reason,
+    },
+  });
+
+  await recordAudit(db, {
+    actorMembershipId,
+    action: 'planning.alert.acknowledge',
+    entityType: 'WeeklySchedule',
+    entityId: scheduleId,
+    after: {
+      acknowledged: pending.length,
+      rules: pending.map((entry) => entry.ruleCode).join(', '),
+    },
+    reason,
+  });
+}
+
+/**
+ * Réévalue la semaine touchée et ses voisines, et refuse l'enregistrement si un
+ * constat bloquant apparaît.
+ *
+ * Les `BLOCKING` sont des incohérences de données — chevauchement, créneau
+ * pendant une absence — pas des arbitrages d'organisation. La transaction est
+ * annulée : mieux vaut refuser une saisie que garder en base un planning dont
+ * les heures se comptent deux fois.
+ */
+async function assertNoBlocking(
+  db: ScopedClient,
+  scheduleId: string,
+): Promise<void> {
+  await evaluateAround(db, scheduleId);
+
+  const blocking = await db.complianceViolation.findFirst({
+    where: { weeklyScheduleId: scheduleId, severity: 'BLOCKING' },
+    select: { message: true },
+  });
+
+  if (blocking) throw new ValidationError(blocking.message);
 }
 
 /**

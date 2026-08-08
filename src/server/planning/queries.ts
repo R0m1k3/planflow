@@ -41,6 +41,21 @@ export interface BoardSection {
   publishedAt: Date | null;
   rows: BoardRow[];
   unassignedRow: BoardRow | null;
+  alerts: BoardAlert[];
+  /** Créneaux portant au moins un constat, pour le badge de cellule. */
+  flaggedShiftIds: string[];
+}
+
+export interface BoardAlert {
+  id: string;
+  ruleCode: string;
+  severity: 'INFO' | 'WARNING' | 'BLOCKING';
+  message: string;
+  localDate: string | null;
+  membershipId: string | null;
+  shiftIds: string[];
+  acknowledged: boolean;
+  acknowledgementReason: string | null;
 }
 
 export interface BoardLabel {
@@ -163,6 +178,14 @@ export async function getWeekBoard(
 
       const people = await loadPeople(db, teams.map((team) => team.id));
 
+      // Les constats sont lus, jamais recalculés à l'affichage : ils datent de
+      // la dernière écriture, avec la version de convention qui s'appliquait
+      // alors. Les recalculer ici les ferait diverger de ce qui a été acquitté.
+      const alerts = await db.complianceViolation.findMany({
+        where: { weeklyScheduleId: { in: schedules.map((s) => s.id) } },
+        orderBy: [{ severity: 'asc' }, { localDate: 'asc' }],
+      });
+
       const sections = teams.map((team) => {
         const schedule = scheduleByTeam.get(team.id) ?? null;
         const isPublished = schedule?.status === 'PUBLISHED';
@@ -188,6 +211,20 @@ export async function getWeekBoard(
           isPublished,
         );
 
+        const teamAlerts = alerts
+          .filter((alert) => alert.weeklyScheduleId === schedule?.id)
+          .map((alert) => ({
+            id: alert.id,
+            ruleCode: alert.ruleCode,
+            severity: alert.severity,
+            message: alert.message,
+            localDate: alert.localDate?.toISOString().slice(0, 10) ?? null,
+            membershipId: alert.membershipId,
+            shiftIds: alert.shiftIds,
+            acknowledged: alert.acknowledgedAt !== null,
+            acknowledgementReason: alert.acknowledgementReason,
+          }));
+
         return {
           teamId: team.id,
           teamName: team.name,
@@ -198,6 +235,14 @@ export async function getWeekBoard(
           publishedAt: schedule?.publishedAt ?? null,
           rows,
           unassignedRow,
+          alerts: teamAlerts,
+          flaggedShiftIds: [
+            ...new Set(
+              teamAlerts
+                .filter((alert) => alert.severity !== 'INFO')
+                .flatMap((alert) => alert.shiftIds),
+            ),
+          ],
         } satisfies BoardSection;
       });
 

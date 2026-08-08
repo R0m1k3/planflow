@@ -16,6 +16,12 @@ import {
   zonedInstant,
 } from '../src/domain/planning/week';
 import { POSTE_CODES, POSTE_LABELS } from '../src/lib/design/postes';
+import {
+  IDCC_1517_PARAMETERS,
+  IDCC_1517_PROVENANCE,
+} from '../src/domain/compliance/idcc1517';
+import { evaluateSchedule } from '../src/server/compliance/evaluate';
+import { withTenant } from '../src/server/tenant';
 
 /**
  * Jeu de données de départ — PLAN.md §11.
@@ -406,6 +412,128 @@ async function main() {
   console.log('→ Plannings');
   await seedPlanning(account.id);
 
+
+  console.log('→ Convention collective');
+  // Effectif-datée : la version ne se met pas à jour, elle se remplace par une
+  // suivante datée. Un trigger PostgreSQL refuse de modifier son contenu.
+  const agreement = await prisma.collectiveAgreement.findFirst({
+    where: { accountId: account.id, idcc: '1517', version: 1 },
+  });
+  if (!agreement) {
+    await prisma.collectiveAgreement.create({
+      data: {
+        accountId: account.id,
+        idcc: '1517',
+        name: 'Commerces de détail non alimentaires',
+        parameters: IDCC_1517_PARAMETERS,
+        version: 1,
+        effectiveFrom: new Date('2026-01-01'),
+        source:
+          'Sources secondaires publiques — À VALIDER contre le texte consolidé Legifrance',
+      },
+    });
+  }
+  console.log('  IDCC 1517 version 1');
+
+  console.log('→ Registre de paramétrage juridique');
+  // L'origine de chaque valeur — ordre public, convention, accord d'entreprise
+  // — décide de ce qui se négocie et de ce qui s'impose. Elle est enregistrée
+  // avec sa source, pas seulement commentée dans le code.
+  for (const entry of IDCC_1517_PROVENANCE) {
+    await prisma.legalConfigEntry.upsert({
+      where: {
+        accountId_domain_key_effectiveFrom: {
+          accountId: account.id,
+          domain: 'temps',
+          key: entry.key,
+          effectiveFrom: new Date('2026-01-01'),
+        },
+      },
+      update: { value: entry.value, source: entry.source },
+      create: {
+        accountId: account.id,
+        domain: 'temps',
+        key: entry.key,
+        value: `${entry.label} : ${entry.value}`,
+        source: `[${entry.origin}] ${entry.source}`,
+        population: 'Tous salariés',
+        effectiveFrom: new Date('2026-01-01'),
+      },
+    });
+  }
+  console.log(`  ${IDCC_1517_PROVENANCE.length} paramètres tracés`);
+
+  console.log('→ Jours fériés et dimanches autorisés');
+  // Jours fériés légaux français, hors Alsace-Moselle.
+  const holidays2026: Array<[string, string]> = [
+    ['2026-01-01', 'Jour de l’an'],
+    ['2026-04-06', 'Lundi de Pâques'],
+    ['2026-05-01', 'Fête du travail'],
+    ['2026-05-08', 'Victoire 1945'],
+    ['2026-05-14', 'Ascension'],
+    ['2026-05-25', 'Lundi de Pentecôte'],
+    ['2026-07-14', 'Fête nationale'],
+    ['2026-08-15', 'Assomption'],
+    ['2026-11-01', 'Toussaint'],
+    ['2026-11-11', 'Armistice 1918'],
+    ['2026-12-25', 'Noël'],
+  ];
+
+  for (const location of locations) {
+    for (const [date, name] of holidays2026) {
+      await prisma.holiday.upsert({
+        where: {
+          locationId_localDate: {
+            locationId: location.id,
+            localDate: new Date(`${date}T00:00:00Z`),
+          },
+        },
+        update: { name },
+        create: {
+          accountId: account.id,
+          locationId: location.id,
+          localDate: new Date(`${date}T00:00:00Z`),
+          name,
+          // Les trois jours chômés garantis par la convention sont choisis par
+          // l'employeur : ils ne sont pas devinés ici.
+          isPaidOff: date === '2026-05-01',
+        },
+      });
+    }
+
+    // Douze dimanches du maire, liste arrêtée avant le 31 décembre pour
+    // l'année suivante (L3132-26). Valeurs de démonstration.
+    const sundays = [
+      '2026-01-11',
+      '2026-06-28',
+      '2026-07-05',
+      '2026-08-30',
+      '2026-09-06',
+      '2026-11-29',
+      '2026-12-06',
+      '2026-12-13',
+      '2026-12-20',
+    ];
+    for (const date of sundays) {
+      await prisma.authorisedSunday.upsert({
+        where: {
+          locationId_localDate: {
+            locationId: location.id,
+            localDate: new Date(`${date}T00:00:00Z`),
+          },
+        },
+        update: {},
+        create: {
+          accountId: account.id,
+          locationId: location.id,
+          localDate: new Date(`${date}T00:00:00Z`),
+          reference: 'Arrêté municipal de démonstration',
+        },
+      });
+    }
+  }
+  console.log(`  ${holidays2026.length} jours fériés par établissement`);
+
   console.log('→ Durées de conservation');
   const retention = [
     ['Shift', 12, 'creation', 'Décompte des horaires : 1 an minimum (matrice n° 21).'],
@@ -436,6 +564,21 @@ async function main() {
     });
   }
   console.log(`  ${retention.length} politiques`);
+
+  console.log('→ Évaluation de conformité');
+  // Le seed produit des plannings, donc des constats : les laisser à calculer
+  // au premier affichage donnerait une grille faussement conforme.
+  const schedules = await prisma.weeklySchedule.findMany({
+    where: { accountId: account.id },
+    select: { id: true },
+  });
+  let violations = 0;
+  await withTenant(account.id, async (db) => {
+    for (const schedule of schedules) {
+      violations += (await evaluateSchedule(db, schedule.id)).length;
+    }
+  });
+  console.log(`  ${violations} constats sur ${schedules.length} semaines`);
 
   console.log(`\nMot de passe de démonstration : ${DEMO_PASSWORD}`);
 }
