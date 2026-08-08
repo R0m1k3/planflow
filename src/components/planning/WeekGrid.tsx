@@ -5,6 +5,7 @@ import {
   displayName,
   initialsOf,
   type BoardRow,
+  type BoardShift,
 } from '@/domain/planning/board';
 import { cx } from '@/lib/cx';
 
@@ -16,7 +17,11 @@ export interface WeekGridProps {
   /** Rendu de la case d'un jour : sert à greffer l'ajout d'un créneau. */
   cellAction?: (row: BoardRow, dayIndex: number) => React.ReactNode;
   /** Rendu attaché à un créneau : suppression, édition. */
-  shiftAction?: (shiftId: string) => React.ReactNode;
+  shiftAction?: (
+    shift: BoardShift,
+    row: BoardRow,
+    dayIndex: number,
+  ) => React.ReactNode;
 }
 
 /**
@@ -37,7 +42,10 @@ export function WeekGrid({
 }: WeekGridProps) {
   return (
     <div className="overflow-x-auto rounded-3 border border-line-1 bg-surface">
-      <div className="min-w-[1040px]">
+      {/* Rôles ARIA explicites : la grille est faite de div pour la mise en
+          page, mais elle se lit comme un tableau — un lecteur d'écran doit
+          pouvoir annoncer « ligne Camille Ferrand, colonne mercredi ». */}
+      <div role="grid" aria-label="Planning de la semaine" className="min-w-[1040px]">
         <GridHeader days={days} />
         {unassignedRow ? (
           <Row
@@ -70,13 +78,20 @@ export function WeekGrid({
 
 function GridHeader({ days }: { days: readonly string[] }) {
   return (
-    <div className="sticky top-0 z-20 flex border-b border-line-2 bg-surface-2">
-      <div className="w-64 flex-none border-r border-line-1 px-3 py-2 text-micro font-semibold tracking-[0.06em] text-ink-3 uppercase">
+    <div
+      role="row"
+      className="sticky top-0 z-20 flex border-b border-line-2 bg-surface-2"
+    >
+      <div
+        role="columnheader"
+        className="w-64 flex-none border-r border-line-1 px-3 py-2 text-micro font-semibold tracking-[0.06em] text-ink-3 uppercase"
+      >
         Salarié
       </div>
       <div className="grid flex-1 grid-cols-7">
         {days.map((day, index) => (
           <div
+            role="columnheader"
             key={day}
             className={cx(
               'border-r border-line-1 px-2 py-2 text-center text-xs font-semibold last:border-r-0',
@@ -102,19 +117,25 @@ function Row({
   days: readonly string[];
   dates: readonly string[];
   cellAction?: (row: BoardRow, dayIndex: number) => React.ReactNode;
-  shiftAction?: (shiftId: string) => React.ReactNode;
+  shiftAction?: (
+    shift: BoardShift,
+    row: BoardRow,
+    dayIndex: number,
+  ) => React.ReactNode;
 }) {
   const counters = computeWeekCounters(row.counters);
   const name = row.unassigned ? 'Non assigné' : displayName(row);
 
   return (
     <div
+      role="row"
+      data-membership={row.membershipId ?? 'unassigned'}
       className={cx(
         'flex border-b border-line-1 last:border-b-0',
         row.unassigned && 'bg-surface-2',
       )}
     >
-      <div className="w-64 flex-none border-r border-line-1 px-3 py-2">
+      <div role="rowheader" className="w-64 flex-none border-r border-line-1 px-3 py-2">
         <div className="flex items-center gap-2">
           {row.unassigned ? (
             <span
@@ -158,6 +179,7 @@ function Row({
           const shifts = row.days[index] ?? [];
           return (
             <div
+              role="gridcell"
               key={dates[index] ?? day}
               className={cx(
                 'group/cell flex min-h-[var(--row-h)] flex-col gap-1 border-r border-line-1 p-1 last:border-r-0',
@@ -174,7 +196,7 @@ function Row({
                       ? { breakMinutes: shift.breakMinutes }
                       : {})}
                   />
-                  {shiftAction?.(shift.id)}
+                  {shiftAction?.(shift, row, index)}
                 </div>
               ))}
               {cellAction?.(row, index)}

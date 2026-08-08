@@ -38,7 +38,7 @@ export function AppShell({
 
   return (
     <div className="flex min-h-dvh flex-col bg-canvas text-ink-1">
-      <header className="flex h-13 flex-none items-center gap-5 border-b border-line-2 bg-surface px-5">
+      <header data-print="hide" className="flex h-13 flex-none items-center gap-5 border-b border-line-2 bg-surface px-5">
         <Link
           href="/"
           className="flex items-center gap-2.5 rounded-2 text-lg font-semibold tracking-[-0.015em]"

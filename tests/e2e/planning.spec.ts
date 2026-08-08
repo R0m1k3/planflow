@@ -13,7 +13,12 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
  * ou déjà rempli.
  */
 
+/**
+ * Chaque test possède **sa** semaine : la suite tourne en parallèle, et deux
+ * tests qui videraient puis rempliraient la même grille se marcheraient dessus.
+ */
 const WEEK = '2027-W20';
+const CROSS_VIEW_WEEK = '2027-W22';
 
 function venteSection(page: Page): Locator {
   return page
@@ -21,8 +26,8 @@ function venteSection(page: Page): Locator {
     .filter({ has: page.getByRole('heading', { name: 'Vente' }) });
 }
 
-async function resetWeek(page: Page): Promise<void> {
-  await page.goto(`/planning/semaine?semaine=${WEEK}`);
+async function resetWeek(page: Page, week = WEEK): Promise<void> {
+  await page.goto(`/planning/semaine?semaine=${week}`);
   const section = venteSection(page);
   await expect(section).toBeVisible();
 
@@ -49,9 +54,12 @@ async function addShift(
   section: Locator,
   times: { start: string; end: string; pause?: string },
 ): Promise<Locator> {
+  // Viser la ligne par son rôle ARIA : `locator('div')` remonterait au
+  // conteneur de la grille, et le premier bouton trouvé serait celui d'un
+  // autre salarié — une erreur qui ne se voit pas à l'écran.
   const row = section
-    .locator('div')
-    .filter({ hasText: /Camille Ferrand/ })
+    .getByRole('row')
+    .filter({ hasText: 'Camille Ferrand' })
     .first();
   await row.getByRole('button', { name: /\+ Créneau/ }).first().click();
 
@@ -113,4 +121,41 @@ test('la navigation de semaine change la grille', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'Planning · semaine 20' }),
   ).toBeVisible();
+});
+
+/**
+ * Les vues lisent le même modèle.
+ *
+ * C'est le critère d'acceptation de WP-04 : un créneau posé dans la grille
+ * hebdomadaire doit apparaître **identique** dans les vues jour, poste et
+ * mois. Chacune interroge `Shift` directement ; ce test est ce qui empêche
+ * l'une d'elles de dériver vers son propre calcul.
+ */
+test('un créneau posé se retrouve dans les quatre vues', async ({ page }) => {
+  await resetWeek(page, CROSS_VIEW_WEEK);
+  const section = venteSection(page);
+
+  await addShift(page, section, { start: '08:30', end: '16:30', pause: '45' });
+  await expect(section.getByText('08:30–16:30').first()).toBeVisible();
+
+  // Lundi de la semaine 22 de 2027.
+  const monday = '2027-05-31';
+
+  await page.goto(`/planning/jour?jour=${monday}`);
+  // Chercher le nom dans la chronologie, pas dans l'en-tête de l'application,
+  // qui affiche déjà « Camille Ferrand, Propriétaire ».
+  await expect(page.getByTitle(/^ENC · 08:30–16:30$|08:30–16:30/).first()).toBeVisible();
+  await expect(
+    page.locator('main').getByText('Camille Ferrand').first(),
+  ).toBeVisible();
+
+  await page.goto(`/planning/etiquettes?semaine=${CROSS_VIEW_WEEK}`);
+  await expect(page.getByText('08:30–16:30').first()).toBeVisible();
+
+  await page.goto('/planning/mois?mois=2027-05');
+  const row = page.getByRole('row').filter({ hasText: 'Camille Ferrand' });
+  // 8 h d'amplitude moins 45 min de pause : 7,3 h dans la case du jour. Les
+  // deux vues doivent dire la même durée. `first()` parce que l'autre test de
+  // ce fichier planifie le même salarié ailleurs dans le mois.
+  await expect(row.getByText('7,3').first()).toBeVisible();
 });

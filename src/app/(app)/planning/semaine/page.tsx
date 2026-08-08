@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { PrintButton } from '@/components/planning/PrintButton';
 import { TeamSection } from '@/components/planning/TeamSection';
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/Badge';
@@ -45,6 +46,7 @@ export default async function SemainePage({ searchParams }: PageProps) {
 
   const canEdit = can(session.actor, 'planning.create');
   const canPublish = can(session.actor, 'planning.publish');
+  const canDuplicate = can(session.actor, 'planning.duplicate');
   const href = (semaine: string, etablissement = board.location.id) =>
     `/planning/semaine?semaine=${semaine}&etablissement=${etablissement}`;
 
@@ -67,11 +69,12 @@ export default async function SemainePage({ searchParams }: PageProps) {
             >
               Semaine suivante →
             </Link>
+            <PrintButton label="Imprimer la semaine" />
           </>
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2" data-print="hide">
         {board.locations.map((location) => (
           <Link
             key={location.id}
@@ -111,8 +114,10 @@ export default async function SemainePage({ searchParams }: PageProps) {
           dates={board.dates}
           labels={board.labels}
           weekParam={board.weekParam}
+          previousParam={board.previousParam}
           canEdit={canEdit}
           canPublish={canPublish}
+          canDuplicate={canDuplicate}
         />
       ))}
 

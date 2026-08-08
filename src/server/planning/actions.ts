@@ -8,6 +8,9 @@ import { shiftMinutes } from '@/domain/counters/week';
 import {
   parseWeekParam,
   weekBounds,
+  weekDates,
+  zonedClock,
+  zonedDate,
   zonedInstant,
 } from '@/domain/planning/week';
 import { recordAudit } from '@/server/audit';
@@ -357,6 +360,145 @@ export async function unpublishWeekAction(
   formData: FormData,
 ): Promise<PlanningActionState> {
   return setPublication(formData, false);
+}
+
+const duplicateInput = z.object({
+  teamId: z.string().min(1),
+  /** Semaine à copier. */
+  source: z.string().min(1),
+  /** Semaine de destination. */
+  target: z.string().min(1),
+});
+
+/**
+ * Duplique une semaine vers une autre.
+ *
+ * C'est le geste le plus fréquent du métier : les plannings de commerce se
+ * répètent d'une semaine à l'autre, à quelques ajustements près. La copie
+ * reporte les créneaux **jour à jour** — le lundi source devient le lundi
+ * cible — et recalcule les instants dans le fuseau de l'établissement, sans
+ * quoi une copie franchissant un changement d'heure décalerait tout d'une
+ * heure.
+ *
+ * La destination doit être **vide** : écraser silencieusement le travail de
+ * quelqu'un d'autre est pire que refuser.
+ */
+export async function duplicateWeekAction(
+  _previous: PlanningActionState,
+  formData: FormData,
+): Promise<PlanningActionState> {
+  const parsed = duplicateInput.safeParse({
+    teamId: formData.get('teamId'),
+    source: formData.get('source'),
+    target: formData.get('target'),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };
+  }
+
+  const source = parseWeekParam(parsed.data.source);
+  const target = parseWeekParam(parsed.data.target);
+  if (!source || !target) return { error: 'Semaine invalide.' };
+  if (source.isoYear === target.isoYear && source.isoWeek === target.isoWeek) {
+    return { error: 'La semaine source et la semaine cible sont identiques.' };
+  }
+
+  let copied = 0;
+
+  try {
+    await mutate('planning.duplicate', async (db, actor) => {
+      const { team, location } = await loadTeamContext(db, parsed.data.teamId);
+
+      const from = await db.weeklySchedule.findUnique({
+        where: {
+          teamId_isoYear_isoWeek: {
+            teamId: team.id,
+            isoYear: source.isoYear,
+            isoWeek: source.isoWeek,
+          },
+        },
+      });
+      if (!from) {
+        throw new ValidationError("La semaine à copier n'existe pas.");
+      }
+
+      const shifts = await db.shift.findMany({
+        where: { weeklyScheduleId: from.id },
+      });
+      if (shifts.length === 0) {
+        throw new ValidationError('La semaine à copier ne contient aucun créneau.');
+      }
+
+      const to = await ensureSchedule(
+        db,
+        team.id,
+        location.id,
+        target.isoYear,
+        target.isoWeek,
+      );
+
+      const existing = await db.shift.count({
+        where: { weeklyScheduleId: to.id },
+      });
+      if (existing > 0) {
+        throw new ValidationError(
+          'La semaine de destination contient déjà des créneaux. Videz-la avant de dupliquer.',
+        );
+      }
+
+      const sourceDates = weekDates(source);
+      const targetDates = weekDates(target);
+      const dayOf = new Map(sourceDates.map((date, index) => [date, index]));
+
+      for (const shift of shifts) {
+        const column = dayOf.get(zonedDate(shift.startAt, location.timezone));
+        if (column === undefined) continue;
+
+        const targetDate = targetDates[column] as string;
+        // Report par heure locale, pas par décalage de sept jours : entre
+        // mars et avril, sept jours d'écart ne redonnent pas la même heure.
+        const startClock = zonedClock(shift.startAt, location.timezone);
+        const endClock = zonedClock(shift.endAt, location.timezone);
+
+        const startAt = zonedInstant(targetDate, startClock, location.timezone);
+        let endAt = zonedInstant(targetDate, endClock, location.timezone);
+        if (endAt <= startAt) endAt = new Date(endAt.getTime() + 86_400_000);
+
+        await db.shift.create({
+          data: {
+            weeklyScheduleId: to.id,
+            membershipId: shift.membershipId,
+            localDate: new Date(`${targetDate}T00:00:00Z`),
+            startAt,
+            endAt,
+            breakMinutes: shift.breakMinutes,
+            labelId: shift.labelId,
+            note: shift.note,
+          } as never,
+        });
+        copied += 1;
+      }
+
+      await recordAudit(db, {
+        actorMembershipId: actor.membershipId,
+        action: 'planning.week.duplicate',
+        entityType: 'WeeklySchedule',
+        entityId: to.id,
+        after: {
+          teamId: team.id,
+          from: `${source.isoYear}-W${source.isoWeek}`,
+          to: `${target.isoYear}-W${target.isoWeek}`,
+          shifts: copied,
+        },
+      });
+    });
+  } catch (error) {
+    return toState(error, 'Vous ne pouvez pas dupliquer cette semaine.');
+  }
+
+  revalidatePath('/planning/semaine');
+  return { ok: true };
 }
 
 /**

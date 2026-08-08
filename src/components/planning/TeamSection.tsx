@@ -6,12 +6,18 @@ import { WeekGrid } from '@/components/planning/WeekGrid';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { formatMinutes } from '@/domain/counters/week';
-import { displayName, type BoardRow } from '@/domain/planning/board';
+import {
+  displayName,
+  type BoardRow,
+  type BoardShift,
+} from '@/domain/planning/board';
 import {
   createShiftAction,
   deleteShiftAction,
+  duplicateWeekAction,
   publishWeekAction,
   unpublishWeekAction,
+  updateShiftAction,
   type PlanningActionState,
 } from '@/server/planning/actions';
 import type { BoardLabel, BoardSection } from '@/server/planning/queries';
@@ -22,12 +28,25 @@ export interface TeamSectionProps {
   dates: string[];
   labels: BoardLabel[];
   weekParam: string;
+  /** Semaine précédente : proposition par défaut de la duplication. */
+  previousParam: string;
   /** Faux quand la capacité de modification manque : la grille reste lisible. */
   canEdit: boolean;
   canPublish: boolean;
+  canDuplicate: boolean;
 }
 
 const empty: PlanningActionState = {};
+
+/** Cible du panneau d'édition : création dans une case, ou créneau existant. */
+type Target =
+  | { kind: 'create'; membershipId: string | null; dayIndex: number }
+  | {
+      kind: 'edit';
+      shift: BoardShift;
+      membershipId: string | null;
+      dayIndex: number;
+    };
 
 /**
  * Une équipe, une grille, un état de publication.
@@ -42,19 +61,21 @@ export function TeamSection({
   dates,
   labels,
   weekParam,
+  previousParam,
   canEdit,
   canPublish,
+  canDuplicate,
 }: TeamSectionProps) {
-  const [target, setTarget] = useState<{
-    membershipId: string | null;
-    dayIndex: number;
-  } | null>(null);
+  const [target, setTarget] = useState<Target | null>(null);
 
   const published = section.status === 'PUBLISHED';
   const plannedMinutes = section.rows.reduce(
     (total, row) => total + row.counters.plannedMinutes,
     0,
   );
+  const isEmpty =
+    section.rows.every((row) => row.days.flat().length === 0) &&
+    !section.unassignedRow;
 
   if (section.hidden) {
     // Le brouillon n'est pas seulement masqué : il n'a pas été chargé. Dire
@@ -86,14 +107,23 @@ export function TeamSection({
           </span>
         </div>
 
-        {canPublish ? (
-          <PublishControl
-            teamId={section.teamId}
-            weekParam={weekParam}
-            version={section.version}
-            published={published}
-          />
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2 print:hidden">
+          {canDuplicate && isEmpty ? (
+            <DuplicateControl
+              teamId={section.teamId}
+              source={previousParam}
+              target={weekParam}
+            />
+          ) : null}
+          {canPublish ? (
+            <PublishControl
+              teamId={section.teamId}
+              weekParam={weekParam}
+              version={section.version}
+              published={published}
+            />
+          ) : null}
+        </div>
       </header>
 
       <WeekGrid
@@ -107,9 +137,13 @@ export function TeamSection({
                 <button
                   type="button"
                   onClick={() =>
-                    setTarget({ membershipId: row.membershipId, dayIndex })
+                    setTarget({
+                      kind: 'create',
+                      membershipId: row.membershipId,
+                      dayIndex,
+                    })
                   }
-                  className="mt-auto rounded-2 border border-dashed border-line-2 px-1 py-0.5 text-micro text-ink-3 opacity-0 transition-opacity hover:border-accent hover:text-accent focus-visible:opacity-100 group-hover/cell:opacity-100"
+                  className="mt-auto rounded-2 border border-dashed border-line-2 px-1 py-0.5 text-micro text-ink-3 opacity-0 transition-opacity hover:border-accent hover:text-accent focus-visible:opacity-100 group-hover/cell:opacity-100 print:hidden"
                 >
                   + Créneau
                   <span className="sr-only">
@@ -117,8 +151,26 @@ export function TeamSection({
                   </span>
                 </button>
               ),
-              shiftAction: (shiftId: string) => (
-                <DeleteShift shiftId={shiftId} />
+              shiftAction: (shift, row, dayIndex) => (
+                <div className="absolute -top-1 -right-1 flex gap-0.5 print:hidden">
+                  <button
+                    type="button"
+                    title="Modifier le créneau"
+                    onClick={() =>
+                      setTarget({
+                        kind: 'edit',
+                        shift,
+                        membershipId: row.membershipId,
+                        dayIndex,
+                      })
+                    }
+                    className="flex size-4 items-center justify-center rounded-full border border-line-2 bg-surface text-micro leading-none text-ink-3 opacity-0 hover:border-accent hover:text-accent focus-visible:opacity-100 group-hover/cell:opacity-100"
+                  >
+                    <span aria-hidden>✎</span>
+                    <span className="sr-only">Modifier le créneau</span>
+                  </button>
+                  <DeleteShift shiftId={shift.id} />
+                </div>
               ),
             }
           : {})}
@@ -126,13 +178,14 @@ export function TeamSection({
 
       {target ? (
         <ShiftComposer
+          key={target.kind === 'edit' ? target.shift.id : 'create'}
           teamId={section.teamId}
           weekParam={weekParam}
           labels={labels}
           rows={section.rows}
           localDate={dates[target.dayIndex] ?? ''}
           dayLabel={days[target.dayIndex] ?? ''}
-          membershipId={target.membershipId}
+          target={target}
           onClose={() => setTarget(null)}
         />
       ) : null}
@@ -179,11 +232,46 @@ function PublishControl({
   );
 }
 
+/**
+ * Proposé seulement sur une semaine vide : dupliquer par-dessus un travail
+ * commencé le détruirait, et l'action refuse de toute façon côté serveur.
+ */
+function DuplicateControl({
+  teamId,
+  source,
+  target,
+}: {
+  teamId: string;
+  source: string;
+  target: string;
+}) {
+  const [state, formAction, pending] = useActionState(
+    duplicateWeekAction,
+    empty,
+  );
+
+  return (
+    <form action={formAction} className="flex items-center gap-2">
+      <input type="hidden" name="teamId" value={teamId} />
+      <input type="hidden" name="source" value={source} />
+      <input type="hidden" name="target" value={target} />
+      {state.error ? (
+        <span role="alert" className="text-xs text-danger">
+          {state.error}
+        </span>
+      ) : null}
+      <Button type="submit" size="sm" disabled={pending}>
+        Copier la semaine précédente
+      </Button>
+    </form>
+  );
+}
+
 function DeleteShift({ shiftId }: { shiftId: string }) {
   const [state, formAction, pending] = useActionState(deleteShiftAction, empty);
 
   return (
-    <form action={formAction} className="absolute -top-1 -right-1">
+    <form action={formAction}>
       <input type="hidden" name="shiftId" value={shiftId} />
       {/* Volontairement pas désactivé pendant l'envoi : la suppression fait
           disparaître le créneau, donc le bouton, et un état désactivé
@@ -201,6 +289,13 @@ function DeleteShift({ shiftId }: { shiftId: string }) {
   );
 }
 
+/**
+ * Panneau d'édition d'un créneau, en création comme en modification.
+ *
+ * Un seul formulaire pour les deux : déplacer un créneau, c'est changer son
+ * jour, son salarié ou ses heures — exactement les champs de la création. Deux
+ * écrans distincts finiraient par diverger.
+ */
 function ShiftComposer({
   teamId,
   weekParam,
@@ -208,7 +303,7 @@ function ShiftComposer({
   rows,
   localDate,
   dayLabel,
-  membershipId,
+  target,
   onClose,
 }: {
   teamId: string;
@@ -217,10 +312,14 @@ function ShiftComposer({
   rows: BoardRow[];
   localDate: string;
   dayLabel: string;
-  membershipId: string | null;
+  target: Target;
   onClose: () => void;
 }) {
-  const [state, formAction, pending] = useActionState(createShiftAction, empty);
+  const editing = target.kind === 'edit';
+  const [state, formAction, pending] = useActionState(
+    editing ? updateShiftAction : createShiftAction,
+    empty,
+  );
 
   // La grille est déjà revalidée côté serveur ; refermer le panneau évite de
   // reposter le même créneau par inadvertance.
@@ -228,13 +327,23 @@ function ShiftComposer({
     if (state.ok) onClose();
   }, [state.ok, onClose]);
 
+  const [start, end] = editing
+    ? target.shift.time.split('–')
+    : ['09:00', '17:00'];
+
   return (
     <form
       action={formAction}
-      className="flex flex-wrap items-end gap-3 rounded-3 border border-line-2 bg-surface-2 p-3"
+      className="flex flex-wrap items-end gap-3 rounded-3 border border-line-2 bg-surface-2 p-3 print:hidden"
     >
-      <input type="hidden" name="teamId" value={teamId} />
-      <input type="hidden" name="week" value={weekParam} />
+      {editing ? (
+        <input type="hidden" name="shiftId" value={target.shift.id} />
+      ) : (
+        <>
+          <input type="hidden" name="teamId" value={teamId} />
+          <input type="hidden" name="week" value={weekParam} />
+        </>
+      )}
       <input type="hidden" name="localDate" value={localDate} />
 
       <Field label="Jour">
@@ -247,7 +356,7 @@ function ShiftComposer({
         <select
           id="composer-membership"
           name="membershipId"
-          defaultValue={membershipId ?? ''}
+          defaultValue={target.membershipId ?? ''}
           className="h-8 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
         >
           <option value="">Besoin non couvert</option>
@@ -265,7 +374,7 @@ function ShiftComposer({
           name="start"
           type="time"
           required
-          defaultValue="09:00"
+          defaultValue={start}
           className="h-8 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
         />
       </Field>
@@ -276,7 +385,7 @@ function ShiftComposer({
           name="end"
           type="time"
           required
-          defaultValue="17:00"
+          defaultValue={end}
           className="h-8 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
         />
       </Field>
@@ -289,28 +398,30 @@ function ShiftComposer({
           min={0}
           max={600}
           step={5}
-          defaultValue={0}
+          defaultValue={editing ? target.shift.breakMinutes : 0}
           className="h-8 w-20 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
         />
       </Field>
 
-      <Field label="Poste" htmlFor="composer-label">
-        <select
-          id="composer-label"
-          name="labelId"
-          className="h-8 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
-        >
-          {labels.map((label) => (
-            <option key={label.id} value={label.id}>
-              {label.name}
-            </option>
-          ))}
-        </select>
-      </Field>
+      {editing ? null : (
+        <Field label="Poste" htmlFor="composer-label">
+          <select
+            id="composer-label"
+            name="labelId"
+            className="h-8 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+          >
+            {labels.map((label) => (
+              <option key={label.id} value={label.id}>
+                {label.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <div className="flex items-center gap-2">
         <Button type="submit" variant="primary" size="sm" disabled={pending}>
-          Ajouter
+          {editing ? 'Enregistrer' : 'Ajouter'}
         </Button>
         <Button type="button" size="sm" onClick={onClose}>
           Annuler

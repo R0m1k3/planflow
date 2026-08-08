@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
 import { DayTimeline } from '@/components/planning/DayTimeline';
+import { PrintButton } from '@/components/planning/PrintButton';
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { getDayBoard } from '@/server/planning/queries';
@@ -57,6 +58,7 @@ export default async function JourPage({ searchParams }: PageProps) {
             >
               Jour suivant →
             </Link>
+            <PrintButton label="Imprimer la journée" />
           </>
         }
       />
