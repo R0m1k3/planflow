@@ -51,10 +51,13 @@ test('le thème bascule et survit à un rechargement', async ({ page }) => {
 test('une entrée de navigation non construite mène à un écran explicite', async ({
   page,
 }) => {
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Profils incomplets' }).click();
+  // La barre latérale n'affiche que la section courante : on l'ouvre d'abord.
+  await page.goto('/conges');
+  // « Politiques de congés » fait partie du périmètre visé mais n'est pas
+  // encore construit : l'entrée reste, et mène à un écran qui le dit.
+  await page.getByRole('link', { name: 'Politiques de congés' }).click();
   await expect(
-    page.getByRole('heading', { name: 'Profils incomplets' }),
+    page.getByRole('heading', { name: 'Politiques de congés' }),
   ).toBeVisible();
   // `exact` évite de heurter l'annonceur de route de Next, qui répète le titre
   // du document — « Écran à venir · PlanFlow ».

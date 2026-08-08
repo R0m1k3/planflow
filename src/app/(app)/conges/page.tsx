@@ -150,7 +150,10 @@ export default async function CongesPage({ searchParams }: PageProps) {
         )}
       </section>
 
-      <section className="rounded-3 border border-line-1 bg-surface">
+      <section
+        id="compteurs"
+        className="rounded-3 border border-line-1 bg-surface"
+      >
         <h2 className="border-b border-line-1 px-4 py-2 text-micro font-semibold tracking-[0.08em] text-ink-3 uppercase">
           Compteurs
         </h2>

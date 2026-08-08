@@ -58,3 +58,34 @@ test('un manager voit le brouillon et peut le publier', async ({ page }) => {
   await expect(page.getByText('Brouillon').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Publier' }).first()).toBeVisible();
 });
+
+test('un salarié voit un accueil adapté, pas un tableau de bord vide', async ({
+  page,
+}) => {
+  await signIn(page, 'salarie@example.test');
+  await page.goto('/');
+
+  // Lui servir une erreur d'autorisation sur la page d'accueil serait absurde ;
+  // lui montrer des indicateurs vides le serait tout autant.
+  await expect(page.getByRole('heading', { name: 'Aperçu' })).toBeVisible();
+  await expect(page.getByText('Mon planning')).toBeVisible();
+  await expect(page.getByText('Effectif en fin de mois')).toHaveCount(0);
+  await expect(page.getByText('Rotation')).toHaveCount(0);
+});
+
+test('un manager ne voit que les établissements de son périmètre', async ({
+  page,
+}) => {
+  await signIn(page, 'manager.nantes@example.test');
+  await page.goto('/');
+
+  // Le périmètre s'applique avant l'agrégation : les mouvements d'un autre
+  // établissement ne doivent pas transparaître, même fondus dans un total.
+  await expect(page.getByRole('heading', { name: 'Aperçu RH' })).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Nantes Atlantis', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Rennes Alma', exact: true }),
+  ).toHaveCount(0);
+});
