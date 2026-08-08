@@ -29,9 +29,12 @@ export const NAVIGATION: NavSection[] = [
     label: 'Aperçu',
     items: [
       { id: 'taches', label: 'Tâches RH', href: '/' },
-      { id: 'entrees', label: 'Entrées et sorties' },
-      { id: 'profils', label: 'Profils incomplets', badge: '6' },
-      { id: 'soldes-cp', label: 'Compteurs de congés payés' },
+      { id: 'entrees', label: 'Entrées et sorties', href: '/?liste=entrees' },
+      { id: 'profils', label: 'Profils incomplets', href: '/?liste=profils' },
+      { id: 'titres', label: 'Titres de séjour', href: '/?liste=titres' },
+      // Ancre plutôt que route : `/conges` appartient à la section Congés, et
+      // deux entrées allumées pour un même écran rendent la navigation muette.
+      { id: 'soldes-cp', label: 'Compteurs de congés payés', href: '/conges#compteurs' },
     ],
   },
   {
@@ -42,7 +45,7 @@ export const NAVIGATION: NavSection[] = [
       { id: 'jour', label: 'Vue jour', href: '/planning/jour' },
       { id: 'etiquettes', label: 'Vue par poste', href: '/planning/etiquettes' },
       { id: 'mois', label: 'Vue mois', href: '/planning/mois' },
-      { id: 'besoins', label: 'Besoins non couverts', badge: '5' },
+      { id: 'besoins', label: 'Besoins non couverts' },
       { id: 'modeles', label: "Modèles d'ouverture" },
     ],
   },
@@ -59,7 +62,7 @@ export const NAVIGATION: NavSection[] = [
     label: 'Congés',
     items: [
       { id: 'calendrier', label: 'Calendrier des absences', href: '/conges' },
-      { id: 'attente', label: 'Demandes en attente', href: '/conges#attente', badge: '3' },
+      { id: 'attente', label: 'Demandes en attente', href: '/conges#attente' },
       { id: 'politiques', label: 'Politiques de congés' },
     ],
   },

@@ -12,9 +12,37 @@ La spécification de construction est [`PLAN.md`](PLAN.md). Elle est normative :
 
 ## État
 
-**WP-00 — socle** et **implémentation du design** : six écrans sur données de démonstration.
+Neuf lots livrés. **Aucun écran ne lit plus de données de démonstration** : le
+répertoire `src/lib/demo` a disparu.
 
-**WP-01 — tenancy, identité, autorisation** : en cours. Modèle de données, RLS, journal d'audit append-only, catalogue de 70 capacités, cinq rôles, sessions en base. Les écrans lisent encore `src/lib/demo`.
+| Lot | Contenu |
+|---|---|
+| WP-00 | Socle : Next.js, PostgreSQL, CSP restrictive, CI, sauvegardes |
+| WP-01 | Tenancy, identité, autorisation : RLS, audit append-only, 70 capacités, cinq rôles |
+| WP-02 | Référentiels et registre de paramétrage juridique |
+| WP-03 | Dossiers salariés, contrats et avenants, forfait jours |
+| WP-04 | Planning : quatre vues, publication par équipe, impression |
+| WP-05 | Moteur de règles de convention, effectif-daté |
+| WP-06 | Absences, registre de compteurs, calendrier |
+| WP-07 | Heures prévu/réalisé/payé, périodes de paie verrouillables |
+| WP-08 | Export Silae, format relevé sur un export réel du dossier |
+| WP-09 | Tableau de bord RH : indicateurs explicables |
+
+Restent WP-10 (documents) et WP-11 (communication, optionnel), ainsi que deux
+points nommés à l'intérieur des lots livrés : la régularisation automatique sur
+la période suivante et l'information au retour d'arrêt.
+
+### Ce qui attend une décision du client
+
+Ces points sont des **signaux d'arrêt** au sens de `PLAN.md` : ils ne se
+devinent pas.
+
+- Les **codes d'absence Silae** (`AB-100`, `AB-200`, `AB-300`, `AB-630`) : leur
+  existence est connue, leur signification non. L'export refuse de tourner tant
+  que la correspondance n'est pas confirmée.
+- Le **régime dominical** applicable aux magasins, qui détermine si la
+  majoration de 100 % et le repos compensateur sont les bonnes contreparties.
+- Les **règles applicables aux mineurs**, sans source primaire au dossier.
 
 ## Démarrer
 
