@@ -776,3 +776,61 @@ model AuthorisedSunday {
   @@unique([locationId, localDate])
   @@index([accountId])
 }
+
+// ============================================================================
+// Export de paie — PLAN.md §8, WP-08
+// ============================================================================
+
+/// Correspondance entre un élément calculé par PlanFlow et un code du dossier
+/// Silae.
+///
+/// En base et non dans le code : les codes appartiennent au dossier du client
+/// et se lisent dans « Saisie des éléments variables ». Deux clients du même
+/// cabinet n'ont pas nécessairement les mêmes.
+model SilaeCodeMapping {
+  id        String          @id @default(cuid())
+  accountId String
+  /// Élément calculé — voir `PayrollElementKey`.
+  sourceKey String
+  silaeCode String
+  label     String
+  kind      SilaeMappingKind
+  /// Faux tant que la correspondance n'a pas été confirmée par le gestionnaire
+  /// de paie. Un export refuse de tourner sur une correspondance non confirmée.
+  confirmed Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@unique([accountId, sourceKey])
+  @@index([accountId])
+}
+
+enum SilaeMappingKind {
+  /// Décompte de service, sans préfixe : jours travaillés, heures travaillées.
+  SERVICE
+  /// Heures supplémentaires, préfixe `HS-`.
+  OVERTIME
+  /// Absences, préfixe `AB-`.
+  ABSENCE
+  /// Éléments variables, préfixe `EV-`.
+  VARIABLE
+}
+
+/// Trace d'une génération d'export.
+///
+/// Le contenu n'est **pas** conservé : il porte les heures et les absences de
+/// salariés identifiables, et le regénérer est déterministe. L'empreinte suffit
+/// à prouver qu'un réexport est identique.
+model PayrollExport {
+  id          String   @id @default(cuid())
+  accountId   String
+  locationId  String?
+  periodStart DateTime @db.Date
+  periodEnd   DateTime @db.Date
+  checksum    String
+  lineCount   Int
+  generatedBy String?
+  generatedAt DateTime @default(now())
+
+  @@index([accountId, periodStart])
+  @@index([accountId])
+}
