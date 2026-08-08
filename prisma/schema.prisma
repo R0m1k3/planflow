@@ -825,6 +825,10 @@ model PayrollExport {
   id          String   @id @default(cuid())
   accountId   String
   locationId  String?
+  /// Période couverte. La péremption se **déduit** de
+  /// `generatedAt < PayPeriod.unlockedAt` : la stocker obligerait à réécrire
+  /// une trace qui doit rester append-only.
+  payPeriodId String?
   periodStart DateTime @db.Date
   periodEnd   DateTime @db.Date
   checksum    String
@@ -1011,4 +1015,82 @@ model LeaveNotice {
 
   @@index([accountId])
   @@index([membershipId])
+}
+
+// ============================================================================
+// Périodes de paie — PLAN.md §4.6 et §7.3, WP-07
+// ============================================================================
+
+/// Période de paie d'un établissement.
+///
+/// Le **verrouillage** fige les instantanés et interdit toute mutation dont la
+/// date tombe dans la période. Le **déverrouillage** existe et rouvre les
+/// mutations : c'est une décision qui exige une justification, pas un bouton
+/// anodin — tout export produit avant devient périmé.
+model PayPeriod {
+  id          String          @id @default(cuid())
+  accountId   String
+  locationId  String
+  label       String
+  startDate   DateTime        @db.Date
+  endDate     DateTime        @db.Date
+  kind        PayPeriodKind   @default(MAIN)
+  /// Types de contrat inclus. Vide = tous.
+  populations ContractType[]
+  status      PayPeriodStatus @default(OPEN)
+  lockedAt    DateTime?
+  lockedBy    String?
+  /// Dernier déverrouillage : la péremption des exports s'en **déduit**, elle
+  /// n'est jamais stockée, pour que `PayrollExport` reste append-only.
+  unlockedAt  DateTime?
+  unlockedBy  String?
+  version     Int             @default(0)
+  createdAt   DateTime        @default(now())
+
+  snapshots PayPeriodSnapshot[]
+
+  @@unique([locationId, startDate, endDate, kind])
+  @@index([accountId])
+  @@index([accountId, startDate])
+}
+
+enum PayPeriodKind {
+  MAIN
+  ALTERNATIVE
+}
+
+enum PayPeriodStatus {
+  OPEN
+  LOCKED
+}
+
+/// Instantané figé au verrouillage.
+///
+/// Recalculé intégralement à chaque nouveau verrouillage : il n'est donc pas
+/// immuable au sens strict. C'est le couple (instantané, `PayrollExport`) qui
+/// porte la preuve — et `PayrollExport`, lui, est append-only.
+model PayPeriodSnapshot {
+  id                String   @id @default(cuid())
+  accountId         String
+  payPeriodId       String
+  membershipId      String
+  plannedMinutes    Int
+  actualMinutes     Int
+  absenceMinutes    Int
+  workedDays        Int
+  /// [{ ratePercent, minutes }]
+  overtimeByBracket Json
+  /// [{ absenceTypeId, code, days, minutes }]
+  absenceBreakdown  Json
+  /// [{ key, value, unit }] — les éléments prêts pour l'export.
+  variables         Json
+  /// Version de convention appliquée : sans elle, un instantané ancien devient
+  /// inexplicable dès que les paramètres changent.
+  agreementId       String?
+  computedAt        DateTime @default(now())
+
+  period PayPeriod @relation(fields: [payPeriodId], references: [id], onDelete: Cascade)
+
+  @@unique([payPeriodId, membershipId])
+  @@index([accountId])
 }

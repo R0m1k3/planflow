@@ -67,8 +67,9 @@ export const NAVIGATION: NavSection[] = [
     id: 'rapports',
     label: 'Rapports',
     items: [
-      { id: 'heures', label: 'Heures travaillées' },
+      { id: 'heures', label: 'Heures travaillées', href: '/rapports/heures' },
       { id: 'paie', label: 'Préparation de paie', href: '/paie' },
+      { id: 'periodes', label: 'Périodes de paie', href: '/paie/periodes' },
       { id: 'silae', label: 'Codes Silae', href: '/paie/silae' },
       { id: 'activite', label: "Journal d'activité" },
     ],

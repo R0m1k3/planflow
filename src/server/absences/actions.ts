@@ -11,6 +11,7 @@ import {
 } from '@/domain/absences/count';
 import { recordAudit } from '@/server/audit';
 import { mutate } from '@/server/context';
+import { assertPeriodOpen, PeriodLockedError } from '@/server/payroll/periods';
 import type { ScopedClient } from '@/server/tenant';
 
 /**
@@ -184,6 +185,15 @@ export async function requestTimeOffAction(
         ]
           .filter(Boolean)
           .join(' ');
+      }
+
+      if (contract) {
+        // Poser un congé sur un mois déjà transmis fausserait la paie sans
+        // qu'aucun fichier ne le reflète.
+        await assertPeriodOpen(db, contract.locationId, [
+          parsed.data.startDate,
+          parsed.data.endDate,
+        ]);
       }
 
       const created = await db.timeOff.create({
@@ -581,6 +591,7 @@ function counterTypeFor(
 
 function toState(error: unknown, denied: string): AbsenceActionState {
   if (error instanceof ValidationError) return { error: error.message };
+  if (error instanceof PeriodLockedError) return { error: error.message };
   if (error instanceof AuthorizationError) return { error: denied };
   throw error;
 }
