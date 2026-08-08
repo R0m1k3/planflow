@@ -34,6 +34,15 @@ export interface BoardShift {
   note: string | null;
 }
 
+export interface BoardAbsence {
+  label: string;
+  colorKey: string;
+  /** Index de colonne du premier jour visible, 0 = lundi. */
+  startDay: number;
+  /** Nombre de jours couverts dans la semaine affichée. */
+  span: number;
+}
+
 export interface BoardRow {
   /** `null` sur la ligne des besoins non couverts. */
   membershipId: string | null;
@@ -44,6 +53,8 @@ export interface BoardRow {
   counters: WeekCounters;
   /** Sept cases, lundi → dimanche. */
   days: BoardShift[][];
+  /** Absences acceptées recouvrant la semaine affichée. */
+  absences: BoardAbsence[];
   unassigned: boolean;
 }
 
@@ -54,6 +65,15 @@ export interface RowPerson {
   job: string;
   forfaitJours: boolean;
   contractMinutes: number;
+}
+
+export interface AbsenceInput {
+  membershipId: string;
+  startDate: string;
+  /** Dernier jour d'absence, pas la date de reprise. */
+  endDate: string;
+  label: string;
+  colorKey: string;
 }
 
 /**
@@ -70,6 +90,7 @@ export function buildRows(
   weekDates: string[],
   timeZone: string,
   isPublished: boolean,
+  absences: AbsenceInput[] = [],
 ): { rows: BoardRow[]; unassignedRow: BoardRow | null } {
   const columnOf = new Map(weekDates.map((date, index) => [date, index]));
 
@@ -128,9 +149,34 @@ export function buildRows(
   }
   for (const column of unassignedDays) column.sort(byStartTime);
 
+  const first = weekDates[0] ?? '';
+  const last = weekDates[6] ?? '';
+
   const rows = people.map((person) => {
     const days = byMember.get(person.membershipId) ?? emptyDays();
     const worked = days.filter((column) => column.length > 0).length;
+
+    // L'absence est **rognée** aux bornes de la semaine affichée : une absence
+    // de trois semaines doit apparaître entière sur chacune, pas déborder.
+    const rowAbsences = absences
+      .filter(
+        (absence) =>
+          absence.membershipId === person.membershipId &&
+          absence.startDate <= last &&
+          absence.endDate >= first,
+      )
+      .map((absence) => {
+        const startDay = Math.max(0, weekDates.indexOf(absence.startDate));
+        const endIndex = weekDates.indexOf(absence.endDate);
+        const endDay = endIndex === -1 ? 6 : endIndex;
+        return {
+          label: absence.label,
+          colorKey: absence.colorKey,
+          startDay: absence.startDate < first ? 0 : startDay,
+          span: endDay - (absence.startDate < first ? 0 : startDay) + 1,
+        };
+      });
+
     return {
       membershipId: person.membershipId,
       firstName: person.firstName,
@@ -139,12 +185,18 @@ export function buildRows(
       forfaitJours: person.forfaitJours,
       unassigned: false,
       days,
+      absences: rowAbsences,
       counters: {
         contractMinutes: person.forfaitJours ? 0 : person.contractMinutes,
         plannedMinutes: minutesByMember.get(person.membershipId) ?? 0,
-        // Les absences arrivent au lot suivant ; le compteur existe déjà pour
-        // que la formule d'écart ne change pas quand elles se brancheront.
-        absenceMinutes: 0,
+        // Les absences comptent dans l'atteinte du contrat : une semaine
+        // entièrement en congés ne doit pas apparaître en sous-réalisation.
+        // Leur valorisation en minutes vient du contrat, pas du planning.
+        absenceMinutes: absenceMinutesOf(
+          rowAbsences,
+          person.contractMinutes,
+          person.forfaitJours,
+        ),
         sundaysWorked: sundaysByMember.get(person.membershipId)?.size ?? 0,
         restDays: 7 - worked,
       },
@@ -160,6 +212,7 @@ export function buildRows(
         forfaitJours: false,
         unassigned: true,
         days: unassignedDays,
+        absences: [],
         counters: {
           contractMinutes: 0,
           plannedMinutes: unassignedDays
@@ -173,6 +226,24 @@ export function buildRows(
     : null;
 
   return { rows, unassignedRow };
+}
+
+/**
+ * Durée créditée par une absence, en minutes.
+ *
+ * Proportionnelle au contrat sur une base de cinq jours ouvrés : un salarié à
+ * 35 h absent trois jours est crédité de 21 h. Le calcul reste ici, dans la
+ * mise en forme, parce qu'il ne sert qu'à l'écart affiché — la paie, elle, part
+ * du décompte en jours figé à la décision.
+ */
+function absenceMinutesOf(
+  absences: BoardAbsence[],
+  contractMinutes: number,
+  forfaitJours: boolean,
+): number {
+  if (forfaitJours || contractMinutes <= 0) return 0;
+  const days = absences.reduce((total, absence) => total + absence.span, 0);
+  return Math.round((contractMinutes / 5) * Math.min(days, 5));
 }
 
 function byStartTime(a: BoardShift, b: BoardShift): number {

@@ -374,6 +374,7 @@ model AbsenceType {
   archivedAt              DateTime?
 
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  timeOffs TimeOff[]
 
   @@unique([accountId, code])
   @@index([accountId])
@@ -833,4 +834,181 @@ model PayrollExport {
 
   @@index([accountId, periodStart])
   @@index([accountId])
+}
+
+// ============================================================================
+// Absences et compteurs — PLAN.md §4.5 et §7, WP-06
+// ============================================================================
+
+/// Demande d'absence.
+///
+/// `endDate` porte le **dernier jour d'absence**, jamais la date de reprise.
+/// La confusion est la plus fréquente du domaine : elle décompte un jour de
+/// trop ou de trop peu à chaque demande, et le salarié s'en aperçoit au solde,
+/// des mois plus tard.
+model TimeOff {
+  id             String        @id @default(cuid())
+  accountId      String
+  membershipId   String
+  userContractId String?
+  absenceTypeId  String
+  startDate      DateTime      @db.Date
+  startHalfDay   Boolean       @default(false)
+  endDate        DateTime      @db.Date
+  endHalfDay     Boolean       @default(false)
+  /// Décompte figé à la décision : le calendrier de l'établissement peut
+  /// changer après coup, le droit acquis ne doit pas bouger avec lui.
+  countedDays    Decimal?      @db.Decimal(6, 2)
+  status         TimeOffStatus @default(PENDING)
+  comment        String?
+
+  requestedBy             String
+  requestedAt             DateTime  @default(now())
+  decidedBy               String?
+  decidedAt               DateTime?
+  decisionComment         String?
+  justificationDocumentId String?
+
+  absenceType AbsenceType @relation(fields: [absenceTypeId], references: [id])
+
+  @@index([accountId])
+  @@index([membershipId, startDate])
+  @@index([accountId, status])
+}
+
+enum TimeOffStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+}
+
+/// Compteur d'un salarié sur une période d'acquisition.
+///
+/// Ne porte **aucun solde** : le solde est la somme des écritures. Un solde
+/// stocké se désynchronise, et la désynchronisation ne se voit qu'au moment où
+/// un salarié conteste.
+model Counter {
+  id                     String      @id @default(cuid())
+  accountId              String
+  membershipId           String
+  counterType            CounterType
+  acquisitionPeriodStart DateTime    @db.Date
+  acquisitionPeriodEnd   DateTime    @db.Date
+
+  operations LedgerOperation[]
+
+  @@unique([membershipId, counterType, acquisitionPeriodStart])
+  @@index([accountId])
+}
+
+enum CounterType {
+  PAID_LEAVE
+  RTT
+  COMPENSATORY_REST
+  MODULATION
+  OVERTIME
+}
+
+/// Écriture de compteur — **append-only**, imposé par un trigger.
+///
+/// Une correction s'écrit : contre-passation portant `reversesId`, puis
+/// nouvelle écriture. Elle ne se réécrit pas.
+model LedgerOperation {
+  id            String       @id @default(cuid())
+  accountId     String
+  counterId     String
+  kind          LedgerKind
+  /// Signé : positif acquiert, négatif consomme.
+  quantity      Decimal      @db.Decimal(10, 4)
+  unit          LedgerUnit
+  effectiveDate DateTime     @db.Date
+  sourceType    LedgerSource
+  sourceId      String?
+  reason        String?
+  reversesId    String?      @unique
+  createdBy     String?
+  createdAt     DateTime     @default(now())
+
+  counter Counter @relation(fields: [counterId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([counterId, effectiveDate])
+}
+
+enum LedgerKind {
+  ACCRUAL
+  TAKEN
+  ADJUSTMENT
+  CARRY_OVER
+  EXPIRY
+  REGULARISATION
+}
+
+enum LedgerUnit {
+  DAY
+  HOUR
+}
+
+enum LedgerSource {
+  TIMEOFF
+  PAY_PERIOD
+  MANUAL
+  SYSTEM
+}
+
+model RttPolicy {
+  id          String       @id @default(cuid())
+  accountId   String
+  name        String
+  daysPerYear Decimal      @db.Decimal(5, 2)
+  /// Début de période au format « MM-JJ ».
+  periodStart String
+  autoRenew   Boolean      @default(true)
+  status      PolicyStatus @default(ACTIVE)
+
+  assignments RttPolicyAssignment[]
+
+  @@index([accountId])
+}
+
+enum PolicyStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model RttPolicyAssignment {
+  id           String @id @default(cuid())
+  accountId    String
+  rttPolicyId  String
+  membershipId String
+
+  policy RttPolicy @relation(fields: [rttPolicyId], references: [id], onDelete: Cascade)
+
+  @@unique([rttPolicyId, membershipId])
+  @@index([accountId])
+}
+
+/// Information due au salarié à son retour d'arrêt — PLAN.md §12.3.
+///
+/// Obligation **active** et non un affichage : l'employeur doit informer des
+/// droits acquis et de la date limite de prise dans le mois suivant la reprise.
+/// La preuve de remise est ce qui rend l'obligation opposable.
+model LeaveNotice {
+  id           String    @id @default(cuid())
+  accountId    String
+  membershipId String
+  timeOffId    String?
+  /// Date de reprise qui déclenche le délai d'un mois.
+  returnDate   DateTime  @db.Date
+  dueDate      DateTime  @db.Date
+  /// Contenu remis, figé : il fait foi.
+  content      String
+  deliveredAt  DateTime?
+  deliveryProof String?
+  createdAt    DateTime  @default(now())
+
+  @@index([accountId])
+  @@index([membershipId])
 }

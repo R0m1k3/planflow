@@ -20,6 +20,7 @@ import {
   IDCC_1517_PARAMETERS,
   IDCC_1517_PROVENANCE,
 } from '../src/domain/compliance/idcc1517';
+import { frenchHolidays } from '../src/domain/absences/holidays';
 import { PAYROLL_ELEMENT_DEFINITIONS } from '../src/domain/payroll/elements';
 import { evaluateSchedule } from '../src/server/compliance/evaluate';
 import { withTenant } from '../src/server/tenant';
@@ -465,55 +466,51 @@ async function main() {
   console.log(`  ${IDCC_1517_PROVENANCE.length} paramètres tracés`);
 
   console.log('→ Jours fériés et dimanches autorisés');
-  // Jours fériés légaux français, hors Alsace-Moselle.
-  const holidays2026: Array<[string, string]> = [
-    ['2026-01-01', 'Jour de l’an'],
-    ['2026-04-06', 'Lundi de Pâques'],
-    ['2026-05-01', 'Fête du travail'],
-    ['2026-05-08', 'Victoire 1945'],
-    ['2026-05-14', 'Ascension'],
-    ['2026-05-25', 'Lundi de Pentecôte'],
-    ['2026-07-14', 'Fête nationale'],
-    ['2026-08-15', 'Assomption'],
-    ['2026-11-01', 'Toussaint'],
-    ['2026-11-11', 'Armistice 1918'],
-    ['2026-12-25', 'Noël'],
-  ];
+  // Calculés, pas listés : une table écrite à la main est juste l'année où on
+  // l'écrit. Un férié manquant se décompte comme un jour de congé, et le
+  // salarié perd un jour sans que personne ne le voie.
+  const currentYear = new Date().getUTCFullYear();
+  const years = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
+  let holidayCount = 0;
 
   for (const location of locations) {
-    for (const [date, name] of holidays2026) {
-      await prisma.holiday.upsert({
-        where: {
-          locationId_localDate: {
-            locationId: location.id,
-            localDate: new Date(`${date}T00:00:00Z`),
+    for (const year of years) {
+      for (const holiday of frenchHolidays(year)) {
+        await prisma.holiday.upsert({
+          where: {
+            locationId_localDate: {
+              locationId: location.id,
+              localDate: new Date(`${holiday.isoDate}T00:00:00Z`),
+            },
           },
-        },
-        update: { name },
-        create: {
-          accountId: account.id,
-          locationId: location.id,
-          localDate: new Date(`${date}T00:00:00Z`),
-          name,
-          // Les trois jours chômés garantis par la convention sont choisis par
-          // l'employeur : ils ne sont pas devinés ici.
-          isPaidOff: date === '2026-05-01',
-        },
-      });
+          update: { name: holiday.name },
+          create: {
+            accountId: account.id,
+            locationId: location.id,
+            localDate: new Date(`${holiday.isoDate}T00:00:00Z`),
+            name: holiday.name,
+            // Seul le 1er mai est chômé de droit. Les trois jours garantis par
+            // la convention sont choisis par l'employeur : ils ne se devinent
+            // pas ici.
+            isPaidOff: holiday.isoDate.slice(5) === '05-01',
+          },
+        });
+        holidayCount += 1;
+      }
     }
 
-    // Douze dimanches du maire, liste arrêtée avant le 31 décembre pour
-    // l'année suivante (L3132-26). Valeurs de démonstration.
+    // Douze dimanches du maire au plus, liste arrêtée avant le 31 décembre
+    // pour l'année suivante (L3132-26). Valeurs de démonstration.
     const sundays = [
-      '2026-01-11',
-      '2026-06-28',
-      '2026-07-05',
-      '2026-08-30',
-      '2026-09-06',
-      '2026-11-29',
-      '2026-12-06',
-      '2026-12-13',
-      '2026-12-20',
+      `${currentYear}-01-11`,
+      `${currentYear}-06-28`,
+      `${currentYear}-07-05`,
+      `${currentYear}-08-30`,
+      `${currentYear}-09-06`,
+      `${currentYear}-11-29`,
+      `${currentYear}-12-06`,
+      `${currentYear}-12-13`,
+      `${currentYear}-12-20`,
     ];
     for (const date of sundays) {
       await prisma.authorisedSunday.upsert({
@@ -533,7 +530,7 @@ async function main() {
       });
     }
   }
-  console.log(`  ${holidays2026.length} jours fériés par établissement`);
+  console.log(`  ${holidayCount} jours fériés sur ${years.length} années`);
 
   console.log('→ Durées de conservation');
   const retention = [
@@ -566,6 +563,130 @@ async function main() {
   }
   console.log(`  ${retention.length} politiques`);
 
+
+
+  console.log('→ Types d’absence');
+  // `silaeCode` reste **null** : les codes AB-* du dossier sont connus, leur
+  // signification ne l'est pas. Les associer ici reviendrait à deviner à quel
+  // type d'absence correspond AB-300, ce qui produirait une paie fausse.
+  const absenceTypes = [
+    { code: 'CP', name: 'Congés payés', colorKey: 'cp', isPaid: true, social: false, notice: 30 },
+    { code: 'RTT', name: 'RTT', colorKey: 'rtt', isPaid: true, social: false, notice: 7 },
+    { code: 'MAL', name: 'Arrêt maladie', colorKey: 'maladie', isPaid: false, social: true, notice: null },
+    { code: 'SS', name: 'Congé sans solde', colorKey: 'sans-solde', isPaid: false, social: false, notice: 15 },
+    { code: 'RC', name: 'Repos compensateur', colorKey: 'rtt', isPaid: true, social: false, notice: 7 },
+  ] as const;
+
+  for (const type of absenceTypes) {
+    await prisma.absenceType.upsert({
+      where: { accountId_code: { accountId: account.id, code: type.code } },
+      update: { name: type.name, colorKey: type.colorKey },
+      create: {
+        accountId: account.id,
+        code: type.code,
+        name: type.name,
+        colorKey: type.colorKey,
+        isPaid: type.isPaid,
+        countsAsWorkTime: false,
+        affectsPaidLeaveAccrual: !type.social,
+        isSocialSecurity: type.social,
+        requiresJustification: type.social,
+        minNoticeDays: type.notice,
+      },
+    });
+  }
+  console.log(`  ${absenceTypes.length} types`);
+
+  console.log('→ Absences de démonstration');
+  const cpType = await prisma.absenceType.findFirst({
+    where: { accountId: account.id, code: 'CP' },
+  });
+  const malType = await prisma.absenceType.findFirst({
+    where: { accountId: account.id, code: 'MAL' },
+  });
+  const demoMembers = await prisma.membership.findMany({
+    where: { accountId: account.id, employeeNumber: { in: ['E0005', 'E0007'] } },
+  });
+
+  const today = new Date();
+  const iso = (offsetDays: number) =>
+    new Date(today.getTime() + offsetDays * 86_400_000)
+      .toISOString()
+      .slice(0, 10);
+
+  const demoAbsences = [
+    // Acceptée, en cours : elle doit apparaître sur la grille de planning.
+    { member: 'E0005', type: cpType?.id, from: iso(1), to: iso(5), status: 'ACCEPTED' as const, days: 5 },
+    // En attente : elle doit apparaître dans la file à traiter.
+    { member: 'E0007', type: malType?.id, from: iso(-2), to: iso(2), status: 'PENDING' as const, days: 4 },
+  ];
+
+  for (const absence of demoAbsences) {
+    const membership = demoMembers.find(
+      (member) => member.employeeNumber === absence.member,
+    );
+    if (!membership || !absence.type) continue;
+
+    const existing = await prisma.timeOff.findFirst({
+      where: { membershipId: membership.id },
+    });
+    if (existing) continue;
+
+    const created = await prisma.timeOff.create({
+      data: {
+        accountId: account.id,
+        membershipId: membership.id,
+        absenceTypeId: absence.type,
+        startDate: new Date(`${absence.from}T00:00:00Z`),
+        endDate: new Date(`${absence.to}T00:00:00Z`),
+        countedDays: absence.days,
+        status: absence.status,
+        requestedBy: membership.id,
+        ...(absence.status === 'ACCEPTED'
+          ? { decidedBy: membership.id, decidedAt: new Date() }
+          : {}),
+      },
+    });
+
+    if (absence.status !== 'ACCEPTED') continue;
+
+    // L'acceptation écrit au registre : le solde bouge parce qu'une écriture a
+    // été posée, jamais parce qu'un champ a été décrémenté.
+    const year = today.getUTCMonth() >= 5 ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
+    const counter = await prisma.counter.create({
+      data: {
+        accountId: account.id,
+        membershipId: membership.id,
+        counterType: 'PAID_LEAVE',
+        acquisitionPeriodStart: new Date(`${year}-06-01T00:00:00Z`),
+        acquisitionPeriodEnd: new Date(`${year + 1}-05-31T00:00:00Z`),
+      },
+    });
+    await prisma.ledgerOperation.createMany({
+      data: [
+        {
+          accountId: account.id,
+          counterId: counter.id,
+          kind: 'ACCRUAL',
+          quantity: 25,
+          unit: 'DAY',
+          effectiveDate: new Date(`${year}-06-01T00:00:00Z`),
+          sourceType: 'SYSTEM',
+        },
+        {
+          accountId: account.id,
+          counterId: counter.id,
+          kind: 'TAKEN',
+          quantity: -absence.days,
+          unit: 'DAY',
+          effectiveDate: new Date(`${absence.from}T00:00:00Z`),
+          sourceType: 'TIMEOFF',
+          sourceId: created.id,
+        },
+      ],
+    });
+  }
+  console.log(`  ${demoAbsences.length} absences`);
 
   console.log('→ Correspondances Silae');
   // Semées **non confirmées**, y compris quand le code se lit dans son libellé
