@@ -51,6 +51,9 @@ export const PERMISSIONS = [
   ['members.documents.manage', 'Personnel', 'Gérer les documents'],
   ['members.register.export', 'Personnel', 'Exporter le registre du personnel'],
   ['members.dpae.check', 'Personnel', 'Contrôler l’éligibilité DPAE'],
+  // Distincte de `members.edit` : ouvrir un accès à l'application n'est pas
+  // modifier un dossier, et tel client voudra confier l'un sans l'autre.
+  ['members.invite', 'Personnel', 'Inviter un salarié à se connecter'],
 
   // --- Heures --------------------------------------------------------------
   ['hours.view', 'Heures', 'Voir les heures'],
@@ -178,6 +181,7 @@ const DIRECTOR_PERMISSIONS: string[] = [
   'members.documents.manage',
   'members.register.export',
   'members.dpae.check',
+  'members.invite',
   'timeoff.delete',
   'timeoff.bypass_notice',
   'counters.adjust',

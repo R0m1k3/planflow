@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 
+import { InvitationPanel } from '@/app/(app)/equipe/[id]/InvitationPanel';
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, EmptyState } from '@/components/ui/Card';
@@ -61,6 +62,20 @@ export default async function FichePage({
           <Badge tone="info">Sans accès applicatif</Badge>
         ) : null}
       </div>
+
+      {employee.canInvite ? (
+        <Card>
+          <CardHeader title="Accès à l’application" />
+          <InvitationPanel
+            membershipId={employee.id}
+            defaultEmail={
+              employee.email ?? employee.profile?.personalEmail ?? ''
+            }
+            hasAccount={employee.hasAccount}
+            invitation={employee.invitation}
+          />
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader

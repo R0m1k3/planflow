@@ -1,4 +1,8 @@
 import { can } from '@/domain/access/authorize';
+import {
+  invitationState,
+  type InvitationState,
+} from '@/domain/access/invitation';
 import { decryptOptional } from '@/server/crypto';
 import { query } from '@/server/context';
 
@@ -129,6 +133,14 @@ export interface EmployeeDetail extends EmployeeListRow {
     amendments: Array<{ id: string; effectiveDate: Date; reason: string | null }>;
   }>;
   canSeeSalary: boolean;
+  canInvite: boolean;
+  /** Dernière invitation émise, quel que soit son sort. */
+  invitation: {
+    state: InvitationState;
+    email: string;
+    expiresAt: Date;
+    createdAt: Date;
+  } | null;
 }
 
 export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
@@ -162,6 +174,21 @@ export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
           select: { name: true },
         })
       : null;
+
+    // La plus récente, pas la seule en attente : « invitation expirée le 3 »
+    // est une information utile, et la masquer laisserait croire qu'aucune
+    // n'a jamais été envoyée.
+    const lastInvitation = await db.invitation.findFirst({
+      where: { membershipId: membership.id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        email: true,
+        expiresAt: true,
+        acceptedAt: true,
+        revokedAt: true,
+        createdAt: true,
+      },
+    });
 
     return {
       id: membership.id,
@@ -217,6 +244,15 @@ export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
         })),
       })),
       canSeeSalary,
+      canInvite: can(actor, 'members.invite'),
+      invitation: lastInvitation
+        ? {
+            state: invitationState(lastInvitation, new Date()),
+            email: lastInvitation.email,
+            expiresAt: lastInvitation.expiresAt,
+            createdAt: lastInvitation.createdAt,
+          }
+        : null,
     };
   });
 }
