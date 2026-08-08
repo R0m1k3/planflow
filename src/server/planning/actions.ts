@@ -16,6 +16,7 @@ import {
 import { recordAudit } from '@/server/audit';
 import { evaluateAround, evaluateSchedule } from '@/server/compliance/evaluate';
 import { mutate } from '@/server/context';
+import { assertPeriodOpen, PeriodLockedError } from '@/server/payroll/periods';
 import type { ScopedClient } from '@/server/tenant';
 
 /**
@@ -131,6 +132,10 @@ export async function createShiftAction(
       // interdirait de planifier un inventaire 22 h–02 h.
       if (endAt <= startAt) endAt = new Date(endAt.getTime() + 86_400_000);
 
+      // Un mois transmis au cabinet ne se modifie pas par inadvertance : le
+      // contrôle passe **avant** l'écriture.
+      await assertPeriodOpen(db, location.id, [parsed.data.localDate]);
+
       const worked = shiftMinutes(startAt, endAt, parsed.data.breakMinutes);
       if (worked <= 0) {
         throw new ValidationError(
@@ -242,6 +247,11 @@ export async function updateShiftAction(
         assertMayEditPublished(actor);
       }
 
+      await assertPeriodOpen(db, shift.schedule.locationId, [
+        shift.localDate.toISOString().slice(0, 10),
+        parsed.data.localDate,
+      ]);
+
       const startAt = zonedInstant(
         parsed.data.localDate,
         parsed.data.start,
@@ -322,6 +332,10 @@ export async function deleteShiftAction(
       if (shift.schedule.status === 'PUBLISHED') {
         assertMayEditPublished(actor);
       }
+
+      await assertPeriodOpen(db, shift.schedule.locationId, [
+        shift.localDate.toISOString().slice(0, 10),
+      ]);
 
       // La trace est écrite **avant** la suppression : après, l'identifiant ne
       // désigne plus rien, et l'état supprimé serait perdu.
@@ -749,6 +763,9 @@ function assertMayEditPublished(actor: Actor): void {
 
 function toState(error: unknown, denied: string): PlanningActionState {
   if (error instanceof ValidationError) return { error: error.message };
+  // Le verrou de période porte son propre message, qui explique la sortie :
+  // déverrouiller, ou régulariser sur la période suivante.
+  if (error instanceof PeriodLockedError) return { error: error.message };
   if (error instanceof AuthorizationError) return { error: denied };
   throw error;
 }

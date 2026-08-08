@@ -154,12 +154,12 @@ export async function exportSilaeAction(
     await mutate(
       'payroll.export.silae',
       async (db, actor) => {
-        const period = await buildPayrollPeriod(
+        const payroll = await buildPayrollPeriod(
           db,
           month,
           parsed.data.locationId,
         );
-        if (!period) {
+        if (!payroll) {
           throw new ValidationError(
             "Aucune convention collective n'est chargée pour cette période.",
           );
@@ -167,25 +167,37 @@ export async function exportSilaeAction(
 
         // Un export partiel se charge sans erreur et rend la paie fausse pour
         // les salariés absents du fichier : il vaut mieux ne rien produire.
-        if (period.blockers.length > 0) {
-          throw new ValidationError(period.blockers.join(' · '));
+        if (payroll.blockers.length > 0) {
+          throw new ValidationError(payroll.blockers.join(' · '));
         }
-        if (period.rows.length === 0) {
+        if (payroll.rows.length === 0) {
           throw new ValidationError(
             'Aucun élément de paie sur cette période : rien à exporter.',
           );
         }
 
-        const result = formatSilaeCsv(toSilaeLines(period));
+        const result = formatSilaeCsv(toSilaeLines(payroll));
         csv = result.csv;
         digest = await checksum(csv);
-        filename = `silae-${period.location.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}-${parsed.data.month}.csv`;
+        filename = `silae-${payroll.location.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}-${parsed.data.month}.csv`;
+
+        // Rattacher l'export à sa période rend sa péremption déductible : sans
+        // ce lien, un déverrouillage ne pourrait pas signaler les fichiers
+        // devenus faux.
+        const payPeriod = await db.payPeriod.findFirst({
+          where: {
+            locationId: parsed.data.locationId,
+            startDate: new Date(`${payroll.startDate}T00:00:00Z`),
+          },
+          select: { id: true },
+        });
 
         const record = await db.payrollExport.create({
           data: {
             locationId: parsed.data.locationId,
-            periodStart: new Date(`${period.startDate}T00:00:00Z`),
-            periodEnd: new Date(`${period.endDate}T00:00:00Z`),
+            payPeriodId: payPeriod?.id ?? null,
+            periodStart: new Date(`${payroll.startDate}T00:00:00Z`),
+            periodEnd: new Date(`${payroll.endDate}T00:00:00Z`),
             checksum: digest,
             lineCount: result.lineCount,
             generatedBy: actor.membershipId,
@@ -198,7 +210,7 @@ export async function exportSilaeAction(
           entityType: 'PayrollExport',
           entityId: record.id,
           after: {
-            period: `${period.startDate} → ${period.endDate}`,
+            period: `${payroll.startDate} → ${payroll.endDate}`,
             lines: result.lineCount,
             checksum: digest,
           },
