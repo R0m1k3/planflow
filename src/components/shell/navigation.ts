@@ -40,6 +40,8 @@ export const NAVIGATION: NavSection[] = [
     items: [
       { id: 'semaine', label: 'Vue semaine', href: '/planning/semaine' },
       { id: 'jour', label: 'Vue jour', href: '/planning/jour' },
+      { id: 'etiquettes', label: 'Vue par poste', href: '/planning/etiquettes' },
+      { id: 'mois', label: 'Vue mois', href: '/planning/mois' },
       { id: 'besoins', label: 'Besoins non couverts', badge: '5' },
       { id: 'modeles', label: "Modèles d'ouverture" },
     ],

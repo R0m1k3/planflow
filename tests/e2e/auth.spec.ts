@@ -45,7 +45,7 @@ test('connexion, navigation, puis déconnexion', async ({ page }) => {
 
   await page.getByRole('link', { name: 'Plannings' }).click();
   await expect(
-    page.getByRole('heading', { name: /Planning · semaine 33/ }),
+    page.getByRole('heading', { name: /Planning · semaine \d+/ }),
   ).toBeVisible();
 
   await page.getByRole('button', { name: 'Déconnexion' }).click();

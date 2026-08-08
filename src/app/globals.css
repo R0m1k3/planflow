@@ -365,3 +365,61 @@ body {
     transition-duration: 1ms !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Impression
+   ---------------------------------------------------------------------------
+   Un planning affiché reste affiché ; un planning imprimé est le document que
+   l'équipe lit dans la réserve. Deux exigences en découlent :
+
+   - la couleur ne doit pas être nécessaire (les codes de poste sont déjà
+     imprimés dans chaque bloc), mais les aplats doivent sortir quand même,
+     d'où `print-color-adjust: exact` ;
+   - rien ne doit être coupé : la grille tient en paysage et les lignes ne se
+     scindent pas entre deux pages.
+*/
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  :root {
+    /* L'impression part toujours du thème clair : un aplat sombre consomme
+       l'encre sans rien apporter. */
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Les zones à défilement horizontal doivent se déplier, sinon la fin de la
+     semaine n'est tout simplement pas sur la feuille. */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  .min-w-\[1040px\] {
+    min-width: 0 !important;
+  }
+
+  [data-print='hide'],
+  nav,
+  aside {
+    display: none !important;
+  }
+
+  section,
+  tr,
+  .print-keep {
+    break-inside: avoid;
+  }
+}

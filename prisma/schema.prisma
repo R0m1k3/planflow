@@ -66,9 +66,33 @@ model Team {
 
   location Location          @relation(fields: [locationId], references: [id], onDelete: Cascade)
   scopes   MembershipScope[]
+  members  TeamMember[]
 
   @@index([accountId])
   @@index([locationId])
+}
+
+/// Rattachement d'un salarié à une équipe.
+///
+/// Distinct de `MembershipScope`, qui dit ce qu'un manager a le droit de voir.
+/// Celui-ci dit où un salarié **apparaît dans la grille** — y compris une
+/// semaine où il n'a aucun créneau, ce qui est justement l'état de départ
+/// quand on construit un planning.
+model TeamMember {
+  id           String  @id @default(cuid())
+  accountId    String
+  teamId       String
+  membershipId String
+  /// Équipe d'affectation principale ; les autres sont des renforts.
+  isPrimary    Boolean @default(true)
+  position     Int     @default(0)
+
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, membershipId])
+  @@index([accountId])
+  @@index([membershipId])
 }
 
 // ============================================================================
@@ -122,6 +146,7 @@ model Membership {
   profile     EmployeeProfile?
   contracts   UserContract[]
   workPermits WorkPermit[]
+  teams       TeamMember[]
 
   @@unique([accountId, employeeNumber])
   @@index([accountId])
@@ -544,4 +569,107 @@ model WorkloadReview {
 
   @@index([accountId])
   @@index([userContractId])
+}
+
+// ============================================================================
+// Planning — PLAN.md §4.4, WP-04
+// ============================================================================
+
+/// Semaine de planning d'une équipe.
+///
+/// La publication est **par équipe** : l'audit montre un bouton « Dépublier »
+/// sur chaque section de la grille, pas un seul pour l'établissement.
+model WeeklySchedule {
+  id          String         @id @default(cuid())
+  accountId   String
+  locationId  String
+  teamId      String
+  isoYear     Int
+  isoWeek     Int
+  status      ScheduleStatus @default(DRAFT)
+  publishedAt DateTime?
+  publishedBy String?
+  /// Verrou optimiste : la grille s'édite à plusieurs (PLAN.md §3.4).
+  version     Int            @default(0)
+
+  shifts     Shift[]
+  rests      Rest[]
+  dailyNotes DailyNote[]
+
+  @@unique([teamId, isoYear, isoWeek])
+  @@index([accountId])
+  @@index([locationId, isoYear, isoWeek])
+}
+
+enum ScheduleStatus {
+  DRAFT
+  VALIDATED
+  PUBLISHED
+}
+
+model Shift {
+  id               String @id @default(cuid())
+  accountId        String
+  weeklyScheduleId String
+  /// Null = besoin non couvert, affiché sur sa propre ligne.
+  membershipId     String?
+
+  /// Regroupement dans la grille uniquement. Les durées se calculent depuis
+  /// les instants — la nuit du changement d'heure, 22 h–06 h dure 7 h ou 9 h.
+  localDate DateTime @db.Date
+  startAt   DateTime @db.Timestamptz
+  endAt     DateTime @db.Timestamptz
+
+  breakMinutes       Int  @default(0)
+  actualStartAt      DateTime? @db.Timestamptz
+  actualEndAt        DateTime? @db.Timestamptz
+  actualBreakMinutes Int?
+
+  labelId     String?
+  mealCount   Int      @default(0)
+  isValidated Boolean  @default(false)
+  validatedAt DateTime?
+  validatedBy String?
+  note        String?
+  version     Int      @default(0)
+
+  schedule WeeklySchedule @relation(fields: [weeklyScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([weeklyScheduleId, localDate])
+  @@index([membershipId, localDate])
+}
+
+/// Repos de journée — hebdomadaire ou compensateur. Les pauses *dans* un
+/// créneau sont `Shift.breakMinutes`.
+model Rest {
+  id               String   @id @default(cuid())
+  accountId        String
+  weeklyScheduleId String
+  membershipId     String
+  localDate        DateTime @db.Date
+  restType         RestType
+  minutes          Int?
+
+  schedule WeeklySchedule @relation(fields: [weeklyScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+enum RestType {
+  WEEKLY_REST
+  COMPENSATORY_REST
+}
+
+/// Ligne « Notes et événements » de la grille.
+model DailyNote {
+  id               String   @id @default(cuid())
+  accountId        String
+  weeklyScheduleId String
+  localDate        DateTime @db.Date
+  content          String
+
+  schedule WeeklySchedule @relation(fields: [weeklyScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
 }

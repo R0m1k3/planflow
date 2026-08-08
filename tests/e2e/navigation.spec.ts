@@ -6,14 +6,16 @@ test('les six écrans se chargent et affichent leur contenu', async ({ page }) =
 
   await page.getByRole('link', { name: 'Plannings' }).click();
   await expect(
-    page.getByRole('heading', { name: /Planning · semaine 33/ }),
+    page.getByRole('heading', { name: /Planning · semaine \d+/ }),
   ).toBeVisible();
-  // La grille doit porter des créneaux, pas seulement son ossature.
-  await expect(page.getByText('Congés payés').first()).toBeVisible();
+  // La grille doit porter des créneaux venus de la base, pas seulement son
+  // ossature : le seed plante deux semaines sur trois équipes.
+  await expect(page.getByRole('heading', { name: 'Vente' })).toBeVisible();
+  await expect(page.getByText('09:00–17:00').first()).toBeVisible();
 
   await page.getByRole('link', { name: 'Vue jour' }).click();
   await expect(
-    page.getByRole('heading', { name: /Planning · mercredi 12 août/ }),
+    page.getByRole('heading', { name: /^Planning · / }),
   ).toBeVisible();
 
   await page.getByRole('link', { name: 'Équipe', exact: true }).click();
