@@ -76,7 +76,19 @@ pnpm dev
 openssl rand -base64 32
 ```
 
-Elle vit **hors de la base** : une sauvegarde volée ne doit pas suffire à lire ces colonnes. La perdre rend ces données irrécupérables — la sauvegarder séparément et documenter sa rotation.
+Elle vit **hors de la base** : une sauvegarde volée ne doit pas suffire à lire ces colonnes. La perdre rend ces données irrécupérables — la sauvegarder séparément et documenter sa rotation. Elle chiffre également les secrets de second facteur et le mot de passe du serveur d'envoi.
+
+### Second facteur — accès de secours
+
+Les rôles qui lisent les rémunérations ou distribuent les droits doivent porter un second facteur (matrice n° 15) : tant qu'il n'est pas activé, l'application ne leur ouvre aucun écran. Chaque activation délivre dix codes de secours, affichés **une seule fois**.
+
+PlanFlow étant auto-hébergé, il n'y a pas d'éditeur à appeler si un administrateur perd à la fois son téléphone et ses codes. Le retrait se fait alors depuis le serveur :
+
+```bash
+pnpm mfa:reset adresse@example.fr
+```
+
+Le retrait révoque les sessions ouvertes et s'inscrit au journal d'audit. Il n'est délibérément pas exposé dans l'application : l'exécuter demande déjà un accès au serveur, c'est-à-dire davantage que ce que le second facteur protège.
 
 ## Vérifier
 

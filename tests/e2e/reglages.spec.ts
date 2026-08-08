@@ -3,6 +3,12 @@ import { expect, test } from '@playwright/test';
 /**
  * Ce test se connecte en manager : il ne peut donc pas réutiliser la session
  * partagée de la direction, d'où le projet « anonyme ».
+ *
+ * Les écrans qui n'éprouvent pas l'authentification ont été déplacés dans
+ * `registre.spec.ts`, où ils réutilisent la session commune : la direction
+ * porte désormais un second facteur, et deux connexions simultanées sur le même
+ * compte se heurteraient au refus de rejeu d'un code — ce qui est le
+ * comportement voulu, pas un défaut à contourner.
  */
 async function signIn(page: import('@playwright/test').Page, email: string) {
   await page.goto('/connexion');
@@ -11,37 +17,6 @@ async function signIn(page: import('@playwright/test').Page, email: string) {
   await page.getByRole('button', { name: 'Se connecter' }).click();
   await expect(page.getByRole('heading', { name: 'Aperçu RH' })).toBeVisible();
 }
-
-test('la direction lit et alimente le registre de paramétrage', async ({
-  page,
-}) => {
-  await signIn(page, 'direction@example.test');
-  await page.goto('/reglages/registre');
-
-  await expect(
-    page.getByRole('heading', { name: 'Registre de paramétrage juridique' }),
-  ).toBeVisible();
-
-  const parameter = `Durée quotidienne maximale ${Date.now()}`;
-  // Ciblage par attribut `name` : les libellés portent un texte d'aide, et
-  // celui de « Source » contient lui-même le mot « valeur », ce qui rend la
-  // correspondance par libellé ambiguë.
-  const form = page.locator('form').filter({ hasText: 'Consigner' });
-  await form.locator('input[name="key"]').fill(parameter);
-  await form.locator('input[name="value"]').fill('10 h');
-  await form
-    .locator('input[name="source"]')
-    .fill('IDCC 1517 — texte consolidé Legifrance');
-  await form.locator('input[name="population"]').fill('Tous les salariés');
-  await page.getByRole('button', { name: 'Consigner' }).click();
-
-  const row = page.getByRole('row', { name: new RegExp(parameter) });
-  await expect(row).toBeVisible();
-
-  // Consigné n'est pas approuvé : la matrice exige un approbateur nommé.
-  await row.getByRole('button', { name: 'Approuver' }).click();
-  await expect(row.getByText(/Approuvé le/)).toBeVisible();
-});
 
 test('un manager ne peut ni voir ni modifier les établissements', async ({
   page,
@@ -57,40 +32,4 @@ test('un manager ne peut ni voir ni modifier les établissements', async ({
   await expect(
     page.getByRole('heading', { name: 'Établissements' }),
   ).toBeHidden();
-});
-
-test('un salarié sans compte applicatif est créable', async ({ page }) => {
-  await signIn(page, 'direction@example.test');
-  await page.goto('/equipe');
-
-  await expect(page.getByRole('heading', { name: 'Équipe' })).toBeVisible();
-  // L'effectif vient de la base, pas du module de démonstration.
-  await expect(page.getByText('E0001')).toBeVisible();
-
-  // Nom unique par exécution : la base de test n'est pas remise à zéro entre
-  // deux passages, et un nom fixe finirait par désigner plusieurs salariés.
-  const matricule = `E9${Date.now() % 100000}`;
-  const nom = `Sanscompte${matricule}`;
-  const form = page.locator('form').filter({ hasText: 'Ajouter' });
-  await form.locator('input[name="firstName"]').fill('Sans');
-  await form.locator('input[name="lastName"]').fill(nom);
-  await form.locator('input[name="employeeNumber"]').fill(matricule);
-  await page.getByRole('button', { name: 'Ajouter' }).click();
-  await expect(page.getByText('Salarié ajouté.')).toBeVisible();
-
-  // Rechargement explicite : ce qui est vérifié ici est la persistance et la
-  // présence dans l'annuaire, pas le moment exact où la revalidation atteint
-  // le rendu courant.
-  await page.reload();
-
-  // Un salarié sans adresse doit exister : la plupart des équipes de vente ne
-  // se connectent jamais à l'outil.
-  await expect(
-    page.getByRole('cell', { name: matricule, exact: true }),
-  ).toBeVisible();
-  // Le nom vit sur le dossier, pas sur le compte : un salarié sans accès
-  // applicatif doit tout de même figurer nommément au registre du personnel.
-  await expect(
-    page.getByRole('link', { name: new RegExp(`Sans ${nom}`) }),
-  ).toBeVisible();
 });

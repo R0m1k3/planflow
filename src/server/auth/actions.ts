@@ -4,7 +4,10 @@ import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import { answerChallenge } from '@/server/auth/mfa';
 import {
+  pendingChallenge,
+  satisfyMfa,
   SESSION_COOKIE,
   SESSION_COOKIE_OPTIONS,
   signIn,
@@ -57,7 +60,44 @@ export async function signInAction(
     expires: result.expiresAt,
   });
 
-  redirect('/');
+  // La session existe mais ne résout aucun acteur tant que le second facteur
+  // n'est pas présenté : rediriger vers l'application produirait une boucle.
+  redirect(result.mfaPending ? '/connexion/verification' : '/');
+}
+
+export interface ChallengeState {
+  error?: string;
+}
+
+/**
+ * Éprouve le second facteur.
+ *
+ * L'échec ne détruit pas la session en attente : elle expire d'elle-même en dix
+ * minutes, et la supprimer au premier code mal recopié renverrait ressaisir le
+ * mot de passe sans motif.
+ */
+export async function verifyMfaAction(
+  _previous: ChallengeState,
+  formData: FormData,
+): Promise<ChallengeState> {
+  const store = await cookies();
+  const token = store.get(SESSION_COOKIE)?.value;
+  if (!token) return { error: 'Session expirée. Reconnectez-vous.' };
+
+  const challenge = await pendingChallenge(token);
+  if (!challenge) return { error: 'Session expirée. Reconnectez-vous.' };
+
+  const code = String(formData.get('code') ?? '');
+  const result = await answerChallenge(challenge.userId, code);
+  if (!result.ok) return { error: result.error };
+
+  const expiresAt = await satisfyMfa(token);
+  store.set(SESSION_COOKIE, token, {
+    ...SESSION_COOKIE_OPTIONS,
+    expires: expiresAt,
+  });
+
+  redirect(result.usedRecoveryCode ? '/reglages/securite' : '/');
 }
 
 export async function signOutAction(): Promise<void> {

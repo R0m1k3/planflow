@@ -1,3 +1,7 @@
+// La mise en place lit la base directement pour rendre la suite rejouable ;
+// sans cela DATABASE_URL n'existe que pour le serveur, pas pour les tests.
+import 'dotenv/config';
+
 import { defineConfig, devices } from '@playwright/test';
 
 import { STORAGE_STATE } from './tests/e2e/storage';
@@ -38,9 +42,12 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], ...chromiumOverride },
     },
     // Parcours d'authentification : doit partir d'un navigateur vierge.
+    // Dépend tout de même de la mise en place, qui pose le second facteur du
+    // compte de direction — sans lequel la connexion ne peut pas être jouée.
     {
       name: 'anonyme',
       testMatch: /(auth|reglages|acces)\.spec\.ts/,
+      dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'], ...chromiumOverride },
     },
     {

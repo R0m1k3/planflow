@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { answerChallenge, rememberedSecret, waitForFreshCode } from './mfa';
+
 const EMAIL = 'direction@example.test';
 const PASSWORD = 'planflow-demo-2026';
 
@@ -34,10 +36,21 @@ test('un mot de passe faux ne dit pas si le compte existe', async ({ page }) => 
 });
 
 test('connexion, navigation, puis déconnexion', async ({ page }) => {
+  const remembered = rememberedSecret();
+  // Un code ne sert qu'une fois : attendre le pas suivant celui qu'a employé la
+  // mise en place, plutôt que de se heurter au refus de rejeu. L'attente est
+  // nulle dès que trente secondes se sont écoulées entre-temps.
+  await waitForFreshCode(remembered.usedStep);
+
   await page.goto('/connexion');
   await page.getByLabel('Adresse électronique').fill(EMAIL);
   await page.getByLabel('Mot de passe').fill(PASSWORD);
   await page.getByRole('button', { name: 'Se connecter' }).click();
+
+  // Le rôle de la direction exige un second facteur : le mot de passe seul
+  // n'ouvre rien.
+  await expect(page.getByRole('heading', { name: 'Vérification' })).toBeVisible();
+  await answerChallenge(page, remembered.secret);
 
   await expect(page.getByRole('heading', { name: 'Aperçu RH' })).toBeVisible();
   // L'identité affichée vient de la base, pas d'un libellé en dur.

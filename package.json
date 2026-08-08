@@ -21,6 +21,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "mfa:reset": "tsx scripts/mfa-reset.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "prisma": {
@@ -33,6 +34,7 @@
     "next": "16.3.0",
     "nodemailer": "^9.0.5",
     "pg": "8.22.0",
+    "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "4.4.3"
@@ -43,6 +45,7 @@
     "@types/node": "22.19.4",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "8.20.4",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "dotenv": "^17.4.2",
