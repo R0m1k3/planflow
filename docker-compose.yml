@@ -34,10 +34,12 @@ services:
     # vrai problème.
     networks:
       - interne
-    # Jamais publiée : rien hors de la pile n'a besoin de la base, et un jeu de
-    # données RH ne doit pas être à une règle de pare-feu du monde entier.
-    expose:
-      - '5432'
+    # Le conteneur reste sur 5432 pour l'application (réseau interne), mais le
+    # port hôte est publié sur un port non commun, configurable : plusieurs
+    # instances PostgreSQL coexistent sur le même serveur, et s'en tenir au
+    # 5432 par défaut les ferait entrer en collision.
+    ports:
+      - '${POSTGRES_PORT:-55432}:5432'
 
   app:
     build:
