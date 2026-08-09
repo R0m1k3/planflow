@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import { signInAction, type SignInState } from '@/server/auth/actions';
 
 function SubmitButton() {
@@ -27,7 +28,10 @@ export function SignInForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <PersistentForm
+      action={formAction}
+      className="flex flex-col gap-4"
+    >
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Adresse électronique</span>
         <input
@@ -61,6 +65,6 @@ export function SignInForm() {
       ) : null}
 
       <SubmitButton />
-    </form>
+    </PersistentForm>
   );
 }

@@ -7,6 +7,7 @@ import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { mfaRequired } from '@/domain/access/mfa-policy';
 import { currentSession } from '@/server/auth/session';
+import { isInstalled } from '@/server/install/state';
 
 /**
  * Toutes les routes applicatives passent par ici.
@@ -17,6 +18,11 @@ import { currentSession } from '@/server/auth/session';
  * sessions en base (matrice n° 23).
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  // Avant même la session : sur une instance vierge, il n'y a pas de compte à
+  // qui appartenir, et renvoyer vers la connexion ferait rebondir d'un écran à
+  // l'autre sans jamais dire ce qui manque.
+  if (!(await isInstalled())) redirect('/installation');
+
   const session = await currentSession();
   if (!session) redirect('/connexion');
 

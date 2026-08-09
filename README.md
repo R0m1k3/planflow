@@ -74,6 +74,19 @@ Les autres ont une valeur par défaut utilisable : `POSTGRES_PASSWORD`, `POSTGRE
 
 **Après le premier déploiement, relevez la clé dans les journaux du conteneur `app` et conservez-la hors du serveur.**
 
+### Première installation
+
+Les migrations posent le schéma, rien de plus : une instance neuve n'a **aucun compte et aucun utilisateur**. Le jeu de données de démonstration (`pnpm db:seed`) n'y remédie pas et refuse de tourner en production, à raison — personne ne veut de « Maison Rivage » et de salariés fictifs dans son registre du personnel.
+
+À la place, la première visite est redirigée vers `/installation`. L'écran demande le nom de l'entreprise, un premier établissement avec son fuseau horaire, et le compte qui administrera l'instance. Il crée le compte, le catalogue des capacités, les cinq rôles fournis, et vous connecte.
+
+Deux choses à savoir :
+
+- **L'écran ne se rouvre pas.** Il crée un propriétaire sans demander de session ; le laisser accessible ensuite reviendrait à offrir tous les droits au premier visiteur. Une ligne en base marque l'installation, et cette ligne ne se modifie ni ne s'efface depuis l'application. Remettre une instance à zéro est un geste d'exploitant, fait depuis la base.
+- **Un second facteur vous sera demandé aussitôt.** Le rôle propriétaire donne accès aux rémunérations et à la distribution des droits ; l'application l'exige avant d'ouvrir quoi que ce soit. Prévoyez une application d'authentification à portée de main, et conservez les codes de secours affichés à l'enrôlement — ils ne sont montrés qu'une fois.
+
+Le fuseau horaire n'est pas cosmétique : il décide des durées travaillées, changement d'heure compris. Un établissement outre-mer se déclare avec le sien.
+
 ### En local
 
 Nécessite Node 22, pnpm 10 et un PostgreSQL 16 accessible.

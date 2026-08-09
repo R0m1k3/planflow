@@ -2,11 +2,16 @@ import { redirect } from 'next/navigation';
 
 import { SignInForm } from '@/app/(auth)/connexion/SignInForm';
 import { currentSession } from '@/server/auth/session';
+import { isInstalled } from '@/server/install/state';
 
 export const metadata = { title: 'Connexion · PlanFlow' };
 export const dynamic = 'force-dynamic';
 
 export default async function ConnexionPage() {
+  // Une instance vierge n'a aucun compte : proposer de se connecter y serait
+  // une impasse, et l'échec ne dirait pas qu'il manque une installation.
+  if (!(await isInstalled())) redirect('/installation');
+
   if (await currentSession()) redirect('/');
 
   return (

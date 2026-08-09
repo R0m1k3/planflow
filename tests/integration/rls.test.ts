@@ -178,6 +178,19 @@ describeIfDb('immutabilité du journal d’audit', () => {
   });
 });
 
+/**
+ * Tables qui portent `accountId` sans être soumises à la RLS.
+ *
+ * Une seule, et elle doit le rester : `Installation` répond à « cette instance
+ * a-t-elle déjà un compte ? » **avant** qu'un compte soit connu. La lui poser
+ * sous RLS reviendrait à demander à la politique du compte courant de parler
+ * d'un compte qu'on n'a pas — elle répondrait « rien », et l'écran de première
+ * installation, qui crée un propriétaire, se rouvrirait à tout venant.
+ *
+ * Ce qui la protège à la place est vérifié par le test suivant.
+ */
+const EXEMPT = new Set(['Installation']);
+
 describeIfDb('couverture des politiques', () => {
   let client: Client;
 
@@ -221,12 +234,40 @@ describeIfDb('couverture des politiques', () => {
 
     const unprotected = rows.filter(
       (row) =>
-        !row.relrowsecurity || !row.relforcerowsecurity || row.policies < 2,
+        !EXEMPT.has(row.table_name) &&
+        (!row.relrowsecurity || !row.relforcerowsecurity || row.policies < 2),
     );
 
     expect(
       unprotected.map((row) => row.table_name),
       'tables sans RLS forcée ou sans politique de lecture et d’écriture',
     ).toEqual([]);
+  });
+
+  it('la seule table exemptée l’est bien, et autrement protégée', async () => {
+    // Une exemption qui n'est que l'absence d'une règle finit par en couvrir
+    // d'autres. Celle-ci est donc affirmée dans les deux sens : `Installation`
+    // est hors RLS **et** ce qui la protège à la place existe réellement.
+    const { rows } = await client.query<{ relrowsecurity: boolean }>(
+      `SELECT relrowsecurity FROM pg_class WHERE relname = 'Installation'`,
+    );
+    expect(rows[0]?.relrowsecurity, 'Installation est hors RLS à dessein').toBe(
+      false,
+    );
+
+    // Ce qui tient lieu de protection : la ligne ne se réécrit pas, ne
+    // s'efface pas, et ne peut pas être doublée.
+    const { rows: guards } = await client.query<{
+      triggers: number;
+      checks: number;
+    }>(`
+      SELECT
+        (SELECT count(*)::int FROM pg_trigger
+          WHERE tgrelid = '"Installation"'::regclass AND NOT tgisinternal) AS triggers,
+        (SELECT count(*)::int FROM pg_constraint
+          WHERE conrelid = '"Installation"'::regclass AND contype = 'c') AS checks
+    `);
+    expect(guards[0]?.triggers, 'trigger append-only').toBeGreaterThan(0);
+    expect(guards[0]?.checks, 'contrainte de ligne unique').toBeGreaterThan(0);
   });
 });

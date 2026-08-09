@@ -80,6 +80,16 @@ async function main() {
     },
   });
 
+  // Le marqueur d'installation, sans quoi une base semée serait tenue pour
+  // vierge et l'application renverrait vers l'écran de première installation
+  // au lieu de la connexion. `upsert` parce que le seed se rejoue, et que la
+  // ligne, elle, ne se supprime pas.
+  await prisma.installation.upsert({
+    where: { id: 'singleton' },
+    update: {},
+    create: { id: 'singleton', accountId: account.id },
+  });
+
   console.log('→ Rôles');
   const roleIds = new Map<string, string>();
   for (const role of SYSTEM_ROLES) {
