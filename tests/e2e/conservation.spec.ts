@@ -180,15 +180,14 @@ test('une pièce échue est effectivement effacée', async ({ page }) => {
   await upload.getByRole('button', { name: 'Déposer' }).click();
   await expect(page.getByText(`« ${fileName} » déposé.`)).toBeVisible();
 
-  // Fraîchement déposée, elle n'est pas échue : la purge ne doit pas l'emporter.
-  await page.goto('/reglages/conservation');
-  await expect(
-    page.locator('li').filter({ hasText: fileName }).getByText('Échéance non atteinte'),
-  ).toBeVisible();
+  // Fraîchement déposée, elle n'est pas échue. Constaté sur le dossier, qui ne
+  // liste que les pièces de ce salarié : l'écran de conservation tronque, et la
+  // pièce d'un test neuf n'y figure pas tant qu'elle n'appelle aucune décision.
+  await expect(page.getByText(/conservée jusqu’au/)).toBeVisible();
 
   // Seule l'échéance déclenche l'effacement, et elle se compte en mois.
   await backdateDocument(fileName, 3);
-  await page.reload();
+  await page.goto('/reglages/conservation');
   await expect(
     page.locator('li').filter({ hasText: fileName }).getByText('À purger'),
   ).toBeVisible();

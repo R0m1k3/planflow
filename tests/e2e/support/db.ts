@@ -62,3 +62,31 @@ export async function backdateDocument(
     await tx.$executeRaw`UPDATE "Document" SET "uploadedAt" = ${uploadedAt} WHERE id = ${found.id}`;
   });
 }
+
+/**
+ * Attribue un rôle à un membership, par son libellé.
+ *
+ * Aucun écran d'affectation n'existe encore : sans ce levier, l'effet d'un rôle
+ * personnalisé — le critère d'acceptation de WP-01 — resterait invérifiable.
+ */
+export async function assignRole(
+  membershipId: string,
+  roleName: string,
+): Promise<void> {
+  const rows = await db().$queryRaw<Array<{ id: string; accountId: string }>>`
+    SELECT id, "accountId" FROM "Role" WHERE name = ${roleName} LIMIT 1
+  `;
+  const role = rows[0];
+  if (!role) throw new Error(`Rôle introuvable : ${roleName}`);
+
+  const updated = await db().$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.account_id', ${role.accountId}, true)`;
+    return tx.$executeRaw`UPDATE "Membership" SET "roleId" = ${role.id} WHERE id = ${membershipId}`;
+  });
+
+  // Une mise à jour qui ne touche aucune ligne est indiscernable d'un succès :
+  // le test échouerait bien plus loin, sur un refus d'accès inexpliqué.
+  if (updated === 0) {
+    throw new Error(`Aucun membership mis à jour : ${membershipId}`);
+  }
+}

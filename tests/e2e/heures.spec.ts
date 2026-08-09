@@ -86,6 +86,18 @@ test('verrouiller une période ferme le mois aux modifications', async ({
     .fill('Correction demandée par le cabinet');
   await unlock.getByRole('button', { name: 'Déverrouiller' }).click();
   await expect(card.getByText('Ouverte')).toBeVisible();
+
+  // Rendre le mois : une période est unique par bornes, et en consommer une par
+  // exécution finit par épuiser la plage — le test échouerait alors sur une
+  // création refusée, pour une raison sans rapport avec ce qu'il vérifie.
+  const remove = card.locator('form').filter({ hasText: 'Supprimer' });
+  await remove.getByRole('button', { name: 'Supprimer' }).click();
+  await expect(remove.getByText(/saisissez le libellé exact/i)).toBeVisible();
+  await remove.getByPlaceholder(`Saisir « ${label} »`).fill(label);
+  await remove.getByRole('button', { name: 'Supprimer' }).click();
+  await expect(page.locator('section').filter({ hasText: label })).toHaveCount(
+    0,
+  );
 });
 
 test('supprimer une période exige de retaper son libellé', async ({ page }) => {

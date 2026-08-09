@@ -34,6 +34,18 @@ export default async function RetentionPage() {
   const due = candidates.filter((entry) => entry.verdict === 'DUE');
   const unpolicied = candidates.filter((entry) => entry.verdict === 'NO_POLICY');
 
+  // Ce qui appelle une décision d'abord. Trier par date de dépôt puis tronquer
+  // ferait disparaître les pièces échues derrière les plus anciennes, qui sont
+  // justement celles dont il n'y a rien à dire.
+  const PRIORITY: Record<string, number> = { DUE: 0, HELD: 1, NOT_COMPUTABLE: 2 };
+  const shown = [...candidates]
+    .sort(
+      (a, b) =>
+        (PRIORITY[a.verdict] ?? 3) - (PRIORITY[b.verdict] ?? 3) ||
+        b.uploadedAt.getTime() - a.uploadedAt.getTime(),
+    )
+    .slice(0, 40);
+
   return (
     <PageBody>
       <PageHeader
@@ -130,7 +142,7 @@ export default async function RetentionPage() {
             <p className="text-sm text-ink-3">Aucune pièce déposée.</p>
           ) : (
             <ul className="flex flex-col gap-1 text-sm">
-              {candidates.slice(0, 40).map((candidate) => (
+              {shown.map((candidate) => (
                 <li key={candidate.id} className="flex flex-wrap items-center gap-2">
                   <Badge
                     tone={
@@ -154,6 +166,13 @@ export default async function RetentionPage() {
               ))}
             </ul>
           )}
+
+          {candidates.length > shown.length ? (
+            <p className="text-micro text-ink-3">
+              {candidates.length - shown.length} pièce(s) de plus, non affichées.
+              Les pièces échues et suspendues figurent toujours en tête.
+            </p>
+          ) : null}
 
           {unpolicied.length > 0 ? (
             <p className="text-micro text-ink-3">

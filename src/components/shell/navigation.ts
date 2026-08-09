@@ -92,7 +92,7 @@ export const NAVIGATION: NavSection[] = [
       },
       { id: 'convention', label: 'Convention collective' },
       { id: 'postes', label: 'Postes et étiquettes' },
-      { id: 'roles', label: 'Rôles et permissions' },
+      { id: 'roles', label: 'Rôles et permissions', href: '/reglages/roles' },
     ],
   },
 ];
