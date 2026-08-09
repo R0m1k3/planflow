@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   requestTimeOffAction,
   type AbsenceActionState,
@@ -33,7 +34,8 @@ export function RequestForm({
   );
 
   return (
-    <form
+    <PersistentForm
+      resetAfter={state.ok ? state : null}
       action={formAction}
       className="flex flex-wrap items-end gap-3 rounded-3 border border-line-2 bg-surface-2 p-3"
     >
@@ -126,7 +128,7 @@ export function RequestForm({
       {state.ok && !state.warning ? (
         <p className="w-full text-xs text-ok-soft-ink">Demande enregistrée.</p>
       ) : null}
-    </form>
+    </PersistentForm>
   );
 }
 

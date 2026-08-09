@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   START_POINT_LABELS,
   START_POINTS,
@@ -23,7 +24,11 @@ export function RetentionPolicyForm() {
   );
 
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2">
+    <PersistentForm
+      action={action}
+      resetAfter={state.ok ? state : null}
+      className="grid gap-3 sm:grid-cols-2"
+    >
       <Field
         label="Objet"
         name="objectType"
@@ -88,7 +93,7 @@ export function RetentionPolicyForm() {
         </Button>
         <Messages state={state} />
       </div>
-    </form>
+    </PersistentForm>
   );
 }
 

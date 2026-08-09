@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Field, FormError, SubmitButton } from '@/components/ui/Form';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   createEmployeeAction,
   type ActionState,
@@ -15,7 +16,11 @@ export function AddEmployeeForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <PersistentForm
+      action={formAction}
+      resetAfter={state.ok ? state : null}
+      className="flex flex-col gap-3"
+    >
       <div className="flex flex-wrap gap-3">
         <Field label="Prénom" name="firstName" required />
         <Field label="Nom" name="lastName" required />
@@ -37,6 +42,6 @@ export function AddEmployeeForm() {
           <span className="text-xs text-ok-soft-ink">Salarié ajouté.</span>
         ) : null}
       </div>
-    </form>
+    </PersistentForm>
   );
 }

@@ -4,6 +4,7 @@ import { useActionState } from 'react';
 
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   ACCEPTED_MIME_TYPES,
   CATEGORY_LABELS,
@@ -114,8 +115,9 @@ export function DocumentsPanel({
       )}
 
       {canManage ? (
-        <form
+        <PersistentForm
           action={upload}
+          resetAfter={uploadState.ok ? uploadState : null}
           className="flex flex-wrap items-end gap-3 border-t border-line-1 pt-4"
         >
           <input type="hidden" name="membershipId" value={membershipId} />
@@ -157,7 +159,7 @@ export function DocumentsPanel({
           <Button type="submit" variant="primary" disabled={uploading}>
             Déposer
           </Button>
-        </form>
+        </PersistentForm>
       ) : null}
 
       {uploadState.error ? (

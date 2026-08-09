@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Field, FormError, SubmitButton } from '@/components/ui/Form';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import { LEGAL_DOMAINS } from '@/domain/legal/domains';
 import {
   addLegalEntryAction,
@@ -16,7 +17,11 @@ export function AddEntryForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <PersistentForm
+      action={formAction}
+      resetAfter={state.ok ? state : null}
+      className="flex flex-col gap-3"
+    >
       <div className="flex flex-wrap gap-3">
         <label className="flex min-w-0 flex-1 flex-col gap-1.5">
           <span className="text-sm font-medium">Domaine</span>
@@ -78,6 +83,6 @@ export function AddEntryForm() {
           </span>
         ) : null}
       </div>
-    </form>
+    </PersistentForm>
   );
 }

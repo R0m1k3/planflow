@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Field, FormError, SubmitButton } from '@/components/ui/Form';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   createLocationAction,
   type ActionState,
@@ -15,7 +16,11 @@ export function AddLocationForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <PersistentForm
+      action={formAction}
+      resetAfter={state.ok ? state : null}
+      className="flex flex-col gap-3"
+    >
       <div className="flex flex-wrap gap-3">
         <Field label="Nom" name="name" required placeholder="Nantes Atlantis" />
         <Field
@@ -52,6 +57,6 @@ export function AddLocationForm() {
           <span className="text-xs text-ok-soft-ink">Établissement créé.</span>
         ) : null}
       </div>
-    </form>
+    </PersistentForm>
   );
 }

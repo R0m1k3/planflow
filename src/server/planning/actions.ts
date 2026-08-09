@@ -3,6 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
+import {
+  PUBLICATION_INTENT_FIELD,
+  PUBLISH_INTENT,
+} from '@/domain/planning/publication';
 import { AuthorizationError, can, type Actor } from '@/domain/access/authorize';
 import { shiftMinutes } from '@/domain/counters/week';
 import {
@@ -374,18 +378,33 @@ const publishInput = z.object({
   acknowledgement: z.string().trim().max(500).optional(),
 });
 
-export async function publishWeekAction(
+/**
+ * Publier et dépublier par une **seule** action, l'intention venant du
+ * formulaire.
+ *
+ * Passer tantôt l'une tantôt l'autre à `useActionState` selon l'état paraît
+ * naturel et ne fonctionne pas : le formulaire cesse de suivre le changement
+ * d'action, et un bouton « Dépublier » finit par republier — sans message
+ * d'erreur, puisque l'action exécutée réussit.
+ *
+ * Mesuré sur trois envois consécutifs, en lisant l'en-tête `Next-Action` :
+ *
+ *     1er envoi   next-action: 60b8097e   (dépublier)  → brouillon
+ *     2e  envoi   next-action: 6012d40f   (publier)    → publiée
+ *     3e  envoi   next-action: 6012d40f   (publier)    → publiée
+ *
+ * L'intention voyage donc avec le bouton, `name`/`value` sur le déclencheur :
+ * un champ caché serait remis à sa valeur d'origine par la réinitialisation
+ * que React applique après chaque action, un bouton ne l'est jamais.
+ */
+export async function setWeekPublicationAction(
   _previous: PlanningActionState,
   formData: FormData,
 ): Promise<PlanningActionState> {
-  return setPublication(formData, true);
-}
-
-export async function unpublishWeekAction(
-  _previous: PlanningActionState,
-  formData: FormData,
-): Promise<PlanningActionState> {
-  return setPublication(formData, false);
+  return setPublication(
+    formData,
+    formData.get(PUBLICATION_INTENT_FIELD) === PUBLISH_INTENT,
+  );
 }
 
 const duplicateInput = z.object({
