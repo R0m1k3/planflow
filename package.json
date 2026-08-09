@@ -22,6 +22,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "mfa:reset": "tsx scripts/mfa-reset.ts",
+    "retention:purge": "tsx scripts/retention-purge.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test"
   },
   "prisma": {

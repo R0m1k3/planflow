@@ -90,6 +90,19 @@ pnpm mfa:reset adresse@example.fr
 
 Le retrait révoque les sessions ouvertes et s'inscrit au journal d'audit. Il n'est délibérément pas exposé dans l'application : l'exécuter demande déjà un accès au serveur, c'est-à-dire davantage que ce que le second facteur protège.
 
+### Durées de conservation
+
+Aucune durée n'est appliquée par défaut : la matrice interdit d'aligner tout sur cinq ans, et un objet sans politique déclarée se conserve. Les durées se déclarent dans Réglages → Durées de conservation, chacune avec sa justification — elle devra être défendue lors d'un contrôle.
+
+La purge doit tourner périodiquement, par exemple en `cron` :
+
+```bash
+pnpm retention:purge --dry   # inventaire, n'efface rien
+pnpm retention:purge         # efface les pièces échues, compte par compte
+```
+
+Une conservation à titre probatoire (*legal hold*) suspend la purge des objets qu'elle vise, quelle que soit leur échéance. Les journaux d'audit y échappent par construction : ils doivent survivre aux données qu'ils décrivent, sans quoi il deviendrait impossible de démontrer que la purge a eu lieu.
+
 ## Vérifier
 
 ```bash

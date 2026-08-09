@@ -1,5 +1,11 @@
 import { can } from '@/domain/access/authorize';
 import type { DocumentCategory } from '@/domain/documents/rules';
+import {
+  dueAt,
+  isComputable,
+  resolvePolicy,
+  type RetentionPolicyLike,
+} from '@/domain/retention/policy';
 import { query } from '@/server/context';
 import { signedDocumentUrl } from '@/server/documents/links';
 
@@ -10,6 +16,12 @@ export interface DocumentRow {
   mimeType: string;
   sizeBytes: number;
   isSensitive: boolean;
+  /**
+   * Échéance **dérivée** de la politique en vigueur au dépôt, jamais stockée.
+   * La colonne existe au schéma pour une échéance fixée à la main ; tant
+   * qu'elle ne sert pas, deux sources de vérité vaudraient mieux qu'une seule
+   * uniquement dans les rapports de bogue.
+   */
   retentionUntil: Date | null;
   uploadedAt: Date;
   /** Lien signé, valable quelques minutes seulement. */
@@ -42,17 +54,31 @@ export async function listDocuments(
         mimeType: true,
         sizeBytes: true,
         isSensitive: true,
-        retentionUntil: true,
         uploadedAt: true,
       },
     });
 
+    const policies =
+      (await db.retentionPolicy.findMany()) as RetentionPolicyLike[];
+
     return {
-      documents: rows.map((row) => ({
-        ...row,
-        category: row.category as DocumentCategory,
-        href: signedDocumentUrl(row.id),
-      })),
+      documents: rows.map((row) => {
+        const policy = resolvePolicy(
+          policies,
+          [`Document:${row.category}`, 'Document'],
+          row.uploadedAt,
+        );
+
+        return {
+          ...row,
+          category: row.category as DocumentCategory,
+          retentionUntil:
+            policy && isComputable(policy.startPoint)
+              ? dueAt(row.uploadedAt, policy.durationMonths)
+              : null,
+          href: signedDocumentUrl(row.id),
+        };
+      }),
       canManage: can(actor, 'members.documents.manage'),
     };
   });
