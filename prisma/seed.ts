@@ -35,8 +35,18 @@ import { withTenant } from '../src/server/tenant';
 
 const DEMO_PASSWORD = 'planflow-demo-2026';
 
+// Connexion d'amorçage, **pas** celle de l'application — même principe que le
+// harnais de tests (tests/integration/admin-db.ts).
+//
+// L'application se connecte avec un rôle soumis à la row-level security, qui
+// ne voit rien hors du compte courant et ne peut pas créer de compte de toutes
+// pièces : c'est exactement ce qu'on attend de lui. Le seed, lui, installe un
+// **premier** compte de démonstration — il ne peut pas le faire dans un
+// contexte locataire qui n'existe pas encore. Il passe donc par la connexion
+// d'amorçage, comme un exploitant depuis le serveur.
 const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL ?? '',
+  connectionString:
+    process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL ?? '',
 });
 const prisma = new PrismaClient({ adapter });
 
