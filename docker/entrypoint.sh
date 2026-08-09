@@ -18,6 +18,8 @@ set -eu
 # gère ses secrets par ailleurs ne doit pas être contrarié.
 
 KEY_FILE="${ENCRYPTION_KEY_FILE:-/secrets/encryption.key}"
+# Surchargeable pour pouvoir éprouver ce script hors d'une image.
+MIGRATOR_DIR="${MIGRATOR_DIR:-/migrator}"
 
 if [ -z "${ENCRYPTION_KEY:-}" ]; then
   if [ -f "$KEY_FILE" ]; then
@@ -49,6 +51,12 @@ export ENCRYPTION_KEY
 
 # Les migrations s'appliquent au démarrage : l'image se déploie sans étape
 # séparée.
-./node_modules/.bin/prisma migrate deploy
+#
+# Depuis /migrator, arbre séparé de celui de l'application : la CLI y trouve ses
+# propres dépendances, et le fichier de configuration y résout `prisma/config`.
+# Appelée par son chemin plutôt que par `.bin/prisma` — un lien symbolique
+# recopié d'une image à l'autre est une dépendance de plus à la disposition des
+# fichiers, et c'est exactement ce qui a cassé ici.
+( cd "$MIGRATOR_DIR" && node node_modules/prisma/build/index.js migrate deploy )
 
 exec node server.js

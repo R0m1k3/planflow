@@ -1,5 +1,16 @@
-import 'dotenv/config';
 import { defineConfig } from 'prisma/config';
+
+/*
+ * `.env` est pratique en développement, absent en conteneur — où les variables
+ * viennent de l'environnement et où `dotenv` n'est pas installé : la sortie
+ * `standalone` de Next n'embarque que ce que le serveur utilise. Un import
+ * ferme ferait échouer les migrations au démarrage de l'image.
+ */
+try {
+  await import('dotenv/config');
+} catch {
+  // Rien à charger : les variables sont déjà dans l'environnement.
+}
 
 /**
  * Prisma 7 moved the migration connection URL out of schema.prisma.
