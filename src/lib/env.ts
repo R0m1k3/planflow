@@ -51,4 +51,35 @@ function load(): Env {
   return parsed.data;
 }
 
-export const env = load();
+let cached: Env | null = null;
+
+/**
+ * Contrat d'environnement, validé à la **première lecture** et non à l'import.
+ *
+ * La différence n'est pas cosmétique : Next.js évalue les modules serveur
+ * pendant la construction de l'image, où ni la base ni la clé de chiffrement
+ * n'existent — ce sont des valeurs d'exécution. Valider à l'import rendait
+ * l'image impossible à construire sans les secrets de production, c'est-à-dire
+ * exigeait de les confier au constructeur.
+ *
+ * La garantie reste entière : la première lecture arrive au premier appel utile,
+ * bien avant qu'une requête aboutisse, et échoue avec le même message.
+ */
+export const env: Env = new Proxy({} as Env, {
+  get(_target, property) {
+    cached ??= load();
+    return cached[property as keyof Env];
+  },
+  has(_target, property) {
+    cached ??= load();
+    return property in cached;
+  },
+  ownKeys() {
+    cached ??= load();
+    return Reflect.ownKeys(cached);
+  },
+  getOwnPropertyDescriptor(_target, property) {
+    cached ??= load();
+    return Reflect.getOwnPropertyDescriptor(cached, property);
+  },
+});

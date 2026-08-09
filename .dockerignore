@@ -1,0 +1,24 @@
+# Contexte de construction.
+#
+# `.env` en tête et ce n'est pas un détail : il porte la clé de chiffrement et
+# les mots de passe de la base. Copié dans le contexte, il finirait dans une
+# couche de l'image, lisible par quiconque la récupère.
+.env
+.env.*
+!.env.example
+
+node_modules
+.next
+.pgdata
+storage
+test-results
+playwright-report
+.git
+.github
+.claude
+
+# Documents de travail : ils alourdissent le contexte sans servir au build.
+Audit Combo
+design
+*.md
+!README.md
