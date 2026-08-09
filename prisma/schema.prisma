@@ -35,6 +35,32 @@ model Account {
   labels      Label[]
   absenceTypes AbsenceType[]
   legalConfig LegalConfigEntry[]
+  installation Installation?
+}
+
+/// Marqueur d'installation de l'instance — une ligne, jamais deux.
+///
+/// Il répond à « cette instance a-t-elle déjà un compte ? » **avant** qu'un
+/// compte soit connu. La question ne peut pas être posée à `Account` : sa
+/// politique RLS ne laisse voir que le compte courant, si bien qu'une instance
+/// déjà installée paraîtrait vierge à qui n'a pas de session — et l'écran
+/// d'installation, qui crée un propriétaire, se rouvrirait à tout venant.
+///
+/// Hors RLS à dessein : la seule chose qu'il divulgue est l'existence d'une
+/// installation et son identifiant de compte, que le lien d'invitation porte
+/// déjà en clair (voir `composeInvitationToken`).
+///
+/// Ni modifiable ni supprimable, imposé par un trigger : une instance installée
+/// ne redevient pas vierge sur une requête de l'application. Remettre une
+/// instance à zéro est un geste d'exploitant, depuis la base.
+model Installation {
+  /// Constante, contrainte en base : c'est elle qui rend le doublon impossible
+  /// plutôt que seulement improbable.
+  id          String   @id @default("singleton")
+  accountId   String   @unique
+  installedAt DateTime @default(now())
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model Location {

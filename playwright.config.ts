@@ -46,13 +46,14 @@ export default defineConfig({
     // compte de direction — sans lequel la connexion ne peut pas être jouée.
     {
       name: 'anonyme',
-      testMatch: /(auth|reglages|acces)\.spec\.ts/,
+      testMatch: /(auth|reglages|acces|installation)\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'], ...chromiumOverride },
     },
     {
       name: 'chromium',
-      testIgnore: /(auth\.setup|auth\.spec|reglages\.spec|acces\.spec)\.ts/,
+      testIgnore:
+        /(auth\.setup|auth\.spec|reglages\.spec|acces\.spec|installation\.spec)\.ts/,
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],

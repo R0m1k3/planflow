@@ -1,6 +1,6 @@
 'use client';
 
-import type { InputHTMLAttributes, ReactNode } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode } from 'react';
 import { useFormStatus } from 'react-dom';
 
 import { Button, type ButtonProps } from '@/components/ui/Button';
@@ -11,20 +11,37 @@ export interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string;
 }
 
-export function Field({ label, hint, className, ...rest }: FieldProps) {
+export function Field({ label, hint, className, id, ...rest }: FieldProps) {
+  // L'indication est rattachée par `aria-describedby` et non laissée dans le
+  // `<label>`. Placée dedans, elle entre dans le **nom accessible** du champ :
+  // une aide à la saisie devient alors une partie de son intitulé, annoncée
+  // comme telle par un lecteur d'écran, et deux champs voisins cessent d'être
+  // distinguables par leur nom.
+  const generated = useId();
+  const fieldId = id ?? generated;
+  const hintId = `${fieldId}-hint`;
+
   return (
-    <label className="flex min-w-0 flex-1 flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
+    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <label htmlFor={fieldId} className="text-sm font-medium">
+        {label}
+      </label>
       <input
         {...rest}
+        id={fieldId}
+        {...(hint ? { 'aria-describedby': hintId } : {})}
         className={cx(
           'h-9 rounded-2 border border-line-2 bg-surface px-3 text-sm text-ink-1',
           'outline-none placeholder:text-ink-3 focus-visible:border-focus',
           className,
         )}
       />
-      {hint ? <span className="text-micro text-ink-3">{hint}</span> : null}
-    </label>
+      {hint ? (
+        <span id={hintId} className="text-micro text-ink-3">
+          {hint}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
