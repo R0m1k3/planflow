@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 import type { Actor, Scope } from '@/domain/access/authorize';
 import { generateToken, hashToken } from '@/server/crypto';
-import { unscoped } from '@/server/tenant';
+import { unscoped, withTenant, withUser } from '@/server/tenant';
 
 /**
  * Sessions serveur — PLAN.md §2 (écart assumé) et matrice n° 23.
@@ -247,22 +247,11 @@ export async function resolveSession(
 ): Promise<SessionContext | null> {
   const db = unscoped();
 
+  // `Session` et `User` ne portent pas de compte : ce sont les seules tables
+  // lisibles avant de savoir de quel compte il s'agit.
   const session = await db.session.findUnique({
     where: { tokenHash: hashToken(token) },
-    include: {
-      user: {
-        include: {
-          memberships: {
-            where: { status: 'ACTIVE', archivedAt: null },
-            include: {
-              account: { select: { name: true } },
-              role: { include: { permissions: { include: { permission: true } } } },
-              scopes: true,
-            },
-          },
-        },
-      },
-    },
+    include: { user: true },
   });
 
   // Une session en attente du second facteur ne résout aucun acteur : elle ne
@@ -277,45 +266,70 @@ export async function resolveSession(
     return null;
   }
 
-  const membership = session.user.memberships[0];
-  if (!membership) return null;
+  // Amorçage : trouver le compte suppose de lire le rattachement, lequel est
+  // filtré par compte. La porte est étroite — seules les lignes dont cet
+  // utilisateur est titulaire — et ne sert qu'ici.
+  const membershipId = await withUser(session.userId, async (tx) => {
+    const own = await tx.membership.findFirst({
+      where: { userId: session.userId, status: 'ACTIVE', archivedAt: null },
+      select: { id: true, accountId: true },
+    });
+    return own;
+  });
 
-  const scope: Scope = {
-    allLocations: membership.scopes.some((entry) => entry.allLocations),
-    locationIds: membership.scopes
-      .map((entry) => entry.locationId)
-      .filter((id): id is string => id !== null),
-    teamIds: membership.scopes
-      .map((entry) => entry.teamId)
-      .filter((id): id is string => id !== null),
-  };
+  if (!membershipId) return null;
 
-  const actor: Actor = {
-    membershipId: membership.id,
-    accountId: membership.accountId,
-    userId: session.user.id,
-    roleKey: membership.role.key,
-    permissions: new Set(
-      membership.role.permissions.map((entry) => entry.permission.code),
-    ),
-    scope,
-  };
+  // Tout le reste passe par le périmètre du compte, comme n'importe quelle
+  // lecture métier.
+  return withTenant(membershipId.accountId, async (tx) => {
+    const membership = await tx.membership.findUnique({
+      where: { id: membershipId.id },
+      include: {
+        account: { select: { name: true } },
+        role: { include: { permissions: { include: { permission: true } } } },
+        scopes: true,
+      },
+    });
 
-  const { firstName, lastName, email } = session.user;
+    if (!membership) return null;
 
-  return {
-    actor,
-    sessionId: session.id,
-    user: {
-      firstName,
-      lastName,
-      email,
-      initials: `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase(),
-      mfaEnrolled: session.user.mfaEnrolledAt !== null,
-    },
-    accountName: membership.account.name,
-    roleName: membership.role.name,
-  };
+    const scope: Scope = {
+      allLocations: membership.scopes.some((entry) => entry.allLocations),
+      locationIds: membership.scopes
+        .map((entry) => entry.locationId)
+        .filter((id): id is string => id !== null),
+      teamIds: membership.scopes
+        .map((entry) => entry.teamId)
+        .filter((id): id is string => id !== null),
+    };
+
+    const actor: Actor = {
+      membershipId: membership.id,
+      accountId: membership.accountId,
+      userId: session.userId,
+      roleKey: membership.role.key,
+      permissions: new Set(
+        membership.role.permissions.map((entry) => entry.permission.code),
+      ),
+      scope,
+    };
+
+    const { firstName, lastName, email } = session.user;
+
+    return {
+      actor,
+      sessionId: session.id,
+      user: {
+        firstName,
+        lastName,
+        email,
+        initials: `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase(),
+        mfaEnrolled: session.user.mfaEnrolledAt !== null,
+      },
+      accountName: membership.account.name,
+      roleName: membership.role.name,
+    };
+  });
 }
 
 /** Session courante depuis le cookie, ou `null`. */

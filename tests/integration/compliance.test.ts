@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { adminPrisma } from './admin-db';
+
 import { IDCC_1517_PARAMETERS } from '@/domain/compliance/idcc1517';
 import { zonedInstant } from '@/domain/planning/week';
 
@@ -13,7 +15,7 @@ import { zonedInstant } from '@/domain/planning/week';
  * démontre qu'avec deux versions coexistantes en base.
  */
 
-const enabled = (process.env.DATABASE_URL ?? '').length > 0;
+const enabled = (process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL ?? '').length > 0;
 const describeIfDb = enabled ? describe : describe.skip;
 
 const TZ = 'Europe/Paris';
@@ -26,7 +28,6 @@ const membershipId = `${suffix}-member`;
 let agreementFor: typeof import('@/server/compliance/evaluate').agreementFor;
 let evaluateSchedule: typeof import('@/server/compliance/evaluate').evaluateSchedule;
 let withTenant: typeof import('@/server/tenant').withTenant;
-let unscoped: typeof import('@/server/tenant').unscoped;
 
 /** 10 h de travail : conforme à 10 h, non conforme à 8 h. */
 function tenHourShift(scheduleId: string, date: string) {
@@ -50,9 +51,9 @@ describeIfDb('moteur de conformité en base', () => {
     ({ agreementFor, evaluateSchedule } = await import(
       '@/server/compliance/evaluate'
     ));
-    ({ withTenant, unscoped } = await import('@/server/tenant'));
+    ({ withTenant } = await import('@/server/tenant'));
 
-    const db = unscoped();
+    const db = adminPrisma();
 
     await db.account.create({
       data: { id: accountId, name: `Compte ${suffix}` },
@@ -137,7 +138,7 @@ describeIfDb('moteur de conformité en base', () => {
 
   afterAll(async () => {
     if (!enabled) return;
-    await unscoped().account.delete({ where: { id: accountId } });
+    await adminPrisma().account.delete({ where: { id: accountId } });
   });
 
   it('choisit la version en vigueur à la date, pas la plus récente', async () => {
@@ -208,7 +209,7 @@ describeIfDb('moteur de conformité en base', () => {
     // Le figeage est en base, pas seulement dans l'application : une paie
     // antérieure doit rester reproductible même si quelqu'un écrit
     // directement en SQL.
-    const db = unscoped();
+    const db = adminPrisma();
     const agreement = await db.collectiveAgreement.findFirst({
       where: { accountId, version: 1 },
     });

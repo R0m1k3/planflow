@@ -11,7 +11,14 @@ concurrency:
 
 env:
   # Test-only values. Real secrets never live in CI configuration.
-  DATABASE_URL: postgresql://planflow:planflow@localhost:5432/planflow_test
+  # Compte applicatif, **pas** le superutilisateur d'amorçage : un
+  # superutilisateur contourne la row-level security, et la suite passerait sans
+  # jamais éprouver la seconde couche d'isolation — présente en base, absente
+  # des faits.
+  DATABASE_URL: postgresql://planflow_app:planflow_app@localhost:5432/planflow_test
+  # Le harnais de tests fabrique des états que l'interface ne pose pas ; il lui
+  # faut une connexion qui traverse les comptes, comme un exploitant.
+  ADMIN_DATABASE_URL: postgresql://planflow:planflow@localhost:5432/planflow_test
   ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
   APP_URL: http://127.0.0.1:3100
 
@@ -44,6 +51,16 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Créer le rôle applicatif, soumis à la RLS
+        run: |
+          PGPASSWORD=planflow psql -h localhost -U planflow -d planflow_test -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE planflow_app LOGIN PASSWORD 'planflow_app'
+            NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+          ALTER DATABASE planflow_test OWNER TO planflow_app;
+          ALTER SCHEMA public OWNER TO planflow_app;
+          GRANT ALL ON SCHEMA public TO planflow_app;
+          SQL
 
       - run: pnpm db:generate
 

@@ -17,7 +17,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 const APP_ROLE = 'planflow_rls_test';
 const APP_PASSWORD = 'rls-test-only';
 
-const adminUrl = process.env.DATABASE_URL ?? '';
+// Connexion d'amorçage : créer un rôle et deux comptes de toutes pièces est
+// hors de portée du compte applicatif — c'est précisément ce que ces tests
+// vérifient par ailleurs.
+const adminUrl =
+  process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL ?? '';
 const enabled = adminUrl.length > 0;
 
 let admin: Client;

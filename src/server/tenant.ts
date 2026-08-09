@@ -132,8 +132,34 @@ export async function withTenant<T>(
 }
 
 /**
+ * Exécute `fn` au nom d'un utilisateur, **avant** que son compte soit connu.
+ *
+ * Sert au seul amorçage de session : trouver à quel compte un utilisateur
+ * appartient suppose de lire son rattachement, et le rattachement est
+ * lui-même filtré par compte. Sans cette porte étroite, la seule issue serait
+ * de connecter l'application avec un rôle qui contourne la RLS — c'est-à-dire
+ * de la désactiver partout pour résoudre un cas d'amorçage.
+ *
+ * La politique associée n'ouvre que les lignes dont l'utilisateur est le
+ * titulaire (voir la migration `membership_self_read`).
+ */
+export async function withUser<T>(
+  userId: string,
+  fn: (db: ScopedClient) => Promise<T>,
+): Promise<T> {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
+    return fn(tx as unknown as ScopedClient) as Promise<T>;
+  });
+}
+
+/**
  * Accès sans portée de compte, pour les opérations qui précèdent l'identité :
  * authentification par e-mail, acceptation d'invitation, migrations.
+ *
+ * Ne donne accès qu'aux tables **sans** colonne `accountId` — sessions,
+ * utilisateurs, codes de secours. Les autres restent filtrées par la RLS, qui
+ * ne laisse rien passer hors d'une transaction scopée.
  *
  * Volontairement nommé pour se voir en revue de code.
  */

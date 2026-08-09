@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { adminPrisma } from './admin-db';
+
 import { IDCC_1517_PARAMETERS } from '@/domain/compliance/idcc1517';
 import { zonedInstant } from '@/domain/planning/week';
 
@@ -15,7 +17,7 @@ import { zonedInstant } from '@/domain/planning/week';
  *   Trois calculs séparés divergent, et l'écart ne se voit qu'au bulletin.
  */
 
-const enabled = (process.env.DATABASE_URL ?? '').length > 0;
+const enabled = (process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL ?? '').length > 0;
 const describeIfDb = enabled ? describe : describe.skip;
 
 const TZ = 'Europe/Paris';
@@ -25,7 +27,6 @@ const locationId = `${suffix}-loc`;
 const teamId = `${suffix}-team`;
 const membershipId = `${suffix}-member`;
 
-let unscoped: typeof import('@/server/tenant').unscoped;
 let withTenant: typeof import('@/server/tenant').withTenant;
 let assertPeriodOpen: typeof import('@/server/payroll/periods').assertPeriodOpen;
 let PeriodLockedError: typeof import('@/server/payroll/periods').PeriodLockedError;
@@ -41,13 +42,13 @@ const MONTH = { year: YEAR, month: 8 };
 describeIfDb('période de paie', () => {
   beforeAll(async () => {
     process.env.ENCRYPTION_KEY ??= Buffer.alloc(32, 3).toString('base64');
-    ({ unscoped, withTenant } = await import('@/server/tenant'));
+    ({ withTenant } = await import('@/server/tenant'));
     ({ assertPeriodOpen, PeriodLockedError, computeSnapshots } = await import(
       '@/server/payroll/periods'
     ));
     ({ buildPayrollPeriod } = await import('@/server/payroll/build'));
 
-    const db = unscoped();
+    const db = adminPrisma();
 
     await db.account.create({ data: { id: accountId, name: `Compte ${suffix}` } });
     await db.location.create({
@@ -147,7 +148,7 @@ describeIfDb('période de paie', () => {
 
   afterAll(async () => {
     if (!enabled) return;
-    await unscoped().account.delete({ where: { id: accountId } });
+    await adminPrisma().account.delete({ where: { id: accountId } });
   });
 
   it('laisse passer une mutation sur une période ouverte', async () => {
@@ -191,7 +192,7 @@ describeIfDb('période de paie', () => {
   });
 
   it('refuse toute mutation une fois la période verrouillée', async () => {
-    await unscoped().payPeriod.update({
+    await adminPrisma().payPeriod.update({
       where: { id: periodId },
       data: { status: 'LOCKED', lockedAt: new Date() },
     });
