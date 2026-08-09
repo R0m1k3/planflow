@@ -7,14 +7,25 @@ import { PrismaClient } from '@prisma/client';
  * Certains états ne se posent pas par l'interface — retirer un second facteur
  * dont on a perdu le secret, par exemple. Les fabriquer ici garde la suite
  * rejouable sans ajouter au produit une porte qui n'aurait pas lieu d'exister.
+ *
+ * La connexion est **administrative**, distincte de celle de l'application :
+ * cette dernière est soumise à la row-level security et ne voit rien hors du
+ * compte courant, ce qui est précisément le but. Un harnais de test fabrique
+ * l'état comme le ferait un exploitant, depuis le serveur.
  */
 let client: PrismaClient | null = null;
+
+function adminUrl(): string {
+  const url = process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL;
+  if (!url) throw new Error('ADMIN_DATABASE_URL ou DATABASE_URL requis');
+  return url;
+}
 
 function db(): PrismaClient {
   // Prisma 7 exige un adaptateur : le client applicatif n'est pas réutilisable
   // ici, il vit derrière `server-only`.
   client ??= new PrismaClient({
-    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+    adapter: new PrismaPg({ connectionString: adminUrl() }),
   });
   return client;
 }

@@ -6,20 +6,36 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-planflow}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD est requis}
+      # Valeur par défaut assumée : la base n'est jamais publiée et reste sur le
+      # réseau privé de la pile, où seule l'application l'atteint. Ce mot de
+      # passe ne protège donc pas d'Internet — il protège d'un autre conteneur
+      # du même réseau. Le changer reste recommandé.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-planflow-interne}
       POSTGRES_DB: ${POSTGRES_DB:-planflow}
+      # Transmis au script d'initialisation, qui crée le rôle de connexion de
+      # l'application — celui-ci ne doit surtout pas être le superutilisateur.
+      APP_DB_USER: ${APP_DB_USER:-planflow_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-planflow-app-interne}
       # Deterministic collation: ordering of employee names must not depend on
       # the host locale, or exports differ between machines.
       LANG: C.UTF-8
     volumes:
       - db-data:/var/lib/postgresql/data
+      # Crée le rôle applicatif à la première initialisation du volume.
+      - ./docker/init-app-role.sh:/docker-entrypoint-initdb.d/10-init-app-role.sh:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-planflow} -d ${POSTGRES_DB:-planflow}']
       interval: 5s
       timeout: 5s
       retries: 10
-    # Not published by default: nothing outside the compose network needs the
-    # database, and an HR dataset should not be one firewall rule from the world.
+    # Volontairement absente du réseau externe : elle n'a besoin que de
+    # l'application. L'y attacher exposerait la base à tout ce que le
+    # reverse-proxy héberge, et le mot de passe par défaut deviendrait alors un
+    # vrai problème.
+    networks:
+      - interne
+    # Jamais publiée : rien hors de la pile n'a besoin de la base, et un jeu de
+    # données RH ne doit pas être à une règle de pare-feu du monde entier.
     expose:
       - '5432'
 
@@ -32,11 +48,32 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-planflow}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-planflow}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY est requis — voir .env.example}
-      APP_URL: ${APP_URL:-http://localhost:3000}
+      # Le compte applicatif, **pas** le superutilisateur d'amorçage : un
+      # superutilisateur contourne la row-level security, y compris déclarée en
+      # FORCE, et l'isolation ne reposerait plus que sur la couche applicative.
+      DATABASE_URL: postgresql://${APP_DB_USER:-planflow_app}:${APP_DB_PASSWORD:-planflow-app-interne}@db:5432/${POSTGRES_DB:-planflow}
+      # Seule variable sans valeur par défaut, et il n'y en aura pas : elle
+      # chiffre le NIR, l'IBAN et les arrêts de travail. Une clé livrée avec
+      # l'image serait connue de tous et le chiffrement ne protégerait plus
+      # rien. La produire : openssl rand -base64 32
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY est requis. Produire une clé avec - openssl rand -base64 32}
+      APP_URL: ${APP_URL:-http://localhost:9317}
+      # Chemin **dans le volume**, pas dans l'image : les pièces du dossier
+      # salarié écrites dans la couche du conteneur disparaîtraient au premier
+      # redéploiement, et une pièce d'identité perdue ne se reconstitue pas.
+      DOCUMENT_STORE: /data/documents
+    volumes:
+      - documents:/data
+    networks:
+      # `interne` pour joindre la base, `nginx_default` pour être joignable par
+      # le reverse-proxy — qui atteint le conteneur sur son port 3000, sans
+      # passer par le port publié.
+      - interne
+      - nginx_default
     ports:
-      - '${APP_PORT:-3000}:3000'
+      # Port peu courant : le service est censé passer par le reverse-proxy, et
+      # un 3000 publié sur l'hôte se heurte à tout ce qui traîne.
+      - '${APP_PORT:-9317}:3000'
     healthcheck:
       test:
         [
@@ -50,5 +87,18 @@ services:
       retries: 5
       start_period: 30s
 
+networks:
+  # Réseau privé de la pile : base et application, rien d'autre.
+  interne:
+
+  # Réseau du reverse-proxy, créé en dehors de cette pile. Le déclarer externe
+  # évite d'en fabriquer un second du même nom, sur lequel nginx ne verrait rien.
+  nginx_default:
+    external: true
+
 volumes:
   db-data:
+  # Pièces du dossier salarié, chiffrées au repos avec ENCRYPTION_KEY. À
+  # sauvegarder avec la base : l'une sans l'autre restitue un dossier amputé,
+  # et sans la clé le volume est illisible.
+  documents:

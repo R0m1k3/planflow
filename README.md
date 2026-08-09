@@ -50,11 +50,32 @@ devinent pas.
 
 ```bash
 cp .env.example .env
-# Renseigner POSTGRES_PASSWORD et ENCRYPTION_KEY (voir ci-dessous)
+# ENCRYPTION_KEY est la seule variable sans valeur par défaut :
+echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 docker compose up --build
 ```
 
-L'application écoute sur <http://localhost:3000>. Les migrations s'appliquent au démarrage du conteneur.
+L'application écoute sur <http://localhost:9317> — port peu courant à dessein, le service étant censé passer par un reverse-proxy. Les migrations s'appliquent au démarrage du conteneur.
+
+La pile attend un réseau externe nommé `nginx_default`, celui du reverse-proxy. S'il n'existe pas encore :
+
+```bash
+docker network create nginx_default
+```
+
+Seule l'application y est attachée. La base reste sur le réseau privé de la pile : l'exposer au réseau du proxy la rendrait joignable par tout ce qu'il héberge.
+
+### Avec Portainer
+
+Portainer ne lit pas de fichier `.env` : les variables se déclarent dans l'écran de la pile, section **Environment variables**. Une seule est obligatoire :
+
+| Variable | Valeur |
+|---|---|
+| `ENCRYPTION_KEY` | `openssl rand -base64 32` |
+
+Les autres ont une valeur par défaut utilisable telle quelle : `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB`, `APP_PORT` (9317), `APP_URL`.
+
+Renseignez `APP_URL` avec l'adresse publique réelle, sans quoi les liens des messages — invitations comprises — pointeront vers `localhost` et personne ne pourra les suivre.
 
 ### En local
 
@@ -70,13 +91,27 @@ pnpm dev
 
 ### Clé de chiffrement
 
-`ENCRYPTION_KEY` chiffre au repos les colonnes sensibles exigées par le plan (§3.6) : NIR, IBAN, BIC.
+`ENCRYPTION_KEY` chiffre au repos les colonnes sensibles exigées par le plan (§3.6) — NIR, IBAN, BIC — ainsi que les secrets de second facteur, le mot de passe du serveur d'envoi et **les pièces du dossier salarié**.
 
 ```bash
 openssl rand -base64 32
 ```
 
+`ENCRYPTION_KEY` n'a **délibérément pas de valeur par défaut**, et n'en aura pas : une clé livrée avec l'image serait connue de quiconque lit ce dépôt, et le chiffrement ne protégerait plus rien. C'est la seule variable qui bloque le démarrage tant qu'elle manque.
+
 Elle vit **hors de la base** : une sauvegarde volée ne doit pas suffire à lire ces colonnes. La perdre rend ces données irrécupérables — la sauvegarder séparément et documenter sa rotation. Elle chiffre également les secrets de second facteur et le mot de passe du serveur d'envoi.
+
+### Sauvegardes
+
+Deux choses à sauvegarder **ensemble**, plus une à garder à part :
+
+| Quoi | Où |
+|---|---|
+| Base de données | volume `planflow_db-data` |
+| Pièces du dossier salarié | volume `planflow_documents` |
+| `ENCRYPTION_KEY` | **ailleurs**, jamais dans la même sauvegarde |
+
+Restaurer l'un sans l'autre rend un dossier amputé : les pièces référencées en base pointeraient vers des fichiers absents. Et sans la clé, le volume des documents est illisible — c'est précisément ce qu'on attend de lui si quelqu'un l'emporte.
 
 ### Second facteur — accès de secours
 
@@ -115,6 +150,12 @@ pnpm test:e2e    # build, serveur standalone, tests de bout en bout
 ## Configuration de la base — à ne pas rater
 
 **L'application ne doit pas se connecter en superutilisateur PostgreSQL.**
+
+En docker-compose c'est déjà réglé : `docker/init-app-role.sh` crée au premier démarrage un rôle `planflow_app`, `NOSUPERUSER NOBYPASSRLS`, propriétaire de la base — il lui faut ce droit pour appliquer les migrations, et les politiques sont déclarées en `FORCE` précisément pour s'appliquer aussi au propriétaire.
+
+Le script ne s'exécute qu'à la **première** initialisation du volume. Sur une installation déjà en place, jouer le même SQL à la main puis basculer `DATABASE_URL` sur ce rôle.
+
+Au démarrage, l'application vérifie ses propres privilèges : elle refuse de se lancer si la base porte plus d'un compte, et se contente d'un avertissement visible dans les journaux s'il n'y en a qu'un — bloquer une installation mono-compte fermerait l'accès de l'entreprise à ses données pour un risque de fuite entre clients qui n'existe pas.
 
 Un superutilisateur contourne la *row-level security*, y compris déclarée en `FORCE`. Connecter PlanFlow avec un tel compte désactive silencieusement la seconde couche d'isolation multi-tenant : les requêtes fonctionnent, les tests applicatifs passent, et rien n'indique que la protection a disparu — jusqu'au jour où quelqu'un lit les données d'un autre établissement.
 

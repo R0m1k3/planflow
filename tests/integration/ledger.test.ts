@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { adminPrisma } from './admin-db';
+
 /**
  * Immutabilité du registre — critère d'acceptation de WP-06.
  *
@@ -9,22 +11,21 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
  * sans passer par les Server Actions, pour le prouver.
  */
 
-const enabled = (process.env.DATABASE_URL ?? '').length > 0;
+const enabled = (process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL ?? '').length > 0;
 const describeIfDb = enabled ? describe : describe.skip;
 
 const suffix = `ledger-${Date.now()}`;
 const accountId = `${suffix}-account`;
 const membershipId = `${suffix}-member`;
 
-let unscoped: typeof import('@/server/tenant').unscoped;
 let counterId = '';
 let operationId = '';
 
 describeIfDb('registre des compteurs', () => {
   beforeAll(async () => {
     process.env.ENCRYPTION_KEY ??= Buffer.alloc(32, 3).toString('base64');
-    ({ unscoped } = await import('@/server/tenant'));
-    const db = unscoped();
+    
+    const db = adminPrisma();
 
     await db.account.create({
       data: { id: accountId, name: `Compte ${suffix}` },
@@ -69,7 +70,7 @@ describeIfDb('registre des compteurs', () => {
 
   afterAll(async () => {
     if (!enabled) return;
-    const db = unscoped();
+    const db = adminPrisma();
     // Le trigger interdit DELETE sur les écritures : la suppression du compte
     // ne peut donc pas cascader. On le désactive le temps du ménage.
     await db.$executeRawUnsafe(
@@ -83,7 +84,7 @@ describeIfDb('registre des compteurs', () => {
 
   it('refuse toute modification d’écriture', async () => {
     await expect(
-      unscoped().ledgerOperation.update({
+      adminPrisma().ledgerOperation.update({
         where: { id: operationId },
         data: { quantity: 999 },
       }),
@@ -92,14 +93,14 @@ describeIfDb('registre des compteurs', () => {
 
   it('refuse toute suppression d’écriture', async () => {
     await expect(
-      unscoped().ledgerOperation.delete({ where: { id: operationId } }),
+      adminPrisma().ledgerOperation.delete({ where: { id: operationId } }),
     ).rejects.toThrow(/append-only/);
   });
 
   it('accepte une contre-passation, qui laisse les deux écritures', async () => {
     // Une correction s'écrit ; elle ne se réécrit pas. Les deux lignes
     // coexistent, et le solde redevient juste par addition.
-    const db = unscoped();
+    const db = adminPrisma();
     await db.ledgerOperation.create({
       data: {
         accountId,
@@ -130,7 +131,7 @@ describeIfDb('registre des compteurs', () => {
     // `reversesId` est unique : contre-passer deux fois la même écriture
     // doublerait la correction, et le solde partirait dans l'autre sens.
     await expect(
-      unscoped().ledgerOperation.create({
+      adminPrisma().ledgerOperation.create({
         data: {
           accountId,
           counterId,
