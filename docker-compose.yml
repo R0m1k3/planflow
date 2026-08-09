@@ -105,6 +105,8 @@ services:
       # salarié écrites dans la couche du conteneur disparaîtraient au premier
       # redéploiement, et une pièce d'identité perdue ne se reconstitue pas.
       DOCUMENT_STORE: /data/documents
+      # Sert uniquement au diagnostic affiché quand la connexion est refusée.
+      APP_DB_USER: ${APP_DB_USER:-planflow_app}
     volumes:
       - documents:/data
       # Volume distinct de la base et des documents : sauvegarder l'un ne doit
