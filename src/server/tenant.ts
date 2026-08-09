@@ -107,6 +107,24 @@ function buildScopedClient(accountId: string) {
 }
 
 /**
+ * Budget d'une transaction de compte.
+ *
+ * Prisma applique 5 s par défaut, sans le dire. Comme **tout** accès aux
+ * données passe par `withTenant`, ce défaut plafonne en réalité chaque requête
+ * de l'application : une semaine de planning chargée sur un serveur occupé
+ * échoue alors sur un `P2028` qui ne désigne ni la requête ni la cause.
+ *
+ * La valeur est donc posée ici, visible et discutable, plutôt que subie. Elle
+ * reste un plafond : une transaction qui l'atteint est un défaut à corriger,
+ * pas une lenteur à tolérer — mais elle doit échouer parce qu'elle est trop
+ * lente, pas parce que la machine était chargée pendant deux secondes.
+ */
+const TRANSACTION_BUDGET_MS = 20_000;
+
+/** Attente maximale d'une connexion libre avant de renoncer. */
+const CONNECTION_WAIT_MS = 10_000;
+
+/**
  * Exécute `fn` dans une transaction portant le compte courant.
  *
  * Tout accès aux données d'un compte passe par ici. Le périmètre vient de la
@@ -121,14 +139,17 @@ export async function withTenant<T>(
   // qu'elle fournit porte l'extension et partage la connexion sur laquelle
   // `set_config` est posé. L'inverse — étendre le `tx` — n'est pas possible :
   // Prisma retire `$extends` du client de transaction.
-  return scopedClientFor(accountId).$transaction(async (tx) => {
-    // `set_config(..., true)` est local à la transaction, donc remis à zéro
-    // automatiquement. Une connexion rendue au pool ne garde pas le compte
-    // précédent — ce serait la pire fuite possible.
-    await tx.$executeRaw`SELECT set_config('app.account_id', ${accountId}, true)`;
+  return scopedClientFor(accountId).$transaction(
+    async (tx) => {
+      // `set_config(..., true)` est local à la transaction, donc remis à zéro
+      // automatiquement. Une connexion rendue au pool ne garde pas le compte
+      // précédent — ce serait la pire fuite possible.
+      await tx.$executeRaw`SELECT set_config('app.account_id', ${accountId}, true)`;
 
-    return fn(tx as unknown as ScopedClient) as Promise<T>;
-  });
+      return fn(tx as unknown as ScopedClient) as Promise<T>;
+    },
+    { timeout: TRANSACTION_BUDGET_MS, maxWait: CONNECTION_WAIT_MS },
+  );
 }
 
 /**

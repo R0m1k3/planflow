@@ -49,6 +49,16 @@ fi
 
 export ENCRYPTION_KEY
 
+# Pose ou réaligne le rôle applicatif, si les identifiants d'amorçage sont
+# fournis. Sans eux, ce script se tait : c'est alors `db-init` qui s'en charge.
+node "${BOOTSTRAP_SCRIPT:-./docker/bootstrap-role.mjs}" || true
+
+# Les identifiants d'amorçage ne vont pas plus loin : le serveur qui traite les
+# requêtes ne doit pas les avoir sous la main. Une exécution de code arbitraire
+# dans l'application n'y donnera pas accès, et l'isolation par la row-level
+# security garde son sens.
+unset POSTGRES_PASSWORD PGPASSWORD
+
 # Les migrations s'appliquent au démarrage : l'image se déploie sans étape
 # séparée.
 #
@@ -62,15 +72,15 @@ if ! ( cd "$MIGRATOR_DIR" && node node_modules/prisma/build/index.js migrate dep
     >"$migration_log" 2>&1; then
   cat "$migration_log"
 
-  # Deux codes, deux causes voisines, même remède :
+  # Deux codes, deux causes voisines :
   #   P1010 — le rôle n'existe pas ;
   #   P1000 — il existe, mais son mot de passe ne correspond pas à celui de la
   #           pile, typiquement parce qu'il a été posé lors d'un déploiement
   #           antérieur avec une autre valeur.
   #
-  # Dans les deux cas c'est `db-init` qui remet les choses d'aplomb : il crée le
-  # rôle ou réaligne son mot de passe. Sans ce message, l'application redémarre
-  # en boucle sur une erreur qui n'indique rien à faire.
+  # Les voir **ici** signifie que l'amorçage ci-dessus n'a pas fait son travail :
+  # soit il n'a pas reçu d'identifiants, soit il a échoué. Le message renvoie
+  # donc à ce qu'il a journalisé, et non à une manœuvre à improviser.
   if grep -qE 'P1000|P1010' "$migration_log"; then
     role="${APP_DB_USER:-planflow_app}"
     echo ''
@@ -83,15 +93,16 @@ if ! ( cd "$MIGRATOR_DIR" && node node_modules/prisma/build/index.js migrate dep
       echo " d'un déploiement antérieur, avec une autre valeur."
     fi
     echo ''
-    echo ' Le service `db-init` crée ce rôle et réaligne son mot de passe à'
-    echo " chaque démarrage. Vérifiez qu'il figure bien dans la pile, et ce"
-    echo " qu'il a journalisé :"
+    echo " L'application sait poser ce rôle elle-même au démarrage. Les lignes"
+    echo ' « [bootstrap] » plus haut disent pourquoi elle ne l’a pas fait :'
     echo ''
-    echo '     docker compose logs db-init'
-    echo '     docker compose run --rm db-init'
+    echo "   • « Aucun identifiant d’amorçage fourni » — le service applicatif"
+    echo '     n’a pas POSTGRES_PASSWORD. Ajoutez-le, ou lancez :'
+    echo '         docker compose run --rm db-init'
     echo ''
-    echo " La seconde commande le rejoue : il est fait pour être exécuté"
-    echo " autant de fois qu'il le faut."
+    echo '   • « Provisionnement impossible » — le message qui suit indique'
+    echo '     ce qui a échoué (base injoignable, mot de passe d’amorçage'
+    echo '     erroné, droits insuffisants).'
     echo '════════════════════════════════════════════════════════════════'
     echo ''
   fi
