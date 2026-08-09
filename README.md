@@ -49,11 +49,10 @@ devinent pas.
 ### Avec Docker
 
 ```bash
-cp .env.example .env
-# ENCRYPTION_KEY est la seule variable sans valeur par défaut :
-echo "ENCRYPTION_KEY=$(openssl rand -base64 32)" >> .env
 docker compose up --build
 ```
+
+Aucune variable n'est requise. La clé de chiffrement est **produite au premier démarrage** et affichée une fois dans les journaux — notez-la, elle vit dans un volume distinct de la base et des documents.
 
 L'application écoute sur <http://localhost:9317> — port peu courant à dessein, le service étant censé passer par un reverse-proxy. Les migrations s'appliquent au démarrage du conteneur.
 
@@ -67,15 +66,13 @@ Seule l'application y est attachée. La base reste sur le réseau privé de la p
 
 ### Avec Portainer
 
-Portainer ne lit pas de fichier `.env` : les variables se déclarent dans l'écran de la pile, section **Environment variables**. Une seule est obligatoire :
+Portainer ne lit pas de fichier `.env`, mais **aucune variable n'est obligatoire** : la pile démarre telle quelle.
 
-| Variable | Valeur |
-|---|---|
-| `ENCRYPTION_KEY` | `openssl rand -base64 32` |
+Une seule mérite d'être renseignée dans la section **Environment variables** : `APP_URL`, avec l'adresse publique réelle. Sans elle, les liens des messages — invitations comprises — pointeront vers `localhost` et personne ne pourra les suivre.
 
-Les autres ont une valeur par défaut utilisable telle quelle : `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB`, `APP_PORT` (9317), `APP_URL`.
+Les autres ont une valeur par défaut utilisable : `POSTGRES_PASSWORD`, `POSTGRES_USER`, `POSTGRES_DB`, `APP_PORT` (9317). `ENCRYPTION_KEY` peut être fournie si vous gérez vos secrets ailleurs ; sinon elle est produite au premier démarrage.
 
-Renseignez `APP_URL` avec l'adresse publique réelle, sans quoi les liens des messages — invitations comprises — pointeront vers `localhost` et personne ne pourra les suivre.
+**Après le premier déploiement, relevez la clé dans les journaux du conteneur `app` et conservez-la hors du serveur.**
 
 ### En local
 
@@ -97,7 +94,7 @@ pnpm dev
 openssl rand -base64 32
 ```
 
-`ENCRYPTION_KEY` n'a **délibérément pas de valeur par défaut**, et n'en aura pas : une clé livrée avec l'image serait connue de quiconque lit ce dépôt, et le chiffrement ne protégerait plus rien. C'est la seule variable qui bloque le démarrage tant qu'elle manque.
+Elle n'est **pas** livrée avec l'image — une clé publiée dans un dépôt ne protégerait rien. Elle est produite au premier démarrage du conteneur, affichée une fois dans les journaux, et conservée dans le volume `planflow_secrets`. Fournir `ENCRYPTION_KEY` explicitement l'emporte toujours, pour un déploiement qui gère ses secrets par ailleurs — en gardant à l'esprit qu'une variable d'environnement s'affiche dans `docker inspect` et dans l'interface de gestion, ce qui n'en fait pas un meilleur coffre qu'un fichier.
 
 Elle vit **hors de la base** : une sauvegarde volée ne doit pas suffire à lire ces colonnes. La perdre rend ces données irrécupérables — la sauvegarder séparément et documenter sa rotation. Elle chiffre également les secrets de second facteur et le mot de passe du serveur d'envoi.
 
@@ -109,7 +106,7 @@ Deux choses à sauvegarder **ensemble**, plus une à garder à part :
 |---|---|
 | Base de données | volume `planflow_db-data` |
 | Pièces du dossier salarié | volume `planflow_documents` |
-| `ENCRYPTION_KEY` | **ailleurs**, jamais dans la même sauvegarde |
+| Clé de chiffrement | volume `planflow_secrets` — **ailleurs**, jamais dans la même sauvegarde |
 
 Restaurer l'un sans l'autre rend un dossier amputé : les pièces référencées en base pointeraient vers des fichiers absents. Et sans la clé, le volume des documents est illisible — c'est précisément ce qu'on attend de lui si quelqu'un l'emporte.
 

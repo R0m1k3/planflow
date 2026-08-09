@@ -71,7 +71,17 @@ export async function uploadDocumentAction(
       });
       if (!membership) throw new ValidationError('Salarié introuvable.');
 
-      const stored = await storeFile(actor.accountId, content);
+      // Une écriture disque peut échouer — volume plein, droits, montage
+      // absent. Laisser l'exception remonter afficherait un formulaire muet :
+      // la pièce n'est pas déposée et rien ne le dit.
+      const stored = await storeFile(actor.accountId, content).catch(
+        (error: unknown) => {
+          console.error('Écriture de pièce impossible :', error);
+          throw new ValidationError(
+            'Le fichier n’a pas pu être écrit sur le disque. Vérifiez l’espace disponible et les droits du volume de stockage.',
+          );
+        },
+      );
 
       await db.document.create({
         data: {

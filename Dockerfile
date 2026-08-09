@@ -34,14 +34,15 @@ COPY --from=build --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=build --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=build --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=build --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --chown=nextjs:nodejs docker/entrypoint.sh ./docker/entrypoint.sh
 
 # Créé dans l'image, et non laissé au montage : un volume nommé hérite du
 # propriétaire du répertoire qu'il recouvre, et sans cela l'application —
 # qui ne tourne pas en root — ne pourrait pas y écrire.
-RUN mkdir -p /data/documents && chown -R nextjs:nodejs /data
+RUN mkdir -p /data/documents /secrets && chown -R nextjs:nodejs /data /secrets
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0
 
-CMD ["sh", "-c", "./node_modules/.bin/prisma migrate deploy && node server.js"]
+CMD ["./docker/entrypoint.sh"]

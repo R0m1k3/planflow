@@ -52,11 +52,12 @@ services:
       # superutilisateur contourne la row-level security, y compris déclarée en
       # FORCE, et l'isolation ne reposerait plus que sur la couche applicative.
       DATABASE_URL: postgresql://${APP_DB_USER:-planflow_app}:${APP_DB_PASSWORD:-planflow-app-interne}@db:5432/${POSTGRES_DB:-planflow}
-      # Seule variable sans valeur par défaut, et il n'y en aura pas : elle
-      # chiffre le NIR, l'IBAN et les arrêts de travail. Une clé livrée avec
-      # l'image serait connue de tous et le chiffrement ne protégerait plus
-      # rien. La produire : openssl rand -base64 32
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY est requis. Produire une clé avec - openssl rand -base64 32}
+      # Laissée vide, elle est **produite au premier démarrage** et conservée
+      # dans le volume `secrets`. La renseigner ici reste possible pour un
+      # déploiement qui gère ses secrets par ailleurs — mais une variable
+      # d'environnement s'affiche dans `docker inspect` et dans l'interface de
+      # gestion, ce qui n'en fait pas un meilleur coffre qu'un fichier.
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
       APP_URL: ${APP_URL:-http://localhost:9317}
       # Chemin **dans le volume**, pas dans l'image : les pièces du dossier
       # salarié écrites dans la couche du conteneur disparaîtraient au premier
@@ -64,6 +65,9 @@ services:
       DOCUMENT_STORE: /data/documents
     volumes:
       - documents:/data
+      # Volume distinct de la base et des documents : sauvegarder l'un ne doit
+      # pas emporter la clé qui déchiffre l'autre.
+      - secrets:/secrets
     networks:
       # `interne` pour joindre la base, `nginx_default` pour être joignable par
       # le reverse-proxy — qui atteint le conteneur sur son port 3000, sans
@@ -98,6 +102,9 @@ networks:
 
 volumes:
   db-data:
+  # Clé de chiffrement produite au premier démarrage. À sauvegarder
+  # **séparément** du reste : réunis, le coffre et sa clé ne protègent plus rien.
+  secrets:
   # Pièces du dossier salarié, chiffrées au repos avec ENCRYPTION_KEY. À
   # sauvegarder avec la base : l'une sans l'autre restitue un dossier amputé,
   # et sans la clé le volume est illisible.
