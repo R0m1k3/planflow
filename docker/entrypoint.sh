@@ -57,6 +57,50 @@ export ENCRYPTION_KEY
 # Appelée par son chemin plutôt que par `.bin/prisma` — un lien symbolique
 # recopié d'une image à l'autre est une dépendance de plus à la disposition des
 # fichiers, et c'est exactement ce qui a cassé ici.
-( cd "$MIGRATOR_DIR" && node node_modules/prisma/build/index.js migrate deploy )
+migration_log="$(mktemp)"
+if ! ( cd "$MIGRATOR_DIR" && node node_modules/prisma/build/index.js migrate deploy ) \
+    >"$migration_log" 2>&1; then
+  cat "$migration_log"
+
+  # Deux codes, deux causes voisines, même remède :
+  #   P1010 — le rôle n'existe pas ;
+  #   P1000 — il existe, mais son mot de passe ne correspond pas à celui de la
+  #           pile, typiquement parce qu'il a été posé lors d'un déploiement
+  #           antérieur avec une autre valeur.
+  #
+  # Dans les deux cas c'est `db-init` qui remet les choses d'aplomb : il crée le
+  # rôle ou réaligne son mot de passe. Sans ce message, l'application redémarre
+  # en boucle sur une erreur qui n'indique rien à faire.
+  if grep -qE 'P1000|P1010' "$migration_log"; then
+    role="${APP_DB_USER:-planflow_app}"
+    echo ''
+    echo '════════════════════════════════════════════════════════════════'
+    if grep -q 'P1010' "$migration_log"; then
+      echo " Le rôle « ${role} » n'existe pas dans cette base."
+    else
+      echo " Le rôle « ${role} » existe, mais son mot de passe ne correspond"
+      echo ' pas à celui que porte la pile. Il a probablement été créé lors'
+      echo " d'un déploiement antérieur, avec une autre valeur."
+    fi
+    echo ''
+    echo ' Le service `db-init` crée ce rôle et réaligne son mot de passe à'
+    echo " chaque démarrage. Vérifiez qu'il figure bien dans la pile, et ce"
+    echo " qu'il a journalisé :"
+    echo ''
+    echo '     docker compose logs db-init'
+    echo '     docker compose run --rm db-init'
+    echo ''
+    echo " La seconde commande le rejoue : il est fait pour être exécuté"
+    echo " autant de fois qu'il le faut."
+    echo '════════════════════════════════════════════════════════════════'
+    echo ''
+  fi
+
+  rm -f "$migration_log"
+  exit 1
+fi
+
+cat "$migration_log"
+rm -f "$migration_log"
 
 exec node server.js
