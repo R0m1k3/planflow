@@ -68,6 +68,14 @@ export default async function PeriodesPage({ searchParams }: PageProps) {
         suggestedMonth={view.suggestedMonth}
       />
 
+      {view.totalPeriods > view.periods.length ? (
+        <p className="rounded-3 border border-line-1 bg-surface-2 p-3 text-micro text-ink-3">
+          {view.totalPeriods} périodes en tout ; les {view.periods.length} plus
+          récentes sont affichées. Une période plus ancienne reste consultable
+          par son mois.
+        </p>
+      ) : null}
+
       {view.periods.length === 0 ? (
         <p className="rounded-3 border border-line-1 bg-surface p-4 text-sm text-ink-2">
           Aucune période. Verrouiller une période fige les heures transmises au
