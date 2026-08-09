@@ -52,6 +52,7 @@ COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/public ./public
 COPY --chown=nextjs:nodejs docker/entrypoint.sh ./docker/entrypoint.sh
+COPY --chown=nextjs:nodejs docker/bootstrap-role.mjs ./docker/bootstrap-role.mjs
 
 # Créé dans l'image, et non laissé au montage : un volume nommé hérite du
 # propriétaire du répertoire qu'il recouvre, et sans cela l'application —
