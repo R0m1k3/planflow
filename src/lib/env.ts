@@ -25,6 +25,15 @@ const schema = z.object({
 
   /** Public origin, used for links in invitation and notification e-mails. */
   APP_URL: z.url().default('http://localhost:3000'),
+
+  /**
+   * Where employee documents live on disk, encrypted with ENCRYPTION_KEY.
+   *
+   * Kept out of the database: megabytes of scans would make every backup
+   * impractical. Back this directory up alongside the database — one without
+   * the other restores a dossier with missing pieces.
+   */
+  DOCUMENT_STORE: z.string().min(1).default('./storage/documents'),
 });
 
 export type Env = z.infer<typeof schema>;

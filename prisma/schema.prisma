@@ -167,6 +167,7 @@ model Membership {
   contracts   UserContract[]
   workPermits WorkPermit[]
   teams       TeamMember[]
+  documents   Document[]
 
   @@unique([accountId, employeeNumber])
   @@index([accountId])
@@ -717,6 +718,52 @@ model DailyNote {
 /// pouvoir reproduire à l'identique une paie antérieure après un changement de
 /// règle. Une mise à jour en place rendrait cette reproduction impossible, et
 /// l'impossibilité ne se découvrirait qu'au premier contrôle.
+/// Pièce du dossier salarié — PLAN.md §4.7.
+///
+/// Le contenu vit sur disque, **chiffré**, jamais dans la base : une pièce
+/// jointe de santé chiffrée au repos est une exigence du plan (§3.6), et
+/// stocker des mégaoctets en base rendrait toute sauvegarde impraticable.
+/// `fileKey` est tiré au sort — jamais dérivé du nom déposé, qui ne doit pas
+/// pouvoir désigner un emplacement.
+model Document {
+  id             String            @id @default(cuid())
+  accountId      String
+  membershipId   String?
+  category       DocumentCategory
+  name           String
+  fileKey        String            @unique
+  mimeType       String
+  sizeBytes      Int
+  /// Empreinte du clair, pour détecter une altération du fichier stocké.
+  checksum       String
+  /// Donnée de santé : sa lecture est journalisée (§3.6).
+  isSensitive    Boolean           @default(false)
+  /// Échéance de conservation. Nulle tant qu'aucune politique ne l'a fixée :
+  /// le plan interdit d'appliquer une durée par défaut (§12.5).
+  retentionUntil DateTime?
+  uploadedBy     String
+  uploadedAt     DateTime          @default(now())
+  deletedAt      DateTime?
+  deletedBy      String?
+
+  membership Membership? @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([membershipId])
+  @@index([retentionUntil])
+}
+
+enum DocumentCategory {
+  IDENTITY
+  BANK
+  CONTRACT
+  AMENDMENT
+  SICK_NOTE
+  WORK_PERMIT
+  REGISTER
+  OTHER
+}
+
 model CollectiveAgreement {
   id            String   @id @default(cuid())
   accountId     String

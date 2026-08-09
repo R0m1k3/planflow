@@ -62,6 +62,45 @@ function decryptBuffer(payload: Buffer): string {
   ]).toString('utf8');
 }
 
+/**
+ * Chiffrement d'un contenu binaire — pièces du dossier salarié.
+ *
+ * Même format et même clé que les colonnes : un arrêt de travail est une donnée
+ * de santé, et le plan (§3.6) exige qu'il soit chiffré au repos. Chiffrer
+ * **toutes** les pièces plutôt que les seules pièces de santé évite une branche
+ * dont l'oubli serait silencieux, et ne coûte rien de plus.
+ */
+export function encryptBytes(plaintext: Uint8Array): Buffer {
+  const iv = randomBytes(IV_LENGTH);
+  const cipher = createCipheriv(ALGORITHM, key(), iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), encrypted]);
+}
+
+export function decryptBytes(payload: Uint8Array): Buffer {
+  const buffer = Buffer.from(
+    payload.buffer,
+    payload.byteOffset,
+    payload.byteLength,
+  );
+  if (buffer.length < IV_LENGTH + TAG_LENGTH) {
+    throw new Error('Chiffré invalide : trop court pour contenir iv et tag');
+  }
+
+  const iv = buffer.subarray(0, IV_LENGTH);
+  const tag = buffer.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH);
+  const encrypted = buffer.subarray(IV_LENGTH + TAG_LENGTH);
+
+  const decipher = createDecipheriv(ALGORITHM, key(), iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(encrypted), decipher.final()]);
+}
+
+/** Empreinte d'un contenu, pour détecter l'altération du fichier stocké. */
+export function checksumBytes(payload: Uint8Array): string {
+  return createHash('sha256').update(payload).digest('hex');
+}
+
 export function encryptOptional(value: string | null | undefined): Buffer | null {
   return value ? encrypt(value) : null;
 }
