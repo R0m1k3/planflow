@@ -14,19 +14,23 @@ set -eu
 # ni superutilisateur ni BYPASSRLS. C'est précisément pourquoi les politiques
 # sont déclarées en FORCE : elles s'appliquent aussi au propriétaire.
 #
-# Playé par le conteneur db à la **première** initialisation du volume, puis par
-# le service `db-init` à chaque `docker compose up`. Idempotent : la branche
-# `ELSE` re-synchronise le mot de passe d'une base déjà en place.
+# Joué par le conteneur `db` à la **première** initialisation du volume, puis
+# par le service `db-init` à chaque `docker compose up`. Les deux sont
+# nécessaires : `/docker-entrypoint-initdb.d` ne s'exécute qu'une fois, et une
+# installation dont le volume existait déjà n'aurait jamais vu passer ce rôle.
+# Le script est donc rejouable de bout en bout.
 
 APP_ROLE="${APP_DB_USER:-planflow_app}"
 APP_PASSWORD="${APP_DB_PASSWORD:-planflow-app-interne}"
+DB_NAME="${POSTGRES_DB:-planflow}"
+DB_USER="${POSTGRES_USER:-planflow}"
 
-# En officiation dans le conteneur db, l'hôte est local ; depuis le service
-# db-init, il est `db`. L'un et l'autre doivent aboutir au même SQL.
+# Dans le conteneur `db`, l'hôte est local ; depuis `db-init`, c'est `db`.
+# L'un et l'autre doivent aboutir au même SQL.
 if [ -n "${PGHOST:-}" ]; then
-  set -- -h "$PGHOST" -p "${PGPORT:-5432}" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1
+  set -- -h "$PGHOST" -p "${PGPORT:-5432}" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
 else
-  set -- -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1
+  set -- -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
 fi
 
 psql "$@" <<SQL
@@ -36,15 +40,36 @@ BEGIN
     CREATE ROLE ${APP_ROLE} LOGIN PASSWORD '${APP_PASSWORD}'
       NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   ELSE
+    -- Le mot de passe peut avoir changé dans la configuration de la pile ;
+    -- laisser l'ancien produirait un refus d'authentification illisible.
     ALTER ROLE ${APP_ROLE} WITH LOGIN PASSWORD '${APP_PASSWORD}'
       NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   END IF;
 END
 \$\$;
 
-ALTER DATABASE ${POSTGRES_DB} OWNER TO ${APP_ROLE};
+ALTER DATABASE ${DB_NAME} OWNER TO ${APP_ROLE};
 ALTER SCHEMA public OWNER TO ${APP_ROLE};
 GRANT ALL ON SCHEMA public TO ${APP_ROLE};
+
+-- Objets déjà créés par un compte d'amorçage : sans ce transfert, le rôle
+-- applicatif ne pourrait ni migrer ni lire ce qui existe déjà. Le cas se
+-- produit dès qu'une base a tourné avant que ce rôle n'existe.
+DO \$\$
+DECLARE
+  statement text;
+BEGIN
+  FOR statement IN
+    SELECT format('ALTER TABLE %I.%I OWNER TO ${APP_ROLE}', schemaname, tablename)
+    FROM pg_tables WHERE schemaname = 'public'
+    UNION ALL
+    SELECT format('ALTER SEQUENCE %I.%I OWNER TO ${APP_ROLE}', sequence_schema, sequence_name)
+    FROM information_schema.sequences WHERE sequence_schema = 'public'
+  LOOP
+    EXECUTE statement;
+  END LOOP;
+END
+\$\$;
 SQL
 
-echo "Rôle applicatif ${APP_ROLE} prêt — NOSUPERUSER NOBYPASSRLS, propriétaire de ${POSTGRES_DB}."
+echo "Rôle applicatif ${APP_ROLE} prêt — NOSUPERUSER NOBYPASSRLS, propriétaire de ${DB_NAME}."

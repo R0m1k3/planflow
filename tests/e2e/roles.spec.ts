@@ -9,7 +9,13 @@ import { slugifyRoleKey } from '../../src/domain/access/role-editing';
  * changement de code. » Le vérifier suppose d'aller jusqu'au bout : créer le
  * rôle, l'attribuer, et constater qu'un écran s'ouvre ou se ferme en
  * conséquence. Un test qui s'arrêterait à « la case est cochée » ne dirait rien.
+ *
+ * En série, et il le faut : l'un de ces tests retire momentanément « Gérer les
+ * rôles » aux rôles semés pour atteindre le refus de verrouillage. Joué en
+ * parallèle des autres, qui s'appuient sur cette même capacité, il les fait
+ * échouer par intermittence — et la cause n'est visible nulle part.
  */
+test.describe.configure({ mode: 'serial' });
 
 const OWNER_PASSWORD = 'planflow-demo-2026';
 

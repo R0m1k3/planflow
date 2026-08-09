@@ -34,18 +34,30 @@ services:
     # vrai problème.
     networks:
       - interne
-    # Le conteneur reste sur 5432 pour l'application (réseau interne), mais le
-    # port hôte est publié sur un port non commun, configurable : plusieurs
-    # instances PostgreSQL coexistent sur le même serveur, et s'en tenir au
-    # 5432 par défaut les ferait entrer en collision.
+    # Le conteneur reste sur 5432 pour l'application, et le port hôte est publié
+    # sur un port non commun, configurable : plusieurs instances PostgreSQL
+    # coexistent sur le même serveur, et s'en tenir au 5432 par défaut les
+    # ferait entrer en collision.
+    #
+    # **Lié à la boucle locale**, et c'est important : la publication sert à se
+    # connecter depuis le serveur (sauvegarde, psql), pas depuis le réseau. Sans
+    # `127.0.0.1`, Docker ouvre le port sur toutes les interfaces — un jeu de
+    # données RH derrière un mot de passe par défaut, joignable depuis
+    # l'extérieur. Pour un accès distant, passer par un tunnel.
     ports:
-      - '${POSTGRES_PORT:-55432}:5432'
+      - '${POSTGRES_BIND:-127.0.0.1}:${POSTGRES_PORT:-55432}:5432'
 
-  # Provisionne le rôle applicatif à chaude occurrence de `up`, pas seulement à
-  # la première initialisation du volume : inversement, une base existante dont
-  # le rôle est absent (ou dont le mot de passe a changé) laisserait l'app en
-  # échec d'authentification P1000 sans recours autre que du SQL à la main.
-  # Idempotent : rejouable autant de fois que nécessaire.
+  # Pose le rôle applicatif à **chaque** démarrage de la pile.
+  #
+  # `/docker-entrypoint-initdb.d` ne s'exécute qu'à la toute première
+  # initialisation du volume : une base dont le volume existait déjà — ou dont
+  # le mot de passe a changé — laisserait l'application en échec
+  # d'authentification P1000, sans recours autre que du SQL à la main. Le script
+  # est rejouable, ce service le rejoue.
+  #
+  # Les identifiants du superutilisateur restent ici : les confier au conteneur
+  # applicatif lui donnerait de quoi contourner la row-level security, ce que
+  # tout ce montage cherche précisément à empêcher.
   db-init:
     image: postgres:16-alpine
     restart: 'no'
@@ -53,15 +65,17 @@ services:
       db:
         condition: service_healthy
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-planflow}
+      PGHOST: db
       PGPASSWORD: ${POSTGRES_PASSWORD:-planflow-interne}
+      POSTGRES_USER: ${POSTGRES_USER:-planflow}
       POSTGRES_DB: ${POSTGRES_DB:-planflow}
       APP_DB_USER: ${APP_DB_USER:-planflow_app}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:-planflow-app-interne}
-      PGHOST: db
     volumes:
-      - ./docker/init-app-role.sh:/docker-entrypoint-initdb.d/10-init-app-role.sh:ro
-    command: ['sh', '/docker-entrypoint-initdb.d/10-init-app-role.sh']
+      - ./docker/init-app-role.sh:/init-app-role.sh:ro
+    # `entrypoint` et non `command` : l'image postgres a son propre point
+    # d'entrée, qui tenterait de démarrer un serveur.
+    entrypoint: ['sh', '/init-app-role.sh']
     networks:
       - interne
 
