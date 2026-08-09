@@ -148,7 +148,9 @@ pnpm test:e2e    # build, serveur standalone, tests de bout en bout
 
 **L'application ne doit pas se connecter en superutilisateur PostgreSQL.**
 
-En docker-compose c'est déjà réglé : `docker/init-app-role.sh` crée au premier démarrage un rôle `planflow_app`, `NOSUPERUSER NOBYPASSRLS`, propriétaire de la base — il lui faut ce droit pour appliquer les migrations, et les politiques sont déclarées en `FORCE` précisément pour s'appliquer aussi au propriétaire.
+En docker-compose c'est déjà réglé : d'abord `docker/init-app-role.sh` au premier démarrage, puis le service `db-init` qui le rejoue **à chaque `docker compose up`** — et seulement ensuite l'application. Le rôle `planflow_app`, `NOSUPERUSER NOBYPASSRLS`, propriétaire de la base — il lui faut ce droit pour appliquer les migrations, et les politiques sont déclarées en `FORCE` précisément pour s'appliquer aussi au propriétaire.
+
+L'idempotence n'est pas un luxe : une base déjà en place dont le rôle manque (ou dont le mot de passe a changé) ne doit pas exiger de SQL à la main. Le service `db-init` corrige les deux cas à chaque relance, et l'application n'est démarrée qu'une fois sa tâche terminée.
 
 Le script ne s'exécute qu'à la **première** initialisation du volume. Sur une installation déjà en place, jouer le même SQL à la main puis basculer `DATABASE_URL` sur ce rôle.
 

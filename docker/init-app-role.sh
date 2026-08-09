@@ -14,17 +14,29 @@ set -eu
 # ni superutilisateur ni BYPASSRLS. C'est précisément pourquoi les politiques
 # sont déclarées en FORCE : elles s'appliquent aussi au propriétaire.
 #
-# Ce script ne s'exécute qu'à la **première** initialisation du volume. Pour une
-# installation déjà en place, jouer le même SQL à la main (voir README).
+# Playé par le conteneur db à la **première** initialisation du volume, puis par
+# le service `db-init` à chaque `docker compose up`. Idempotent : la branche
+# `ELSE` re-synchronise le mot de passe d'une base déjà en place.
 
 APP_ROLE="${APP_DB_USER:-planflow_app}"
 APP_PASSWORD="${APP_DB_PASSWORD:-planflow-app-interne}"
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<SQL
+# En officiation dans le conteneur db, l'hôte est local ; depuis le service
+# db-init, il est `db`. L'un et l'autre doivent aboutir au même SQL.
+if [ -n "${PGHOST:-}" ]; then
+  set -- -h "$PGHOST" -p "${PGPORT:-5432}" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1
+else
+  set -- -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1
+fi
+
+psql "$@" <<SQL
 DO \$\$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${APP_ROLE}') THEN
     CREATE ROLE ${APP_ROLE} LOGIN PASSWORD '${APP_PASSWORD}'
+      NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+  ELSE
+    ALTER ROLE ${APP_ROLE} WITH LOGIN PASSWORD '${APP_PASSWORD}'
       NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
   END IF;
 END
