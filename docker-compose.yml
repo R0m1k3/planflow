@@ -39,6 +39,36 @@ services:
     expose:
       - '5432'
 
+  # Pose le rôle applicatif à **chaque** démarrage de la pile.
+  #
+  # `/docker-entrypoint-initdb.d` ne s'exécute qu'à la toute première
+  # initialisation du volume : un volume créé par une tentative antérieure
+  # n'aurait jamais vu passer ce rôle, et l'application échouerait à
+  # s'authentifier sans que rien n'explique pourquoi. Le script est rejouable,
+  # ce service le rejoue.
+  #
+  # Les identifiants du superutilisateur restent ici : les confier au conteneur
+  # applicatif lui donnerait de quoi contourner la row-level security, ce que
+  # tout ce montage cherche précisément à empêcher.
+  db-init:
+    image: postgres:16-alpine
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPASSWORD: ${POSTGRES_PASSWORD:-planflow-interne}
+      POSTGRES_USER: ${POSTGRES_USER:-planflow}
+      POSTGRES_DB: ${POSTGRES_DB:-planflow}
+      APP_DB_USER: ${APP_DB_USER:-planflow_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-planflow-app-interne}
+    volumes:
+      - ./docker/init-app-role.sh:/init-app-role.sh:ro
+    entrypoint: ['sh', '/init-app-role.sh']
+    networks:
+      - interne
+
   app:
     build:
       context: .
@@ -46,6 +76,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       # Le compte applicatif, **pas** le superutilisateur d'amorçage : un
