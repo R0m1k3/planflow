@@ -16,6 +16,19 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm db:generate && pnpm build
 
+# CLI Prisma pour les migrations au démarrage, installée à plat.
+#
+# `node_modules/prisma` de pnpm ne se recopie pas : ses dépendances vivent dans
+# le magasin virtuel `.pnpm`, sous un répertoire au nom haché. En prélever
+# quelques répertoires à la main donne une CLI qui se lance et s'arrête sur
+# « Cannot find module '@prisma/config' ». npm produit une disposition plate,
+# copiable telle quelle.
+#
+# La version est lue dans package.json : la figer ici la ferait diverger au
+# premier changement.
+RUN PRISMA_VERSION="$(node -p "require('/app/package.json').devDependencies.prisma")" \
+ && npm install --prefix /migrator --no-save --no-audit --no-fund "prisma@${PRISMA_VERSION}"
+
 # ---- runtime ----------------------------------------------------------------
 FROM base AS runner
 ENV NODE_ENV=production
@@ -23,17 +36,21 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 --ingroup nodejs nextjs
 
+# Tout ce qui sert aux migrations vit à part, dans /migrator : modules, schéma
+# et fichier de configuration.
+#
+# Les superposer aux modules de l'application les ferait entrer en collision —
+# la sortie `standalone` de pnpm porte `react` en lien symbolique vers son
+# magasin interne, là où l'installation npm de la CLI l'apporte en répertoire
+# réel. Deux arbres séparés n'ont rien à s'écraser.
+COPY --from=build --chown=nextjs:nodejs /migrator/node_modules /migrator/node_modules
+COPY --from=build --chown=nextjs:nodejs /app/prisma /migrator/prisma
+COPY --from=build --chown=nextjs:nodejs /app/prisma.config.ts /migrator/prisma.config.ts
+
 # `output: standalone` emits a server bundle carrying only the modules it uses.
 COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=build --chown=nextjs:nodejs /app/public ./public
-
-# Migrations run at startup, so the image can be deployed without a separate
-# migration step. prisma/ and its CLI are needed for that.
-COPY --from=build --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=build --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --chown=nextjs:nodejs docker/entrypoint.sh ./docker/entrypoint.sh
 
 # Créé dans l'image, et non laissé au montage : un volume nommé hérite du
