@@ -14,22 +14,26 @@ set -eu
 # ni superutilisateur ni BYPASSRLS. C'est précisément pourquoi les politiques
 # sont déclarées en FORCE : elles s'appliquent aussi au propriétaire.
 #
-# Ce script est **rejouable**, et il le doit : `/docker-entrypoint-initdb.d` ne
-# s'exécute qu'à la toute première initialisation du volume. Une installation
-# déjà en place — un volume créé par une tentative antérieure, par exemple —
-# n'aurait jamais vu passer ce rôle, et l'application échouerait à se connecter
-# sans que rien n'explique pourquoi. Il est donc aussi joué à chaque démarrage
-# de la pile, par le service `db-init`.
+# Joué par le conteneur `db` à la **première** initialisation du volume, puis
+# par le service `db-init` à chaque `docker compose up`. Les deux sont
+# nécessaires : `/docker-entrypoint-initdb.d` ne s'exécute qu'une fois, et une
+# installation dont le volume existait déjà n'aurait jamais vu passer ce rôle.
+# Le script est donc rejouable de bout en bout.
 
 APP_ROLE="${APP_DB_USER:-planflow_app}"
 APP_PASSWORD="${APP_DB_PASSWORD:-planflow-app-interne}"
 DB_NAME="${POSTGRES_DB:-planflow}"
 DB_USER="${POSTGRES_USER:-planflow}"
 
-# Sans PGHOST, psql passe par la socket locale — le cas quand le script est
-# joué par l'image postgres à l'initialisation. Avec, il passe par le réseau —
-# le cas du service qui le rejoue à chaque démarrage.
-psql -v ON_ERROR_STOP=1 --username "$DB_USER" --dbname "$DB_NAME" <<SQL
+# Dans le conteneur `db`, l'hôte est local ; depuis `db-init`, c'est `db`.
+# L'un et l'autre doivent aboutir au même SQL.
+if [ -n "${PGHOST:-}" ]; then
+  set -- -h "$PGHOST" -p "${PGPORT:-5432}" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
+else
+  set -- -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
+fi
+
+psql "$@" <<SQL
 DO \$\$
 BEGIN
   IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${APP_ROLE}') THEN
@@ -49,7 +53,8 @@ ALTER SCHEMA public OWNER TO ${APP_ROLE};
 GRANT ALL ON SCHEMA public TO ${APP_ROLE};
 
 -- Objets déjà créés par un compte d'amorçage : sans ce transfert, le rôle
--- applicatif ne pourrait ni migrer ni lire ce qui existe déjà.
+-- applicatif ne pourrait ni migrer ni lire ce qui existe déjà. Le cas se
+-- produit dès qu'une base a tourné avant que ce rôle n'existe.
 DO \$\$
 DECLARE
   statement text;

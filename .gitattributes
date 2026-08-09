@@ -1,0 +1,5 @@
+* text=auto
+
+# Les scripts shell doivent rester en LF : le CRLF casse le shebang dans une
+# image Linux (conteneur « .../entrypoint.sh: not found »).
+*.sh text eol=lf
