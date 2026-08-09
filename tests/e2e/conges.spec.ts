@@ -31,6 +31,12 @@ function isoDate(offsetDays: number): string {
     .slice(0, 10);
 }
 
+/** Format affiché sur la ligne d'absence. */
+function frenchDate(iso: string): string {
+  const [year, month, day] = iso.split('-');
+  return `${day}/${month}/${year}`;
+}
+
 /** Prochain jour de la semaine demandé (0 = dimanche) dans la fenêtre du run. */
 function nextWeekday(weekday: number): string {
   const cursor = new Date(Date.now() + (RUN_OFFSET + 17) * 86_400_000);
@@ -150,15 +156,19 @@ test('une demande apparaît dans la file, puis se décide', async ({ page }) => 
 
   // Puis on libère les dates : annuler contre-passe la prise sans rien
   // effacer, ce qui est exactement le comportement voulu en production.
+  //
+  // La ligne est visée par **ses** dates, pas par « la première de ce
+  // salarié » : les passages précédents en laissent d'autres dans le même
+  // mois, et certaines n'offrent plus de bouton d'annulation.
   await page.goto(`/conges?mois=${from.slice(0, 7)}`);
   const accepted = page
     .locator('section')
     .filter({ hasText: 'Absences du mois' })
     .locator('li')
-    .filter({ hasText: WHO.queue })
-    .first();
-  if (await accepted.isVisible()) {
-    await accepted.getByRole('button', { name: 'Annuler' }).click();
+    .filter({ hasText: `du ${frenchDate(from)} au ${frenchDate(to)}` });
+
+  if ((await accepted.count()) > 0) {
+    await accepted.first().getByRole('button', { name: 'Annuler' }).click();
   }
 });
 
