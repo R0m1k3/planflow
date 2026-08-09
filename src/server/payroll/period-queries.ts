@@ -39,6 +39,8 @@ export interface PeriodsView {
   location: { id: string; name: string };
   locations: Array<{ id: string; name: string }>;
   periods: PeriodCard[];
+  /** Total en base : la liste est bornée, et le taire induirait en erreur. */
+  totalPeriods: number;
   /** Mois proposé par défaut à la création. */
   suggestedMonth: string;
   canLock: boolean;
@@ -62,10 +64,17 @@ export async function getPeriods(locationId?: string): Promise<PeriodsView | nul
         locations[0];
       if (!location) return null;
 
+      // Deux ans de périodes mensuelles : au-delà, la liste cesse d'être
+      // consultable. Le total est rapporté à côté, car une liste tronquée en
+      // silence laisse croire qu'une période créée n'a pas été enregistrée.
+      const PERIOD_PAGE = 24;
+      const totalPeriods = await db.payPeriod.count({
+        where: { locationId: location.id },
+      });
       const periods = await db.payPeriod.findMany({
         where: { locationId: location.id },
         orderBy: { startDate: 'desc' },
-        take: 24,
+        take: PERIOD_PAGE,
       });
 
       const exports = await db.payrollExport.findMany({
@@ -130,6 +139,7 @@ export async function getPeriods(locationId?: string): Promise<PeriodsView | nul
         location,
         locations,
         periods: cards,
+        totalPeriods,
         suggestedMonth: formatMonthParam(monthOf(new Date())),
         canLock: can(actor, 'payroll.period.lock'),
         canUnlock: can(actor, 'payroll.period.unlock'),

@@ -111,6 +111,10 @@ test('supprimer une période exige de retaper son libellé', async ({ page }) =>
   await create.getByLabel('Libellé').fill(label);
   await create.getByRole('button', { name: 'Créer la période' }).click();
 
+  // La liste est bornée aux 24 périodes les plus récentes : sans nettoyage, les
+  // restes d'exécutions interrompues finissent par repousser la nouvelle hors
+  // de l'écran, et le test échoue pour une raison sans rapport avec ce qu'il
+  // vérifie.
   const card = page.locator('section').filter({ hasText: label }).first();
   await expect(card).toBeVisible();
 
