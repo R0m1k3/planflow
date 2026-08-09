@@ -21,3 +21,6 @@ blob-report/
 *.log
 .tmp/
 .pgdata/
+
+# Pièces du dossier salarié, chiffrées au repos
+storage/

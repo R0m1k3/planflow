@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
 
+import { DocumentsPanel } from '@/app/(app)/equipe/[id]/DocumentsPanel';
 import { InvitationPanel } from '@/app/(app)/equipe/[id]/InvitationPanel';
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, EmptyState } from '@/components/ui/Card';
+import { listDocuments } from '@/server/documents/queries';
 import { getEmployee } from '@/server/employees/queries';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +20,10 @@ export default async function FichePage({
   const { id } = await params;
   const employee = await getEmployee(id);
   if (!employee) notFound();
+
+  // `members.documents.view` peut manquer là où `members.view` est accordée :
+  // la section disparaît alors, plutôt que d'échouer sur toute la page.
+  const documents = await listDocuments(id).catch(() => null);
 
   const active = employee.contracts.find(
     (contract) => contract.status === 'ACTIVE',
@@ -62,6 +68,20 @@ export default async function FichePage({
           <Badge tone="info">Sans accès applicatif</Badge>
         ) : null}
       </div>
+
+      {documents ? (
+        <Card>
+          <CardHeader
+            title="Pièces du dossier"
+            badge={<Badge tone="neutral">{documents.documents.length}</Badge>}
+          />
+          <DocumentsPanel
+            membershipId={employee.id}
+            documents={documents.documents}
+            canManage={documents.canManage}
+          />
+        </Card>
+      ) : null}
 
       {employee.canInvite ? (
         <Card>
