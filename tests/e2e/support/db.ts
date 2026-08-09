@@ -33,3 +33,32 @@ export async function resetMfa(email: string): Promise<void> {
   });
   await db().mfaRecoveryCode.deleteMany({ where: { userId: user.id } });
 }
+
+/**
+ * Recule la date de dépôt d'une pièce.
+ *
+ * Aucune interface ne permet d'antidater, et c'est bien ainsi. Sans ce levier,
+ * la moitié utile de la purge — celle qui efface — resterait invérifiable :
+ * seule l'échéance atteinte la déclenche, et elle se compte en mois.
+ *
+ * La transaction pose `app.account_id` : la table est protégée par RLS, et une
+ * mise à jour sans compte courant ne toucherait aucune ligne — en silence.
+ */
+export async function backdateDocument(
+  name: string,
+  months: number,
+): Promise<void> {
+  const document = await db().$queryRaw<Array<{ id: string; accountId: string }>>`
+    SELECT id, "accountId" FROM "Document" WHERE name = ${name} LIMIT 1
+  `;
+  const found = document[0];
+  if (!found) throw new Error(`Pièce introuvable : ${name}`);
+
+  const uploadedAt = new Date();
+  uploadedAt.setMonth(uploadedAt.getMonth() - months);
+
+  await db().$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.account_id', ${found.accountId}, true)`;
+    await tx.$executeRaw`UPDATE "Document" SET "uploadedAt" = ${uploadedAt} WHERE id = ${found.id}`;
+  });
+}

@@ -85,6 +85,11 @@ export const NAVIGATION: NavSection[] = [
       { id: 'registre', label: 'Registre de paramétrage', href: '/reglages/registre' },
       { id: 'email', label: 'Envoi de courrier', href: '/reglages/email' },
       { id: 'securite', label: 'Sécurité', href: '/reglages/securite' },
+      {
+        id: 'conservation',
+        label: 'Durées de conservation',
+        href: '/reglages/conservation',
+      },
       { id: 'convention', label: 'Convention collective' },
       { id: 'postes', label: 'Postes et étiquettes' },
       { id: 'roles', label: 'Rôles et permissions' },
