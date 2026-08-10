@@ -2,6 +2,7 @@ import 'server-only';
 
 import { cache } from 'react';
 
+import { genderShort } from '@/domain/hr/civil-status';
 import type { RupPerson } from '@/domain/legal/rup';
 import { peopleWithGaps } from '@/domain/legal/rup';
 import { query } from '@/server/context';
@@ -44,6 +45,8 @@ export const getRegisterData = cache(async function getRegisterData(
               select: {
                 firstName: true,
                 lastName: true,
+                birthName: true,
+                gender: true,
                 nationality: true,
                 birthDate: true,
               },
@@ -71,11 +74,14 @@ export const getRegisterData = cache(async function getRegisterData(
     // Une ligne par contrat, pas par personne : un salarié réembauché a deux
     // entrées et deux sorties, et les fondre effacerait l'interruption.
     const people: RupPerson[] = contracts.map((contract) => ({
-      lastName: contract.membership.profile?.lastName ?? '',
+      // Le registre se tient au nom de naissance : c'est celui de l'état civil,
+      // et le nom d'usage peut changer sans que la personne change.
+      lastName:
+        contract.membership.profile?.birthName ??
+        contract.membership.profile?.lastName ??
+        '',
       firstName: contract.membership.profile?.firstName ?? '',
-      // PlanFlow ne collecte pas le sexe : la mention est exigée, la colonne
-      // reste donc vide et le décompte des dossiers incomplets le signale.
-      sex: null,
+      sex: genderShort(contract.membership.profile?.gender ?? null),
       nationality: contract.membership.profile?.nationality ?? null,
       birthDate: contract.membership.profile?.birthDate ?? null,
       jobTitle: contract.jobTitleId
@@ -128,6 +134,8 @@ export const listRegisterLocations = cache(
                     select: {
                       firstName: true,
                       lastName: true,
+                      birthName: true,
+                      gender: true,
                       nationality: true,
                       birthDate: true,
                     },
@@ -138,9 +146,12 @@ export const listRegisterLocations = cache(
           });
 
           const people: RupPerson[] = contracts.map((contract) => ({
-            lastName: contract.membership.profile?.lastName ?? '',
+            lastName:
+              contract.membership.profile?.birthName ??
+              contract.membership.profile?.lastName ??
+              '',
             firstName: contract.membership.profile?.firstName ?? '',
-            sex: null,
+            sex: genderShort(contract.membership.profile?.gender ?? null),
             nationality: contract.membership.profile?.nationality ?? null,
             birthDate: contract.membership.profile?.birthDate ?? null,
             jobTitle: contract.jobTitleId ? 'x' : null,

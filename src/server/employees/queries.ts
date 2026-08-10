@@ -267,16 +267,25 @@ export async function listEmployees(
  * qu'il n'avait pas le droit de lire.
  */
 export interface EmployeeProfileDetail {
+  gender: string | null;
   firstName: string;
+  birthName: string | null;
   lastName: string;
   birthDate: Date | null;
   birthPlace: string | null;
+  birthCountry: string | null;
+  birthDepartment: string | null;
   nationality: string | null;
+  maritalStatus: string | null;
+  dependents: number | null;
   addressLine1: string | null;
+  addressLine2: string | null;
   postalCode: string | null;
   city: string | null;
   country: string | null;
   phone: string | null;
+  landline: string | null;
+  smsSchedules: boolean;
   personalEmail: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
@@ -460,16 +469,25 @@ export const getEmployee = cache(async function getEmployee(
       },
       profile: membership.profile
         ? {
+            gender: membership.profile.gender,
             firstName: membership.profile.firstName,
+            birthName: membership.profile.birthName,
             lastName: membership.profile.lastName,
             birthDate: membership.profile.birthDate,
             birthPlace: membership.profile.birthPlace,
+            birthCountry: membership.profile.birthCountry,
+            birthDepartment: membership.profile.birthDepartment,
             nationality: membership.profile.nationality,
+            maritalStatus: membership.profile.maritalStatus,
+            dependents: membership.profile.dependents,
             addressLine1: membership.profile.addressLine1,
+            addressLine2: membership.profile.addressLine2,
             postalCode: membership.profile.postalCode,
             city: membership.profile.city,
             country: membership.profile.country,
             phone: membership.profile.phone,
+            landline: membership.profile.landline,
+            smsSchedules: membership.profile.smsSchedules,
             personalEmail: membership.profile.personalEmail,
             emergencyContactName: membership.profile.emergencyContactName,
             emergencyContactPhone: membership.profile.emergencyContactPhone,
@@ -558,6 +576,49 @@ export const listContractLocations = cache(
         orderBy: { name: 'asc' },
       }),
     );
+  },
+);
+
+/**
+ * Ce que le panneau d'embauche propose en plus des établissements.
+ *
+ * Lu avec `members.view` : ce sont des noms déjà affichés par l'annuaire, et
+ * une politique RTT n'est pas une donnée sensible.
+ */
+export interface HiringOptions {
+  managers: Array<{ id: string; name: string }>;
+  rttPolicies: Array<{ id: string; name: string }>;
+}
+
+export const listHiringOptions = cache(
+  async function listHiringOptions(): Promise<HiringOptions> {
+    return query('members.view', async (db) => {
+      const [managers, rttPolicies] = await Promise.all([
+        db.membership.findMany({
+          where: { archivedAt: null },
+          select: {
+            id: true,
+            employeeNumber: true,
+            profile: { select: { firstName: true, lastName: true } },
+          },
+        }),
+        db.rttPolicy.findMany({
+          where: { status: 'ACTIVE' },
+          select: { id: true, name: true },
+          orderBy: { name: 'asc' },
+        }),
+      ]);
+
+      return {
+        managers: managers
+          .map((manager) => ({
+            id: manager.id,
+            name: `${manager.profile?.firstName ?? ''} ${manager.profile?.lastName ?? manager.employeeNumber}`.trim(),
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'fr')),
+        rttPolicies,
+      };
+    });
   },
 );
 

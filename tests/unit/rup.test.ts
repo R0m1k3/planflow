@@ -117,3 +117,22 @@ describe('rendu du registre', () => {
     expect(Buffer.from(pdf).subarray(0, 5).toString()).toBe('%PDF-');
   });
 });
+
+describe('matricule proposé', () => {
+  it('part à E0001 sur un effectif vide', async () => {
+    const { nextEmployeeNumber } = await import('@/domain/hr/civil-status');
+    expect(nextEmployeeNumber([])).toBe('E0001');
+  });
+
+  it('suit le dernier rang attribué', async () => {
+    const { nextEmployeeNumber } = await import('@/domain/hr/civil-status');
+    expect(nextEmployeeNumber(['E0001', 'E0007', 'E0003'])).toBe('E0008');
+  });
+
+  it('ignore les matricules repris d’un autre outil', async () => {
+    const { nextEmployeeNumber } = await import('@/domain/hr/civil-status');
+    // Un client qui migre apporte ses propres formes : les compter fausserait
+    // le rang, et refuser l'embauche pour cette raison serait absurde.
+    expect(nextEmployeeNumber(['SILAE-42', '00012', 'E0002'])).toBe('E0003');
+  });
+});

@@ -481,15 +481,40 @@ model EmployeeProfile {
   firstName String
   lastName  String
 
+  /// Nom de naissance, distinct du nom d'usage. La paie, la déclaration
+  /// sociale et le registre du personnel se tiennent au nom de naissance ;
+  /// l'un ne remplace pas l'autre.
+  birthName String?
+
+  /// Sexe — mention exigée au registre unique du personnel (art. D1221-23).
+  /// Facultatif en base : un dossier incomplet doit pouvoir exister, et c'est
+  /// le registre qui signale ce qui lui manque.
+  gender Gender?
+
   birthDate    DateTime? @db.Date
-  birthPlace   String?
+  /// Commune de naissance. Le pays et le département sont portés à part :
+  /// la déclaration sociale les demande séparément, et les recoller depuis une
+  /// chaîne libre échouerait au premier « Bar-le-Duc (Meuse) ».
+  birthPlace      String?
+  birthCountry    String?
+  birthDepartment String?
   nationality  String?
+  /// Situation de famille et personnes à charge : la paie en dépend, et le
+  /// salarié seul peut les déclarer.
+  maritalStatus MaritalStatus?
+  dependents    Int?
   addressLine1 String?
+  addressLine2 String?
   postalCode   String?
   city         String?
   country      String?
   phone        String?
+  landline     String?
   personalEmail String?
+
+  /// Envoi des plannings par SMS. Un consentement, donc explicitement faux
+  /// par défaut : la charge de la preuve pèse sur l'employeur.
+  smsSchedules Boolean @default(false)
 
   socialSecurityNumberEnc Bytes?
   ibanEnc                 Bytes?
@@ -503,6 +528,26 @@ model EmployeeProfile {
   membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
+}
+
+/// Sexe au sens de l'état civil, tel que le registre du personnel le demande.
+/// Trois valeurs et non deux : un dossier peut être ouvert avant que la
+/// mention soit connue, et « non précisé » se distingue d'un champ jamais rempli.
+enum Gender {
+  FEMALE
+  MALE
+  UNSPECIFIED
+}
+
+/// Situation de famille. Le PACS est distinct du concubinage et du mariage :
+/// les trois n'ouvrent pas les mêmes droits, et les confondre fausserait la paie.
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  PACS
+  COHABITING
+  DIVORCED
+  WIDOWED
 }
 
 /// Titre de séjour et son échéance. Le tableau de bord RH surveille les
@@ -530,6 +575,9 @@ model UserContract {
 
   contractType ContractType
   startDate    DateTime  @db.Date
+  /// Heure de prise de poste le premier jour, au format « HH:MM ».
+  /// Une date seule ne suffit pas à la DPAE, qui demande l'heure d'embauche.
+  startTime    String?
   endDate      DateTime? @db.Date
   trialEndDate DateTime? @db.Date
 

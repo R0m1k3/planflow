@@ -2,22 +2,25 @@
 
 import { useActionState, useState } from 'react';
 
-import { Button } from '@/components/ui/Button';
 import { Field, FormError, SubmitButton } from '@/components/ui/Form';
 import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   createEmployeeAction,
   type ActionState,
 } from '@/server/employees/actions';
-import type { ContractLocation } from '@/server/employees/queries';
+import type {
+  ContractLocation,
+  HiringOptions,
+} from '@/server/employees/queries';
 
 /**
  * Embauche.
  *
- * Un salarié créé sans contrat ni équipe est un dossier que rien ne rattache :
- * il n'apparaît sur aucune grille et ne se déclare pas. Le contrat est donc
- * proposé d'emblée — et reste décochable, parce qu'un remplaçant se saisit
- * parfois avant que son établissement soit tranché.
+ * Deux sections et un seul envoi : ce qui identifie la personne, puis ce qui
+ * l'emploie. Un salarié créé sans contrat ni équipe est un dossier que rien ne
+ * rattache — il n'apparaît sur aucune grille et ne se déclare pas — d'où un
+ * contrat proposé d'emblée, et décochable seulement pour les cas où
+ * l'établissement n'est pas encore tranché.
  */
 
 const empty: ActionState = {};
@@ -37,13 +40,28 @@ const CONTRACT_TYPES = [
 const selectClass =
   'h-9 min-w-0 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1 outline-none focus-visible:border-focus';
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <h3 className="text-micro font-semibold tracking-[0.06em] text-ink-3 uppercase">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+const today = () => new Date().toISOString().slice(0, 10);
+
 export function AddEmployeeForm({
   locations,
+  options,
   onSaved,
 }: {
   /** Vide quand la capacité d'ouvrir un contrat manque : la section disparaît. */
   locations: ContractLocation[];
-  /** Appelé une fois l'ajout accepté — la modale s'y referme. */
+  options: HiringOptions;
+  /** Appelé une fois l'ajout accepté — le panneau s'y referme. */
   onSaved?: () => void;
 }) {
   const [state, formAction] = useActionState<ActionState, FormData>(
@@ -53,10 +71,11 @@ export function AddEmployeeForm({
   const [withContract, setWithContract] = useState(locations.length > 0);
   const [locationId, setLocationId] = useState(locations[0]?.id ?? '');
   const [forfait, setForfait] = useState(false);
+  const [autoNumber, setAutoNumber] = useState(true);
   const [acknowledged, setAcknowledged] = useState<ActionState>(empty);
 
   // Acquitté une fois pour toutes : sans cela, un succès resté en mémoire
-  // refermerait la modale à sa réouverture.
+  // refermerait le panneau à sa réouverture.
   if (state !== acknowledged && state.ok) {
     setAcknowledged(state);
     onSaved?.();
@@ -69,26 +88,73 @@ export function AddEmployeeForm({
     <PersistentForm
       action={formAction}
       resetAfter={state.ok ? state : null}
-      className="flex flex-col gap-4"
+      className="flex flex-col gap-6"
     >
-      <div className="flex flex-wrap gap-3">
+      <Section title="Informations salarié">
         <Field label="Prénom" name="firstName" required />
-        <Field label="Nom" name="lastName" required />
-        <Field label="Matricule" name="employeeNumber" required />
-      </div>
+        <Field
+          label="Nom de naissance"
+          name="birthName"
+          hint="Laissez vide s’il est identique au nom de famille."
+        />
+        <Field label="Nom de famille" name="lastName" required />
 
-      <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-baseline gap-3">
+            <span className="text-sm font-medium">Matricule</span>
+            <span className="flex-1" />
+            <button
+              type="button"
+              onClick={() => setAutoNumber(!autoNumber)}
+              className="text-micro font-medium text-accent-soft-ink underline underline-offset-2"
+            >
+              {autoNumber
+                ? 'Saisir un matricule'
+                : 'Passer à la génération automatique'}
+            </button>
+          </div>
+          {autoNumber ? (
+            <p className="text-micro text-ink-3">
+              Attribué à la suite du dernier, au moment de l’enregistrement.
+            </p>
+          ) : (
+            <input
+              name="employeeNumber"
+              aria-label="Matricule"
+              className="h-9 rounded-2 border border-line-2 bg-surface px-3 text-sm text-ink-1 outline-none focus-visible:border-focus"
+            />
+          )}
+        </div>
+
+        <Field label="Date de naissance" name="birthDate" type="date" />
+
         <Field
           label="Adresse électronique"
           name="email"
           type="email"
-          hint="Facultative. Sans adresse, le salarié reste planifiable et déclarable ; il n’aura simplement pas d’accès à l’application."
+          hint="Permet de se connecter à PlanFlow et de recevoir ses plannings. Sans elle, le salarié reste planifiable et déclarable."
         />
         <Field label="Téléphone mobile" name="phone" type="tel" />
-      </div>
+
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="smsSchedules"
+            className="mt-0.5 size-4 accent-[var(--accent)]"
+          />
+          <span>
+            <span className="font-medium">Envoyer les plannings par SMS</span>
+            <span className="block text-micro text-ink-3">
+              Consentement du salarié : à recueillir avant de l’activer.
+            </span>
+          </span>
+        </label>
+
+        <Field label="Téléphone fixe" name="landline" type="tel" />
+      </Section>
 
       {locations.length > 0 ? (
-        <>
+        <Section title="Contrat">
           <label className="flex items-center gap-2 text-sm font-medium">
             <input
               type="checkbox"
@@ -101,62 +167,35 @@ export function AddEmployeeForm({
           </label>
 
           {withContract ? (
-            <div className="flex flex-col gap-3 rounded-3 border border-line-1 bg-surface-2 p-4">
-              <div className="flex flex-wrap gap-3">
-                <label className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="text-sm font-medium">Établissement</span>
-                  <select
-                    name="locationId"
-                    className={selectClass}
-                    value={locationId}
-                    onChange={(event) => setLocationId(event.target.value)}
-                  >
-                    {locations.map((location) => (
-                      <option key={location.id} value={location.id}>
-                        {location.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="text-sm font-medium">Équipe</span>
-                  <select name="teamId" className={selectClass}>
-                    <option value="">Aucune pour l’instant</option>
-                    {teams.map((team) => (
-                      <option key={team.id} value={team.id}>
-                        {team.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="flex min-w-0 flex-1 flex-col gap-1.5">
-                  <span className="text-sm font-medium">Type de contrat</span>
-                  <select name="contractType" className={selectClass}>
-                    {CONTRACT_TYPES.map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
+            <div className="flex flex-col gap-3">
               <div className="flex flex-wrap gap-3">
                 <Field
-                  label="Début du contrat"
+                  label="Date de début de contrat"
                   name="startDate"
                   type="date"
-                  required={withContract}
+                  required
+                  defaultValue={today()}
                 />
                 <Field
-                  label="Fin du contrat"
-                  name="endDate"
-                  type="date"
-                  hint="Vide pour un contrat sans terme."
+                  label="Heure de début de contrat"
+                  name="startTime"
+                  type="time"
+                  required
+                  defaultValue="09:00"
+                  hint="Demandée par la DPAE."
                 />
               </div>
+
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <span className="text-sm font-medium">Type de contrat</span>
+                <select name="contractType" className={selectClass}>
+                  {CONTRACT_TYPES.map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
               <div className="flex flex-wrap gap-3">
                 <label className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -187,7 +226,7 @@ export function AddEmployeeForm({
                   />
                 ) : (
                   <Field
-                    label="Durée hebdomadaire"
+                    label="Temps de travail hebdomadaire"
                     name="weeklyHours"
                     type="number"
                     step="0.5"
@@ -214,28 +253,85 @@ export function AddEmployeeForm({
                   />
                 </div>
               ) : null}
+
+              <Field
+                label="Fin du contrat"
+                name="endDate"
+                type="date"
+                hint="Vide pour un contrat sans terme."
+              />
+
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <span className="text-sm font-medium">
+                  Établissement par défaut
+                </span>
+                <select
+                  name="locationId"
+                  className={selectClass}
+                  value={locationId}
+                  onChange={(event) => setLocationId(event.target.value)}
+                >
+                  {locations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <span className="text-sm font-medium">Équipe</span>
+                <select name="teamId" className={selectClass}>
+                  <option value="">Aucune pour l’instant</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex min-w-0 flex-col gap-1.5">
+                <span className="text-sm font-medium">
+                  Responsable hiérarchique
+                </span>
+                <select name="lineManagerId" className={selectClass}>
+                  <option value="">Aucun</option>
+                  {options.managers.map((manager) => (
+                    <option key={manager.id} value={manager.id}>
+                      {manager.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {options.rttPolicies.length > 0 ? (
+                <label className="flex min-w-0 flex-col gap-1.5">
+                  <span className="text-sm font-medium">Politique RTT</span>
+                  <select name="rttPolicyId" className={selectClass}>
+                    <option value="">Aucune</option>
+                    {options.rttPolicies.map((policy) => (
+                      <option key={policy.id} value={policy.id}>
+                        {policy.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
             </div>
           ) : null}
-        </>
+        </Section>
       ) : null}
 
       <FormError>{state.error}</FormError>
 
-      <div className="flex items-center gap-3">
-        <SubmitButton>Ajouter</SubmitButton>
+      <div className="sticky bottom-0 -mx-5 border-t border-line-1 bg-surface px-5 py-4">
+        <SubmitButton className="w-full">Enregistrer</SubmitButton>
         {state.ok ? (
-          <span className="text-xs text-ok-soft-ink">Salarié ajouté.</span>
+          <p className="mt-2 text-center text-xs text-ok-soft-ink">
+            Salarié ajouté.
+          </p>
         ) : null}
-        {withContract ? null : (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setWithContract(true)}
-            disabled={locations.length === 0}
-          >
-            Ajouter un contrat
-          </Button>
-        )}
       </div>
     </PersistentForm>
   );

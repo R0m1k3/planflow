@@ -116,14 +116,15 @@ test('une pièce sans politique n’est jamais purgée', async ({ page }) => {
   // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
   // en modale, à la demande.
   await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
-  const create = page.locator('form').filter({ hasText: 'Ajouter' });
+  const create = page.locator('form').filter({ hasText: 'Informations salarié' });
   await create.getByLabel('Prénom').fill('Garde');
-  await create.getByLabel('Nom', { exact: true }).fill(`Garde${suffix}`);
+  await create.getByLabel('Nom de famille').fill(`Garde${suffix}`);
+  await create.getByRole('button', { name: 'Saisir un matricule' }).click();
   await create.getByLabel('Matricule').fill(`RET${suffix}`);
   // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
   // pas, et un salarié sans contrat doit rester créable.
   await create.getByLabel('Ouvrir un contrat maintenant').uncheck();
-  await create.getByRole('button', { name: 'Ajouter' }).click();
+  await create.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(`Garde${suffix}`) }).click();
@@ -173,14 +174,15 @@ test('une pièce échue est effectivement effacée', async ({ page }) => {
   // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
   // en modale, à la demande.
   await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
-  const create = page.locator('form').filter({ hasText: 'Ajouter' });
+  const create = page.locator('form').filter({ hasText: 'Informations salarié' });
   await create.getByLabel('Prénom').fill('Purge');
-  await create.getByLabel('Nom', { exact: true }).fill(`Purge${suffix}`);
+  await create.getByLabel('Nom de famille').fill(`Purge${suffix}`);
+  await create.getByRole('button', { name: 'Saisir un matricule' }).click();
   await create.getByLabel('Matricule').fill(`PUR${suffix}`);
   // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
   // pas, et un salarié sans contrat doit rester créable.
   await create.getByLabel('Ouvrir un contrat maintenant').uncheck();
-  await create.getByRole('button', { name: 'Ajouter' }).click();
+  await create.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(`Purge${suffix}`) }).click();

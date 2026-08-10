@@ -17,14 +17,15 @@ async function createEmployee(page: Page) {
   // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
   // en modale, à la demande.
   await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
-  const form = page.locator('form').filter({ hasText: 'Ajouter' });
+  const form = page.locator('form').filter({ hasText: 'Informations salarié' });
   await form.getByLabel('Prénom').fill('Awa');
-  await form.getByLabel('Nom', { exact: true }).fill(lastName);
+  await form.getByLabel('Nom de famille').fill(lastName);
+  await form.getByRole('button', { name: 'Saisir un matricule' }).click();
   await form.getByLabel('Matricule').fill(`FIC${suffix}`);
   // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
   // pas, et un salarié sans contrat doit rester créable.
   await form.getByLabel('Ouvrir un contrat maintenant').uncheck();
-  await form.getByRole('button', { name: 'Ajouter' }).click();
+  await form.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(lastName) }).click();
@@ -105,9 +106,10 @@ test('une embauche pose le contrat en même temps que le dossier', async ({
   // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
   // en modale, à la demande.
   await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
-  const form = page.locator('form').filter({ hasText: 'Ajouter' });
+  const form = page.locator('form').filter({ hasText: 'Informations salarié' });
   await form.getByLabel('Prénom').fill('Sofia');
-  await form.getByLabel('Nom', { exact: true }).fill(lastName);
+  await form.getByLabel('Nom de famille').fill(lastName);
+  await form.getByRole('button', { name: 'Saisir un matricule' }).click();
   await form.getByLabel('Matricule').fill(`EMB${suffix}`);
 
   // Le contrat est proposé coché : un dossier créé sans lui n'apparaît sur
@@ -116,7 +118,7 @@ test('une embauche pose le contrat en même temps que le dossier', async ({
     form.getByLabel('Ouvrir un contrat maintenant'),
   ).toBeChecked();
   await form.getByLabel('Début du contrat').fill('2026-01-05');
-  await form.getByRole('button', { name: 'Ajouter' }).click();
+  await form.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   // Le rattachement paraît dans l'annuaire : un dossier sans contrat y porte
