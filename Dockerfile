@@ -54,6 +54,17 @@ COPY --from=build --chown=nextjs:nodejs /app/public ./public
 COPY --chown=nextjs:nodejs docker/entrypoint.sh ./docker/entrypoint.sh
 COPY --chown=nextjs:nodejs docker/bootstrap-role.mjs ./docker/bootstrap-role.mjs
 
+# Le bit exécutable est posé **dans l'image**, sans dépendre de celui du fichier
+# source. `COPY` recopie le mode d'origine, et ce mode se perd hors d'un clone
+# git : archive envoyée à Portainer, contexte reconstitué, système de fichiers
+# qui ne porte pas la permission.
+#
+# La panne que cela produit ne ressemble à rien : la forme exec de `CMD` échoue
+# **avant** le premier octet de sortie, si bien que le conteneur s'arrête sans
+# une ligne de journal. On cherche alors un défaut applicatif là où il n'y a
+# jamais eu de processus.
+RUN chmod +x ./docker/entrypoint.sh
+
 # Créé dans l'image, et non laissé au montage : un volume nommé hérite du
 # propriétaire du répertoire qu'il recouvre, et sans cela l'application —
 # qui ne tourne pas en root — ne pourrait pas y écrire.
