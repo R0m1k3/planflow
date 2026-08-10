@@ -819,7 +819,18 @@ async function seedPlanning(accountId: string): Promise<void> {
             isoWeek: week.isoWeek,
           },
         },
-        update: {},
+        // L'état de publication est **réimposé**, pas seulement posé à la
+        // création. Un seed qui laisse en place ce qu'il trouve ne produit un
+        // état de départ connu que la première fois : la semaine précédente,
+        // publiée par définition, reste en brouillon dès lors qu'elle a déjà
+        // été semée quand elle était la semaine courante. Les tests qui
+        // s'appuient dessus échouent alors sur une base de développement et
+        // passent en intégration continue, où le semis est neuf — l'écart le
+        // plus coûteux à diagnostiquer.
+        update: {
+          status: week === previous ? 'PUBLISHED' : 'DRAFT',
+          publishedAt: week === previous ? new Date() : null,
+        },
         create: {
           accountId,
           teamId: team.id,

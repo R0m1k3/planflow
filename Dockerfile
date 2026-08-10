@@ -71,7 +71,11 @@ RUN chmod +x ./docker/entrypoint.sh
 RUN mkdir -p /data/documents /secrets && chown -R nextjs:nodejs /data /secrets
 
 USER nextjs
-EXPOSE 3000
-ENV PORT=3000 HOSTNAME=0.0.0.0
+# Port peu courant jusque **dans** l'image : le reverse-proxy porte alors la
+# même valeur partout, et rien ne rappelle un 3000 par défaut. Surchargeable
+# par la pile, qui aligne publication, sonde de santé et serveur sur une
+# unique variable.
+EXPOSE 9317
+ENV PORT=9317 HOSTNAME=0.0.0.0
 
 CMD ["./docker/entrypoint.sh"]

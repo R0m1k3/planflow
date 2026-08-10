@@ -22,7 +22,10 @@ const superUser = process.env.POSTGRES_USER ?? 'planflow';
 const superPassword = process.env.POSTGRES_PASSWORD ?? '';
 const database = process.env.POSTGRES_DB ?? 'planflow';
 const host = process.env.POSTGRES_HOST ?? 'db';
-const port = Number(process.env.POSTGRES_PORT_INTERNAL ?? 5432);
+// Le port d'écoute **dans** le conteneur de la base, que la pile choisit peu
+// commun. Le défaut suit celui du compose, pas celui de PostgreSQL : une
+// valeur qui diverge se solderait par un refus de connexion à l'amorçage.
+const port = Number(process.env.POSTGRES_PORT_INTERNAL ?? 5439);
 
 const appRole = process.env.APP_DB_USER ?? 'planflow_app';
 const appPassword = process.env.APP_DB_PASSWORD ?? 'planflow-app-interne';

@@ -12,6 +12,11 @@ services:
       # du même réseau. Le changer reste recommandé.
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-planflow-interne}
       POSTGRES_DB: ${POSTGRES_DB:-planflow}
+      # Port d'écoute **dans** le conteneur. Un port non commun ne protège de
+      # rien — sur un réseau Docker, chaque conteneur a son adresse et deux
+      # services peuvent écouter le même port sans se gêner — mais il lève
+      # l'ambiguïté quand plusieurs bases cohabitent derrière le même proxy.
+      PGPORT: ${POSTGRES_PORT_INTERNAL:-5439}
       # Transmis au script d'initialisation, qui crée le rôle de connexion de
       # l'application — celui-ci ne doit surtout pas être le superutilisateur.
       APP_DB_USER: ${APP_DB_USER:-planflow_app}
@@ -53,13 +58,17 @@ services:
             sleep 1
           done
         ) &
-        exec docker-entrypoint.sh postgres
+        exec docker-entrypoint.sh postgres -p "$$PGPORT"
     volumes:
       - db-data:/var/lib/postgresql/data
       # Crée le rôle applicatif à la première initialisation du volume.
       - ./docker/init-app-role.sh:/docker-entrypoint-initdb.d/10-init-app-role.sh:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-planflow} -d ${POSTGRES_DB:-planflow}']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -p ${POSTGRES_PORT_INTERNAL:-5439} -U ${POSTGRES_USER:-planflow} -d ${POSTGRES_DB:-planflow}',
+        ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -78,10 +87,9 @@ services:
     networks:
       - interne
       - nginx_default
-    # Le conteneur reste sur 5432 pour l'application, et le port hôte est publié
-    # sur un port non commun, configurable : plusieurs instances PostgreSQL
-    # coexistent sur le même serveur, et s'en tenir au 5432 par défaut les
-    # ferait entrer en collision.
+    # Ni le port du conteneur ni celui de l'hôte ne sont les ports usuels :
+    # plusieurs instances PostgreSQL coexistent sur un même serveur, et s'en
+    # tenir au 5432 partout invite la confusion.
     #
     # **Lié à la boucle locale**, et c'est important : la publication sert à se
     # connecter depuis le serveur (sauvegarde, psql), pas depuis le réseau. Sans
@@ -89,7 +97,7 @@ services:
     # données RH derrière un mot de passe par défaut, joignable depuis
     # l'extérieur. Pour un accès distant, passer par un tunnel.
     ports:
-      - '${POSTGRES_BIND:-127.0.0.1}:${POSTGRES_PORT:-55432}:5432'
+      - '${POSTGRES_BIND:-127.0.0.1}:${POSTGRES_PORT:-55432}:${POSTGRES_PORT_INTERNAL:-5439}'
 
   # Pose le rôle applicatif à **chaque** démarrage de la pile.
   #
@@ -110,6 +118,7 @@ services:
         condition: service_healthy
     environment:
       PGHOST: db
+      PGPORT: ${POSTGRES_PORT_INTERNAL:-5439}
       PGPASSWORD: ${POSTGRES_PASSWORD:-planflow-interne}
       POSTGRES_USER: ${POSTGRES_USER:-planflow}
       POSTGRES_DB: ${POSTGRES_DB:-planflow}
@@ -134,10 +143,14 @@ services:
         condition: service_completed_successfully
     environment:
       NODE_ENV: production
+      # Port d'écoute du serveur **dans** le conteneur. C'est celui que vise
+      # le reverse-proxy ; il doit rester le même que celui du healthcheck et
+      # de la publication, d'où l'unique variable.
+      PORT: ${APP_PORT_INTERNAL:-9317}
       # Le compte applicatif, **pas** le superutilisateur d'amorçage : un
       # superutilisateur contourne la row-level security, y compris déclarée en
       # FORCE, et l'isolation ne reposerait plus que sur la couche applicative.
-      DATABASE_URL: postgresql://${APP_DB_USER:-planflow_app}:${APP_DB_PASSWORD:-planflow-app-interne}@db:5432/${POSTGRES_DB:-planflow}
+      DATABASE_URL: postgresql://${APP_DB_USER:-planflow_app}:${APP_DB_PASSWORD:-planflow-app-interne}@db:${POSTGRES_PORT_INTERNAL:-5439}/${POSTGRES_DB:-planflow}
       # Laissée vide, elle est **produite au premier démarrage** et conservée
       # dans le volume `secrets`. La renseigner ici reste possible pour un
       # déploiement qui gère ses secrets par ailleurs — mais une variable
@@ -158,6 +171,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-planflow-interne}
       POSTGRES_DB: ${POSTGRES_DB:-planflow}
       POSTGRES_HOST: db
+      POSTGRES_PORT_INTERNAL: ${POSTGRES_PORT_INTERNAL:-5439}
       APP_DB_USER: ${APP_DB_USER:-planflow_app}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:-planflow-app-interne}
     volumes:
@@ -167,21 +181,23 @@ services:
       - secrets:/secrets
     networks:
       # `interne` pour joindre la base, `nginx_default` pour être joignable par
-      # le reverse-proxy — qui atteint le conteneur sur son port 3000, sans
+      # le reverse-proxy — qui atteint le conteneur sur son port interne, sans
       # passer par le port publié.
       - interne
       - nginx_default
     ports:
       # Port peu courant : le service est censé passer par le reverse-proxy, et
-      # un 3000 publié sur l'hôte se heurte à tout ce qui traîne.
-      - '${APP_PORT:-9317}:3000'
+      # un 3000 publié sur l'hôte se heurte à tout ce qui traîne. Le port
+      # **interne** l'est aussi, pour que la configuration du reverse-proxy
+      # porte partout la même valeur.
+      - '${APP_PORT:-9317}:${APP_PORT_INTERNAL:-9317}'
     healthcheck:
       test:
         [
           'CMD',
           'node',
           '-e',
-          "fetch('http://127.0.0.1:3000/api/sante').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:${APP_PORT_INTERNAL:-9317}/api/sante').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 15s
       timeout: 5s

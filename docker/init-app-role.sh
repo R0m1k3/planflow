@@ -28,7 +28,9 @@ DB_USER="${POSTGRES_USER:-planflow}"
 # Dans le conteneur `db`, l'hôte est local ; depuis `db-init`, c'est `db`.
 # L'un et l'autre doivent aboutir au même SQL.
 if [ -n "${PGHOST:-}" ]; then
-  set -- -h "$PGHOST" -p "${PGPORT:-5432}" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
+  # Défaut aligné sur celui de la pile, et non sur celui de PostgreSQL : la
+  # base écoute un port peu commun, et 5432 ne joindrait rien.
+  set -- -h "$PGHOST" -p "${PGPORT:-5439}" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
 else
   set -- -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1
 fi

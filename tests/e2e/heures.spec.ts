@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { formatMonthParam, monthOf, previousMonth } from '../../src/domain/planning/month';
+import { formatMonthParam, monthOf } from '../../src/domain/planning/month';
 
 /**
  * Heures et périodes de paie.
@@ -10,7 +10,22 @@ import { formatMonthParam, monthOf, previousMonth } from '../../src/domain/plann
  * plutôt qu'un bouton.
  */
 
-const MONTH = formatMonthParam(previousMonth(monthOf(new Date())));
+/**
+ * Mois **courant**, et non le précédent.
+ *
+ * Le seed ne pose que deux semaines de planning : la courante et la
+ * précédente. Le mois précédent n'en contient donc aucune, sauf quand on joue
+ * la suite dans les premiers jours d'un mois — le tableau est vide le reste du
+ * temps, et l'assertion échoue pour une raison sans rapport avec ce qu'elle
+ * vérifie. Le défaut ne se voyait pas sur une base de développement, qui garde
+ * les créneaux des exécutions précédentes ; l'intégration continue, elle,
+ * repart d'un semis neuf.
+ *
+ * Le mois courant, lui, contient toujours aujourd'hui — donc toujours des
+ * créneaux, et aucun n'a d'heures réelles puisque rien dans le semis ni dans la
+ * suite n'en saisit.
+ */
+const MONTH = formatMonthParam(monthOf(new Date()));
 
 /**
  * Mois propre à cette exécution.
