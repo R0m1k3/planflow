@@ -69,9 +69,13 @@ test('le dossier personnel se saisit et se conserve', async ({ page }) => {
     .click();
 
   await page.getByLabel('Date de naissance').fill('1988-03-12');
-  await page.getByLabel('Lieu de naissance').fill('Nancy');
-  await page.getByLabel('Nationalité').fill('France');
-  await page.getByLabel('Téléphone mobile').fill('+33 6 12 34 56 78');
+  await page.getByLabel('Commune de naissance').fill('Nancy');
+  // Pays et département viennent de listes fermées : la saisie libre ne peut
+  // plus y introduire « Frnace ».
+  await page.getByLabel('Nationalité').selectOption('FR');
+  await page.getByLabel('Département de naissance').selectOption('54');
+  // L'indicatif est un contrôle à part ; le champ ne porte que le reste.
+  await page.getByLabel('Téléphone mobile', { exact: true }).fill('6 12 34 56 78');
   await page.getByLabel('Ville').fill('Frouard');
   await page.getByRole('button', { name: 'Enregistrer les modifications' }).click();
 
@@ -82,6 +86,33 @@ test('le dossier personnel se saisit et se conserve', async ({ page }) => {
   await page.goto(employee.url);
   await expect(page.getByText('Nancy')).toBeVisible();
   await expect(page.getByText('Frouard')).toBeVisible();
+  await expect(page.getByText('54 - Meurthe-et-Moselle')).toBeVisible();
+  await expect(page.getByText('+33 6 12 34 56 78')).toBeVisible();
+});
+
+test('un titre de séjour expiré est signalé sur la fiche', async ({ page }) => {
+  await createEmployee(page);
+
+  await page
+    .locator('form')
+    .filter({ hasText: 'Travailleur étranger' })
+    .or(page.getByText('Autorisation de travail'))
+    .first()
+    .scrollIntoViewIfNeeded();
+
+  const card = page
+    .locator('section')
+    .filter({ hasText: 'Autorisation de travail' });
+  await card.getByRole('button', { name: 'Modifier' }).click();
+  await card.getByLabel(/Travailleur étranger/).check();
+
+  // Sans échéance, rien ne peut alerter : le refus est le comportement voulu.
+  await card.getByLabel('Nature du titre').fill('Carte de séjour');
+  await card.getByLabel('Référence').fill('AGDREF-123456');
+  await card.getByLabel('Expire le').fill('2020-01-01');
+  await card.getByRole('button', { name: 'Enregistrer' }).click();
+
+  await expect(page.getByText(/Ce titre a expiré/)).toBeVisible();
 });
 
 test('une date de naissance à venir est refusée', async ({ page }) => {

@@ -5,12 +5,22 @@ import { useActionState, useState } from 'react';
 import { InfoCard, InfoGrid, InfoRow } from '@/app/(app)/equipe/[id]/InfoCard';
 import { Button } from '@/components/ui/Button';
 import { Field, FormError, SubmitButton } from '@/components/ui/Form';
+import { PhoneField } from '@/components/ui/PhoneField';
 import {
   GENDERS,
   MARITAL_STATUSES,
   genderLabel,
   maritalStatusLabel,
 } from '@/domain/hr/civil-status';
+import {
+  countryLabel,
+  countryOptions,
+  departmentLabel,
+  departmentOptions,
+} from '@/domain/hr/geo';
+import {
+  updateWorkPermitAction,
+} from '@/server/employees/profile-actions';
 import {
   updateProfileAction,
   updateSensitiveAction,
@@ -72,11 +82,13 @@ function Select({
   name,
   defaultValue,
   options,
+  hint,
 }: {
   label: string;
   name: string;
   defaultValue: string;
   options: ReadonlyArray<readonly [string, string]>;
+  hint?: string;
 }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
@@ -93,6 +105,7 @@ function Select({
           </option>
         ))}
       </select>
+      {hint ? <span className="text-micro text-ink-3">{hint}</span> : null}
     </label>
   );
 }
@@ -107,12 +120,14 @@ export function PersonalInfoPanel({
   membershipId,
   profile,
   sensitive,
+  permit,
   canEdit,
 }: {
   membershipId: string;
   profile: ProfileFields;
   /** Absent quand la capacité de lecture manque : la carte n'est pas rendue. */
   sensitive: SensitiveFields | null;
+  permit: PermitFields;
   canEdit: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -153,22 +168,30 @@ export function PersonalInfoPanel({
                   defaultValue={profile.birthName}
                 />
                 <Field label="Nom de famille" name="lastName" required defaultValue={profile.lastName} />
-                <Field label="Nationalité" name="nationality" defaultValue={profile.nationality} />
+                <Select
+                  label="Nationalité"
+                  name="nationality"
+                  defaultValue={profile.nationality}
+                  options={countryOptions()}
+                />
                 <Field
                   label="Date de naissance"
                   name="birthDate"
                   type="date"
                   defaultValue={profile.birthDate}
                 />
-                <Field
+                <Select
                   label="Pays de naissance"
                   name="birthCountry"
                   defaultValue={profile.birthCountry}
+                  options={countryOptions()}
                 />
-                <Field
+                <Select
                   label="Département de naissance"
                   name="birthDepartment"
                   defaultValue={profile.birthDepartment}
+                  options={departmentOptions()}
+                  hint="Pour une naissance à l’étranger, laissez vide."
                 />
                 <Field
                   label="Commune de naissance"
@@ -200,7 +223,11 @@ export function PersonalInfoPanel({
                   type="email"
                   defaultValue={profile.personalEmail}
                 />
-                <Field label="Téléphone mobile" name="phone" type="tel" defaultValue={profile.phone} />
+                <PhoneField
+                  label="Téléphone mobile"
+                  name="phone"
+                  defaultValue={profile.phone}
+                />
                 <label className="flex items-start gap-2 text-sm">
                   <input
                     type="checkbox"
@@ -215,7 +242,11 @@ export function PersonalInfoPanel({
                     </span>
                   </span>
                 </label>
-                <Field label="Téléphone fixe" name="landline" type="tel" defaultValue={profile.landline} />
+                <PhoneField
+                  label="Téléphone fixe"
+                  name="landline"
+                  defaultValue={profile.landline}
+                />
                 <Field label="Adresse" name="addressLine1" defaultValue={profile.addressLine1} />
                 <Field
                   label="Complément d’adresse"
@@ -226,7 +257,12 @@ export function PersonalInfoPanel({
                   <Field label="Code postal" name="postalCode" defaultValue={profile.postalCode} />
                   <Field label="Ville" name="city" defaultValue={profile.city} />
                 </div>
-                <Field label="Pays" name="country" defaultValue={profile.country} />
+                <Select
+                  label="Pays"
+                  name="country"
+                  defaultValue={profile.country}
+                  options={countryOptions()}
+                />
               </div>
             </InfoCard>
 
@@ -237,10 +273,9 @@ export function PersonalInfoPanel({
                   name="emergencyContactName"
                   defaultValue={profile.emergencyContactName}
                 />
-                <Field
+                <PhoneField
                   label="Téléphone"
                   name="emergencyContactPhone"
-                  type="tel"
                   defaultValue={profile.emergencyContactPhone}
                 />
               </div>
@@ -267,10 +302,19 @@ export function PersonalInfoPanel({
               <InfoRow label="Prénom" value={profile.firstName} />
               <InfoRow label="Nom de naissance" value={profile.birthName} />
               <InfoRow label="Nom de famille" value={profile.lastName} />
-              <InfoRow label="Nationalité" value={profile.nationality} />
+              <InfoRow
+                label="Nationalité"
+                value={countryLabel(profile.nationality || null)}
+              />
               <InfoRow label="Date de naissance" value={readableDate(profile.birthDate)} tnum />
-              <InfoRow label="Pays de naissance" value={profile.birthCountry} />
-              <InfoRow label="Département de naissance" value={profile.birthDepartment} />
+              <InfoRow
+                label="Pays de naissance"
+                value={countryLabel(profile.birthCountry || null)}
+              />
+              <InfoRow
+                label="Département de naissance"
+                value={departmentLabel(profile.birthDepartment || null)}
+              />
               <InfoRow label="Commune de naissance" value={profile.birthPlace} />
               <InfoRow
                 label="Situation familiale"
@@ -295,7 +339,7 @@ export function PersonalInfoPanel({
               <InfoRow label="Complément d’adresse" value={profile.addressLine2} />
               <InfoRow label="Code postal" value={profile.postalCode} tnum />
               <InfoRow label="Ville" value={profile.city} />
-              <InfoRow label="Pays" value={profile.country} />
+              <InfoRow label="Pays" value={countryLabel(profile.country || null)} />
             </InfoCard>
 
             <InfoCard title="Contact d’urgence">
@@ -313,6 +357,12 @@ export function PersonalInfoPanel({
           ) : null}
         </>
       )}
+
+      <WorkPermitPanel
+        membershipId={membershipId}
+        permit={permit}
+        canEdit={canEdit}
+      />
 
       {sensitive ? (
         <SensitivePanel
@@ -384,6 +434,159 @@ function SensitivePanel({
           />
           <InfoRow label="IBAN" value={sensitive.iban} tnum />
           <InfoRow label="BIC" value={sensitive.bic} tnum />
+          {canEdit ? (
+            <div className="pt-3">
+              <Button onClick={() => setEditing(true)}>Modifier</Button>
+            </div>
+          ) : null}
+        </>
+      )}
+    </InfoCard>
+  );
+}
+
+export interface PermitFields {
+  foreignWorker: boolean;
+  permitType: string;
+  reference: string;
+  issuedAt: string;
+  expiresAt: string;
+}
+
+/**
+ * Autorisation de travail.
+ *
+ * Une seule case commande la section : la plupart des dossiers n'en relèvent
+ * pas, et poser quatre champs de titre de séjour devant tout le monde ferait
+ * d'une exception la règle de saisie.
+ *
+ * L'échéance est exigée dès qu'un titre est déclaré. Employer quelqu'un dont le
+ * titre a expiré est un délit ; sans date, rien ne peut le signaler à temps.
+ */
+function WorkPermitPanel({
+  membershipId,
+  permit,
+  canEdit,
+}: {
+  membershipId: string;
+  permit: PermitFields;
+  canEdit: boolean;
+}) {
+  const [state, save] = useActionState(updateWorkPermitAction, empty);
+  const [acknowledged, setAcknowledged] = useState<ProfileActionState>(empty);
+  const [editing, setEditing] = useState(false);
+  const [foreign, setForeign] = useState(permit.foreignWorker);
+
+  if (state !== acknowledged && state.ok) {
+    setAcknowledged(state);
+    setEditing(false);
+  }
+
+  const expiry = permit.expiresAt
+    ? new Date(`${permit.expiresAt}T00:00:00Z`)
+    : null;
+  const expired = expiry !== null && expiry < new Date();
+
+  return (
+    <InfoCard title="Autorisation de travail">
+      {editing ? (
+        <form action={save} className="flex flex-col gap-3 pt-1">
+          <input type="hidden" name="membershipId" value={membershipId} />
+
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="foreignWorker"
+              checked={foreign}
+              onChange={(event) => setForeign(event.target.checked)}
+              className="mt-0.5 size-4 accent-[var(--accent)]"
+            />
+            <span>
+              <span className="font-medium">
+                Travailleur étranger avec autorisation de travail
+              </span>
+              <span className="block text-micro text-ink-3">
+                Décocher retire le titre : il cesserait sinon d’alerter à son
+                échéance pour quelqu’un qui n’en relève plus.
+              </span>
+            </span>
+          </label>
+
+          {foreign ? (
+            <>
+              <Field
+                label="Nature du titre"
+                name="permitType"
+                required
+                defaultValue={permit.permitType}
+                hint="Carte de séjour, autorisation provisoire, récépissé…"
+              />
+              <Field
+                label="Référence"
+                name="reference"
+                required
+                defaultValue={permit.reference}
+              />
+              <div className="flex flex-wrap gap-3">
+                <Field
+                  label="Délivré le"
+                  name="issuedAt"
+                  type="date"
+                  defaultValue={permit.issuedAt}
+                />
+                <Field
+                  label="Expire le"
+                  name="expiresAt"
+                  type="date"
+                  required
+                  defaultValue={permit.expiresAt}
+                />
+              </div>
+            </>
+          ) : null}
+
+          <FormError>{state.error}</FormError>
+
+          <div className="flex items-center gap-3">
+            <SubmitButton>Enregistrer</SubmitButton>
+            <Button type="button" onClick={() => setEditing(false)}>
+              Annuler
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <InfoRow
+            label="Travailleur étranger"
+            value={permit.foreignWorker ? 'Oui' : 'Non'}
+          />
+          {permit.foreignWorker ? (
+            <>
+              <InfoRow label="Nature du titre" value={permit.permitType} />
+              <InfoRow label="Référence" value={permit.reference} />
+              <InfoRow
+                label="Délivré le"
+                value={readableDate(permit.issuedAt)}
+                tnum
+              />
+              <InfoRow
+                label="Expire le"
+                value={readableDate(permit.expiresAt)}
+                tnum
+              />
+              {expired ? (
+                <p
+                  role="alert"
+                  className="mt-3 rounded-2 border border-danger bg-danger-soft px-3 py-2 text-xs text-danger-soft-ink"
+                >
+                  Ce titre a expiré. Employer une personne dont l’autorisation
+                  n’est plus valide est un délit : régularisez avant de la
+                  planifier.
+                </p>
+              ) : null}
+            </>
+          ) : null}
+
           {canEdit ? (
             <div className="pt-3">
               <Button onClick={() => setEditing(true)}>Modifier</Button>

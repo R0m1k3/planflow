@@ -305,6 +305,13 @@ export interface EmployeeDetail extends EmployeeListRow {
     contractEnd: Date | null;
   };
   profile: EmployeeProfileDetail | null;
+  /** Titre de séjour en cours, `null` quand le salarié n'en relève pas. */
+  workPermit: {
+    permitType: string;
+    reference: string;
+    issuedAt: Date | null;
+    expiresAt: Date;
+  } | null;
   contracts: Array<{
     id: string;
     type: string;
@@ -364,6 +371,9 @@ export const getEmployee = cache(async function getEmployee(
         teams: {
           select: { isPrimary: true, team: { select: { name: true } } },
         },
+        // Le plus lointain : c'est celui qui couvre la période en cours quand
+        // un renouvellement a été enregistré avant l'expiration du précédent.
+        workPermits: { orderBy: { expiresAt: 'desc' }, take: 1 },
         contracts: {
           orderBy: { startDate: 'desc' },
           include: {
@@ -467,6 +477,14 @@ export const getEmployee = cache(async function getEmployee(
           : null,
         contractEnd: active?.endDate ?? null,
       },
+      workPermit: membership.workPermits[0]
+        ? {
+            permitType: membership.workPermits[0].permitType,
+            reference: membership.workPermits[0].reference,
+            issuedAt: membership.workPermits[0].issuedAt,
+            expiresAt: membership.workPermits[0].expiresAt,
+          }
+        : null,
       profile: membership.profile
         ? {
             gender: membership.profile.gender,

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { AuthorizationError, can } from '@/domain/access/authorize';
+import { isKnownCountry, isKnownDepartment } from '@/domain/hr/geo';
 import { recordAudit } from '@/server/audit';
 import { mutate } from '@/server/context';
 import { encryptOptional } from '@/server/crypto';
@@ -44,6 +45,23 @@ const optionalEnum = <T extends readonly string[]>(values: T) =>
     )
     .transform((value) => (value === '' ? null : value));
 
+const optionalCountry = () =>
+  z
+    .string()
+    .trim()
+    .refine((value) => value === '' || isKnownCountry(value), 'Pays inconnu')
+    .transform((value) => (value === '' ? null : value));
+
+const optionalDepartment = () =>
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === '' || isKnownDepartment(value),
+      'Département inconnu',
+    )
+    .transform((value) => (value === '' ? null : value));
+
 const profileInput = z.object({
   membershipId: z.string().min(1),
   gender: optionalEnum(['FEMALE', 'MALE', 'UNSPECIFIED'] as const),
@@ -52,9 +70,11 @@ const profileInput = z.object({
   lastName: z.string().trim().min(1, 'Nom requis').max(80),
   birthDate: optionalText(10),
   birthPlace: optionalText(120),
-  birthCountry: optionalText(80),
-  birthDepartment: optionalText(80),
-  nationality: optionalText(80),
+  // Les pays et le département viennent de listes fermées : accepter du texte
+  // libre rendrait le référentiel inutile dès la première saisie à la main.
+  birthCountry: optionalCountry(),
+  birthDepartment: optionalDepartment(),
+  nationality: optionalCountry(),
   maritalStatus: optionalEnum([
     'SINGLE',
     'MARRIED',
@@ -87,7 +107,7 @@ const profileInput = z.object({
   addressLine2: optionalText(180),
   postalCode: optionalText(12),
   city: optionalText(120),
-  country: optionalText(80),
+  country: optionalCountry(),
   emergencyContactName: optionalText(120),
   emergencyContactPhone: optionalText(30),
 });
@@ -259,6 +279,127 @@ export async function updateSensitiveAction(
       return {
         error: 'Vous n’avez pas le droit de modifier ces données protégées.',
       };
+    }
+    throw error;
+  }
+
+  revalidatePath(`/equipe/${membershipId}`);
+  return { ok: true };
+}
+
+const permitInput = z.object({
+  membershipId: z.string().min(1),
+  /** Décoché = le salarié n'a pas besoin d'autorisation : les titres tombent. */
+  foreignWorker: z.boolean(),
+  permitType: z.string().trim().max(120),
+  reference: z.string().trim().max(120),
+  issuedAt: z.string().trim().max(10),
+  expiresAt: z.string().trim().max(10),
+});
+
+/**
+ * Titre de séjour valant autorisation de travail.
+ *
+ * L'échéance est **obligatoire** dès qu'un titre est déclaré : un titre sans
+ * date de fin ne se surveille pas, et employer quelqu'un dont le titre a expiré
+ * est un délit — c'est précisément ce que cette date permet d'éviter.
+ *
+ * Décocher retire le titre plutôt que de le laisser dormir : un titre conservé
+ * pour un salarié qui n'en relève plus continuerait d'alarmer à son échéance.
+ */
+export async function updateWorkPermitAction(
+  _previous: ProfileActionState,
+  formData: FormData,
+): Promise<ProfileActionState> {
+  const parsed = permitInput.safeParse({
+    membershipId: formData.get('membershipId') ?? '',
+    foreignWorker: formData.get('foreignWorker') === 'on',
+    permitType: formData.get('permitType') ?? '',
+    reference: formData.get('reference') ?? '',
+    issuedAt: formData.get('issuedAt') ?? '',
+    expiresAt: formData.get('expiresAt') ?? '',
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };
+  }
+
+  const { membershipId, foreignWorker } = parsed.data;
+
+  if (foreignWorker) {
+    if (!parsed.data.permitType) {
+      return { error: 'Précisez la nature du titre.' };
+    }
+    if (!parsed.data.reference) {
+      return { error: 'La référence du titre est requise.' };
+    }
+    if (!parsed.data.expiresAt) {
+      return {
+        error:
+          'La date d’expiration est requise : un titre sans échéance ne peut pas être surveillé.',
+      };
+    }
+  }
+
+  const issuedAt = parsed.data.issuedAt
+    ? new Date(`${parsed.data.issuedAt}T00:00:00Z`)
+    : null;
+  const expiresAt = parsed.data.expiresAt
+    ? new Date(`${parsed.data.expiresAt}T00:00:00Z`)
+    : null;
+
+  if (foreignWorker && expiresAt && issuedAt && expiresAt < issuedAt) {
+    return { error: 'Le titre expire avant d’avoir été délivré.' };
+  }
+
+  try {
+    await mutate('members.edit', async (db, actor) => {
+      const before = await db.workPermit.findFirst({
+        where: { membershipId },
+        orderBy: { expiresAt: 'desc' },
+        select: { id: true, permitType: true, expiresAt: true },
+      });
+
+      // Remplacement et non accumulation : la fiche n'en porte qu'un, et
+      // empiler les renouvellements ferait surveiller une échéance périmée à
+      // côté de la bonne.
+      await db.workPermit.deleteMany({ where: { membershipId } });
+
+      if (foreignWorker && expiresAt) {
+        await db.workPermit.create({
+          data: {
+            membershipId,
+            permitType: parsed.data.permitType,
+            reference: parsed.data.reference,
+            issuedAt,
+            expiresAt,
+          } as never,
+        });
+      }
+
+      await recordAudit(db, {
+        actorMembershipId: actor.membershipId,
+        action: 'membership.work_permit.update',
+        entityType: 'Membership',
+        entityId: membershipId,
+        before: before
+          ? {
+              permitType: before.permitType,
+              expiresAt: before.expiresAt.toISOString(),
+            }
+          : null,
+        after: foreignWorker
+          ? {
+              permitType: parsed.data.permitType,
+              expiresAt: expiresAt?.toISOString() ?? null,
+            }
+          : { removed: true },
+      });
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) return { error: error.message };
+    if (error instanceof AuthorizationError) {
+      return { error: 'Vous n’avez pas le droit de modifier ce dossier.' };
     }
     throw error;
   }

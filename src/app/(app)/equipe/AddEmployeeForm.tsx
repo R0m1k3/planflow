@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react';
 
 import { Field, FormError, SubmitButton } from '@/components/ui/Form';
+import { PhoneField } from '@/components/ui/PhoneField';
 import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   createEmployeeAction,
@@ -134,7 +135,7 @@ export function AddEmployeeForm({
           type="email"
           hint="Permet de se connecter à PlanFlow et de recevoir ses plannings. Sans elle, le salarié reste planifiable et déclarable."
         />
-        <Field label="Téléphone mobile" name="phone" type="tel" />
+        <PhoneField label="Téléphone mobile" name="phone" />
 
         <label className="flex items-start gap-2 text-sm">
           <input
@@ -150,7 +151,7 @@ export function AddEmployeeForm({
           </span>
         </label>
 
-        <Field label="Téléphone fixe" name="landline" type="tel" />
+        <PhoneField label="Téléphone fixe" name="landline" />
       </Section>
 
       {locations.length > 0 ? (

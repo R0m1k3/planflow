@@ -136,3 +136,54 @@ describe('matricule proposé', () => {
     expect(nextEmployeeNumber(['SILAE-42', '00012', 'E0002'])).toBe('E0003');
   });
 });
+
+describe('référentiels géographiques', () => {
+  it('nomme les pays en français depuis leur code', async () => {
+    const { countryLabel } = await import('@/domain/hr/geo');
+    expect(countryLabel('FR')).toBe('France');
+    expect(countryLabel('DE')).toBe('Allemagne');
+  });
+
+  it('laisse passer une valeur héritée plutôt que de la blanchir', async () => {
+    const { countryLabel } = await import('@/domain/hr/geo');
+    // Les dossiers saisis avant le référentiel portent le nom en clair.
+    expect(countryLabel('Nouvelle-Calédonie')).toBe('Nouvelle-Calédonie');
+  });
+
+  it('ramène un nom hérité à son code', async () => {
+    const { toCountryCode } = await import('@/domain/hr/geo');
+    expect(toCountryCode('France')).toBe('FR');
+    expect(toCountryCode('FR')).toBe('FR');
+    expect(toCountryCode('Pays imaginaire')).toBe('');
+    expect(toCountryCode(null)).toBe('');
+  });
+
+  it('porte la Corse et l’outre-mer', async () => {
+    const { departmentLabel, isKnownDepartment } = await import('@/domain/hr/geo');
+    expect(departmentLabel('2A')).toBe('2A - Corse-du-Sud');
+    expect(departmentLabel('974')).toBe('974 - La Réunion');
+    expect(isKnownDepartment('20')).toBe(false);
+  });
+
+  it('coupe un numéro sur l’indicatif le plus long', async () => {
+    const { splitDial } = await import('@/domain/hr/geo');
+    // « +352 » commence par « +3 » : tester dans l'ordre de la table
+    // donnerait la France pour un numéro luxembourgeois.
+    expect(splitDial('+352 621 12 34 56')).toEqual({
+      dial: '+352',
+      rest: '621 12 34 56',
+    });
+    expect(splitDial('+33 6 12 34 56 78')).toEqual({
+      dial: '+33',
+      rest: '6 12 34 56 78',
+    });
+  });
+
+  it('retombe sur la France pour un numéro sans indicatif', async () => {
+    const { splitDial } = await import('@/domain/hr/geo');
+    expect(splitDial('06 12 34 56 78')).toEqual({
+      dial: '+33',
+      rest: '06 12 34 56 78',
+    });
+  });
+});

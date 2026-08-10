@@ -2,9 +2,11 @@ import { notFound } from 'next/navigation';
 
 import {
   PersonalInfoPanel,
+  type PermitFields,
   type ProfileFields,
   type SensitiveFields,
 } from '@/app/(app)/equipe/[id]/PersonalInfoPanel';
+import { toCountryCode } from '@/domain/hr/geo';
 import { EmptyState } from '@/components/ui/Card';
 import { getEmployee } from '@/server/employees/queries';
 
@@ -41,9 +43,9 @@ export default async function PersonalTab({
       ? employee.profile.birthDate.toISOString().slice(0, 10)
       : '',
     birthPlace: text(employee.profile.birthPlace),
-    birthCountry: text(employee.profile.birthCountry),
+    birthCountry: toCountryCode(employee.profile.birthCountry),
     birthDepartment: text(employee.profile.birthDepartment),
-    nationality: text(employee.profile.nationality),
+    nationality: toCountryCode(employee.profile.nationality),
     maritalStatus: text(employee.profile.maritalStatus),
     dependents:
       employee.profile.dependents === null
@@ -57,7 +59,7 @@ export default async function PersonalTab({
     addressLine2: text(employee.profile.addressLine2),
     postalCode: text(employee.profile.postalCode),
     city: text(employee.profile.city),
-    country: text(employee.profile.country),
+    country: toCountryCode(employee.profile.country),
     emergencyContactName: text(employee.profile.emergencyContactName),
     emergencyContactPhone: text(employee.profile.emergencyContactPhone),
   };
@@ -72,11 +74,30 @@ export default async function PersonalTab({
       }
     : null;
 
+  const permit: PermitFields = employee.workPermit
+    ? {
+        foreignWorker: true,
+        permitType: employee.workPermit.permitType,
+        reference: employee.workPermit.reference,
+        issuedAt: employee.workPermit.issuedAt
+          ? employee.workPermit.issuedAt.toISOString().slice(0, 10)
+          : '',
+        expiresAt: employee.workPermit.expiresAt.toISOString().slice(0, 10),
+      }
+    : {
+        foreignWorker: false,
+        permitType: '',
+        reference: '',
+        issuedAt: '',
+        expiresAt: '',
+      };
+
   return (
     <PersonalInfoPanel
       membershipId={employee.id}
       profile={profile}
       sensitive={sensitive}
+      permit={permit}
       canEdit={employee.canEdit}
     />
   );
