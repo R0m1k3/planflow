@@ -55,6 +55,9 @@ test('un salarié sans compte applicatif est créable', async ({ page }) => {
   // deux passages, et un nom fixe finirait par désigner plusieurs salariés.
   const matricule = `E9${Date.now() % 100000}`;
   const nom = `Sanscompte${matricule}`;
+  // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
+  // en modale, à la demande.
+  await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
   const form = page.locator('form').filter({ hasText: 'Ajouter' });
   await form.locator('input[name="firstName"]').fill('Sans');
   await form.locator('input[name="lastName"]').fill(nom);

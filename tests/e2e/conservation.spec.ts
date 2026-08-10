@@ -113,6 +113,9 @@ test('une pièce sans politique n’est jamais purgée', async ({ page }) => {
   // compte, et une pièce partagée verrait son sort décidé par un autre test.
   const suffix = `${Date.now()}-garde`;
   await page.goto('/equipe');
+  // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
+  // en modale, à la demande.
+  await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
   const create = page.locator('form').filter({ hasText: 'Ajouter' });
   await create.getByLabel('Prénom').fill('Garde');
   await create.getByLabel('Nom', { exact: true }).fill(`Garde${suffix}`);
@@ -167,6 +170,9 @@ test('une pièce échue est effectivement effacée', async ({ page }) => {
   await expect(page.getByText('Durée enregistrée.')).toBeVisible();
 
   await page.goto('/equipe');
+  // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
+  // en modale, à la demande.
+  await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
   const create = page.locator('form').filter({ hasText: 'Ajouter' });
   await create.getByLabel('Prénom').fill('Purge');
   await create.getByLabel('Nom', { exact: true }).fill(`Purge${suffix}`);
