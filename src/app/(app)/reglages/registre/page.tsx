@@ -28,27 +28,6 @@ export default async function RegistrePage() {
         subtitle={`${register.approvedCount} paramètre${register.approvedCount > 1 ? 's' : ''} approuvé${register.approvedCount > 1 ? 's' : ''} · ${register.pendingCount} en attente`}
       />
 
-      <Card>
-        <div className="p-4 text-sm leading-[var(--lh-prose)] text-ink-2">
-          <p>
-            Chaque paramètre appliqué par PlanFlow doit porter sa{' '}
-            <strong className="font-semibold text-ink-1">valeur</strong>, sa{' '}
-            <strong className="font-semibold text-ink-1">source</strong>, sa{' '}
-            <strong className="font-semibold text-ink-1">date d’effet</strong>,
-            la <strong className="font-semibold text-ink-1">population</strong>{' '}
-            concernée et un{' '}
-            <strong className="font-semibold text-ink-1">approbateur</strong>.
-          </p>
-          <p className="mt-2">
-            Recopier la configuration d’un autre logiciel ne suffit pas : sans
-            justification conservée, un paramètre n’est pas opposable en cas de
-            contrôle. Les valeurs de la convention IDCC 1517 déjà chargées dans
-            le moteur restent à recouper avec le texte consolidé et à faire
-            valider par le gestionnaire de paie.
-          </p>
-        </div>
-      </Card>
-
       {register.missingDomains.length > 0 ? (
         <Card className="border-warn">
           <CardHeader
