@@ -3,6 +3,8 @@ import { Suspense } from 'react';
 
 import { AddEmployeeDialog } from '@/app/(app)/equipe/AddEmployeeDialog';
 import { DirectoryFilters } from '@/app/(app)/equipe/DirectoryFilters';
+import { RegisterDialog } from '@/app/(app)/equipe/RegisterDialog';
+import { listRegisterLocations } from '@/server/employees/rup';
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge, type Tone } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/Card';
@@ -51,6 +53,9 @@ export default async function EquipePage({
   // formulaire s'en tient à l'identité.
   const hiringLocations = await listContractLocations().catch(() => []);
 
+  // Sans `members.register.export`, le bouton du registre ne paraît pas.
+  const registerLocations = await listRegisterLocations().catch(() => []);
+
   const filtered = directory.rows.length !== directory.total;
 
   return (
@@ -64,12 +69,9 @@ export default async function EquipePage({
           : {})}
         actions={
           <>
-            <Link
-              href="/reglages/registre"
-              className="inline-flex h-8 items-center rounded-2 border border-line-3 bg-surface px-3.5 text-sm font-medium text-ink-1 hover:bg-surface-2"
-            >
-              Registre unique du personnel
-            </Link>
+            {registerLocations.length > 0 ? (
+              <RegisterDialog locations={registerLocations} />
+            ) : null}
             <AddEmployeeDialog locations={hiringLocations} />
           </>
         }

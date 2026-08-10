@@ -8,6 +8,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Fourni par Next au bundling, absent de `node_modules` : sans doublure,
+      // aucun module serveur qui le déclare ne serait testable.
+      'server-only': fileURLToPath(
+        new URL('./tests/support/server-only.ts', import.meta.url),
+      ),
     },
   },
   test: {

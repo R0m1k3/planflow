@@ -1,0 +1,119 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  RUP_COLUMNS,
+  missingMentions,
+  peopleWithGaps,
+  type RupPerson,
+} from '@/domain/legal/rup';
+
+/**
+ * Registre unique du personnel — mentions obligatoires.
+ *
+ * La sanction se compte **par salarié concerné**, pas par registre : c'est ce
+ * que le décompte doit refléter, et c'est ce qui décide de l'avertissement
+ * affiché avant l'édition.
+ */
+
+const complete: RupPerson = {
+  lastName: 'Ferrand',
+  firstName: 'Camille',
+  sex: 'F',
+  nationality: 'France',
+  birthDate: new Date('1990-04-12T00:00:00Z'),
+  jobTitle: 'Hôte de caisse',
+  qualification: 'Niveau 3',
+  contractLabel: 'CDI',
+  entryDate: new Date('2024-09-01T00:00:00Z'),
+  exitDate: null,
+};
+
+describe('registre unique du personnel', () => {
+  it('énumère les mentions fixées par le texte', () => {
+    expect(RUP_COLUMNS.map((column) => column.key)).toEqual([
+      'lastName',
+      'firstName',
+      'sex',
+      'nationality',
+      'birthDate',
+      'jobTitle',
+      'qualification',
+      'contractLabel',
+      'entryDate',
+      'exitDate',
+    ]);
+  });
+
+  it('répartit la largeur sur la totalité de la page', () => {
+    const total = RUP_COLUMNS.reduce((sum, column) => sum + column.width, 0);
+    expect(total).toBeCloseTo(1, 5);
+  });
+
+  it('ne réclame rien quand toutes les mentions sont là', () => {
+    expect(missingMentions(complete)).toEqual([]);
+  });
+
+  it('tient une date de sortie absente pour une présence, pas pour un oubli', () => {
+    // Un salarié en poste n'a pas de date de sortie : la réclamer ferait
+    // apparaître tout l'effectif courant comme incomplet.
+    expect(missingMentions({ ...complete, exitDate: null })).toEqual([]);
+  });
+
+  it('nomme les mentions manquantes', () => {
+    expect(
+      missingMentions({ ...complete, nationality: null, qualification: '' }),
+    ).toEqual(['Nationalité', 'Qualification']);
+  });
+
+  it('compte les personnes concernées, pas les champs vides', () => {
+    const bancal: RupPerson = {
+      ...complete,
+      sex: null,
+      nationality: null,
+      birthDate: null,
+    };
+    // Trois manques sur une seule personne : une contravention, pas trois.
+    expect(peopleWithGaps([complete, bancal])).toBe(1);
+  });
+});
+
+describe('rendu du registre', () => {
+  it('produit un PDF paginé qui porte les manques en pied', async () => {
+    const { renderRegisterPdf } = await import('@/server/employees/rup-pdf');
+
+    // Assez de lignes pour dépasser une page : c'est la rupture que le rendu
+    // rate le plus volontiers.
+    const people: RupPerson[] = Array.from({ length: 60 }, (_, index) => ({
+      ...complete,
+      lastName: `Nom manifestement trop long pour la colonne ${index}`,
+      sex: index % 2 === 0 ? null : 'F',
+    }));
+
+    const pdf = await renderRegisterPdf({
+      locationId: 'loc',
+      locationName: 'La Foir’Fouille',
+      siret: '12345678901234',
+      people,
+      incomplete: 30,
+    });
+
+    expect(Buffer.from(pdf).subarray(0, 5).toString()).toBe('%PDF-');
+    expect(pdf.length).toBeGreaterThan(1000);
+  });
+
+  it('édite un registre vide plutôt que de refuser', async () => {
+    const { renderRegisterPdf } = await import('@/server/employees/rup-pdf');
+
+    // Un établissement qui vient d'ouvrir n'a personne : le registre existe
+    // quand même, et son absence serait plus embarrassante que sa vacuité.
+    const pdf = await renderRegisterPdf({
+      locationId: 'loc',
+      locationName: 'Nouvel établissement',
+      siret: null,
+      people: [],
+      incomplete: 0,
+    });
+
+    expect(Buffer.from(pdf).subarray(0, 5).toString()).toBe('%PDF-');
+  });
+});
