@@ -37,6 +37,10 @@ async function createEmployee(page: Page, tag: string) {
     page.getByRole('heading', { name: `${firstName} ${lastName}` }),
   ).toBeVisible();
 
+  // L'accès applicatif est porté par l'onglet « Documents », avec les pièces du
+  // dossier : la fiche s'ouvre ailleurs.
+  await page.goto(`${page.url()}/documents`);
+
   return { firstName, lastName, email, url: page.url() };
 }
 

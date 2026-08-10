@@ -36,6 +36,10 @@ async function createEmployee(page: Page, tag: string) {
 
   await page.getByRole('link', { name: new RegExp(lastName) }).click();
   await expect(page.getByRole('heading', { name: new RegExp(lastName) })).toBeVisible();
+
+  // La fiche s'ouvre sur les informations personnelles : les pièces sont un
+  // onglet, et une route à part entière.
+  await page.goto(`${page.url()}/documents`);
   return { lastName, url: page.url() };
 }
 

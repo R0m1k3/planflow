@@ -160,6 +160,8 @@ async function createAccessibleEmployee(page: Page) {
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(lastName) }).click();
+  // L'invitation est portée par l'onglet « Documents » de la fiche.
+  await page.goto(`${page.url()}/documents`);
   await page
     .locator('form')
     .filter({ hasText: 'Adresse d’invitation' })

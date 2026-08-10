@@ -1,3 +1,5 @@
+import { cache } from 'react';
+
 import { can } from '@/domain/access/authorize';
 import {
   invitationState,
@@ -108,16 +110,45 @@ export async function listEmployees(): Promise<EmployeeListRow[]> {
   });
 }
 
-export interface EmployeeDetail extends EmployeeListRow {
-  profile: {
-    birthDate: Date | null;
-    city: string | null;
-    phone: string | null;
-    personalEmail: string | null;
-    /** Chiffré au repos, déchiffré seulement pour qui a le droit de le lire. */
+/**
+ * Dossier personnel tel qu'il est saisi.
+ *
+ * Les trois champs chiffrés sont regroupés à part : ils ne sont pas seulement
+ * masqués à l'affichage quand la capacité manque, ils sont **absents** de la
+ * réponse, et l'écran de saisie qui les porte n'est alors pas rendu du tout.
+ * Un formulaire affiché vide renverrait des champs vides, et effacerait ce
+ * qu'il n'avait pas le droit de lire.
+ */
+export interface EmployeeProfileDetail {
+  firstName: string;
+  lastName: string;
+  birthDate: Date | null;
+  birthPlace: string | null;
+  nationality: string | null;
+  addressLine1: string | null;
+  postalCode: string | null;
+  city: string | null;
+  country: string | null;
+  phone: string | null;
+  personalEmail: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  /** Chiffrés au repos, déchiffrés seulement pour qui a le droit de les lire. */
+  sensitive: {
     socialSecurityNumber: string | null;
     iban: string | null;
+    bic: string | null;
   } | null;
+}
+
+export interface EmployeeDetail extends EmployeeListRow {
+  /** Ce que porte le bandeau de la fiche, au-dessus des onglets. */
+  headline: {
+    jobTitle: string | null;
+    lineManagerName: string | null;
+    contractEnd: Date | null;
+  };
+  profile: EmployeeProfileDetail | null;
   contracts: Array<{
     id: string;
     type: string;
@@ -134,6 +165,7 @@ export interface EmployeeDetail extends EmployeeListRow {
   }>;
   canSeeSalary: boolean;
   canInvite: boolean;
+  canEdit: boolean;
   /** Dernière invitation émise, quel que soit son sort. */
   invitation: {
     state: InvitationState;
@@ -143,7 +175,14 @@ export interface EmployeeDetail extends EmployeeListRow {
   } | null;
 }
 
-export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
+/**
+ * Mémorisé le temps d'une requête : la fiche est désormais un gabarit à
+ * onglets, et le gabarit comme l'onglet ont besoin du même dossier. Sans cela,
+ * chaque affichage le lirait deux fois.
+ */
+export const getEmployee = cache(async function getEmployee(
+  id: string,
+): Promise<EmployeeDetail | null> {
   return query('members.view', async (db, actor) => {
     const canSeeSalary = can(actor, 'members.salary.view');
     const canSeeDocuments = can(actor, 'members.documents.view');
@@ -172,6 +211,25 @@ export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
       ? await db.location.findUnique({
           where: { id: active.locationId },
           select: { name: true },
+        })
+      : null;
+
+    // L'emploi est porté par le contrat, pas par le dossier : il change par
+    // avenant, et c'est l'avenant qui fait foi devant l'inspection.
+    const jobTitle = active?.jobTitleId
+      ? await db.jobTitle.findUnique({
+          where: { id: active.jobTitleId },
+          select: { name: true },
+        })
+      : null;
+
+    const lineManager = membership.lineManagerId
+      ? await db.membership.findUnique({
+          where: { id: membership.lineManagerId },
+          select: {
+            employeeNumber: true,
+            profile: { select: { firstName: true, lastName: true } },
+          },
         })
       : null;
 
@@ -209,18 +267,38 @@ export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
             forfaitJours: active.workTimeArrangement === 'FORFAIT_JOURS',
           }
         : null,
+      headline: {
+        jobTitle: jobTitle?.name ?? null,
+        lineManagerName: lineManager
+          ? `${lineManager.profile?.firstName ?? ''} ${lineManager.profile?.lastName ?? lineManager.employeeNumber}`.trim()
+          : null,
+        contractEnd: active?.endDate ?? null,
+      },
       profile: membership.profile
         ? {
+            firstName: membership.profile.firstName,
+            lastName: membership.profile.lastName,
             birthDate: membership.profile.birthDate,
+            birthPlace: membership.profile.birthPlace,
+            nationality: membership.profile.nationality,
+            addressLine1: membership.profile.addressLine1,
+            postalCode: membership.profile.postalCode,
             city: membership.profile.city,
+            country: membership.profile.country,
             phone: membership.profile.phone,
             personalEmail: membership.profile.personalEmail,
-            // Le NIR et l'IBAN ne sont déchiffrés que pour un profil habilité.
-            socialSecurityNumber: canSeeDocuments
-              ? decryptOptional(membership.profile.socialSecurityNumberEnc)
-              : null,
-            iban: canSeeDocuments
-              ? decryptOptional(membership.profile.ibanEnc)
+            emergencyContactName: membership.profile.emergencyContactName,
+            emergencyContactPhone: membership.profile.emergencyContactPhone,
+            // Le NIR, l'IBAN et le BIC ne sont déchiffrés que pour un profil
+            // habilité — sinon le bloc entier reste absent de la réponse.
+            sensitive: canSeeDocuments
+              ? {
+                  socialSecurityNumber: decryptOptional(
+                    membership.profile.socialSecurityNumberEnc,
+                  ),
+                  iban: decryptOptional(membership.profile.ibanEnc),
+                  bic: decryptOptional(membership.profile.bicEnc),
+                }
               : null,
           }
         : null,
@@ -245,6 +323,7 @@ export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
       })),
       canSeeSalary,
       canInvite: can(actor, 'members.invite'),
+      canEdit: can(actor, 'members.edit'),
       invitation: lastInvitation
         ? {
             state: invitationState(lastInvitation, new Date()),
@@ -255,4 +334,87 @@ export async function getEmployee(id: string): Promise<EmployeeDetail | null> {
         : null,
     };
   });
+});
+
+/** Rattachement et périmètre — onglet « Planification et accès ». */
+export interface MemberPlacement {
+  /** Établissement porté par le contrat en cours. Il ne se change qu'en avenant. */
+  contractLocationName: string | null;
+  teams: Array<{ id: string; name: string; locationName: string; isPrimary: boolean }>;
+  /** Vrai quand le périmètre couvre tout le compte, ouvertures futures comprises. */
+  allLocations: boolean;
+  scopedLocations: string[];
+  scopedTeams: string[];
 }
+
+export const getMemberPlacement = cache(async function getMemberPlacement(
+  id: string,
+): Promise<MemberPlacement | null> {
+  return query('members.view', async (db) => {
+    const membership = await db.membership.findUnique({
+      where: { id },
+      select: {
+        contracts: {
+          where: { status: 'ACTIVE' },
+          orderBy: { startDate: 'desc' },
+          take: 1,
+          select: { locationId: true },
+        },
+        teams: {
+          select: {
+            isPrimary: true,
+            team: {
+              select: {
+                id: true,
+                name: true,
+                location: { select: { name: true } },
+              },
+            },
+          },
+        },
+        scopes: {
+          select: {
+            allLocations: true,
+            location: { select: { name: true } },
+            team: { select: { name: true } },
+          },
+        },
+      },
+    });
+
+    if (!membership) return null;
+
+    const contractLocationId = membership.contracts[0]?.locationId;
+    const contractLocation = contractLocationId
+      ? await db.location.findUnique({
+          where: { id: contractLocationId },
+          select: { name: true },
+        })
+      : null;
+
+    return {
+      contractLocationName: contractLocation?.name ?? null,
+      teams: membership.teams.map((member) => ({
+        id: member.team.id,
+        name: member.team.name,
+        locationName: member.team.location.name,
+        isPrimary: member.isPrimary,
+      })),
+      allLocations: membership.scopes.some((scope) => scope.allLocations),
+      scopedLocations: [
+        ...new Set(
+          membership.scopes
+            .map((scope) => scope.location?.name)
+            .filter((name): name is string => Boolean(name)),
+        ),
+      ],
+      scopedTeams: [
+        ...new Set(
+          membership.scopes
+            .map((scope) => scope.team?.name)
+            .filter((name): name is string => Boolean(name)),
+        ),
+      ],
+    };
+  });
+});

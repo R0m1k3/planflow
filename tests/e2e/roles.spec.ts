@@ -177,6 +177,8 @@ async function inviteWithRole(page: Page, roleLabel: string) {
   const { assignRole } = await import('./support/db');
   await assignRole(membershipId, roleLabel);
 
+  // L'invitation est portée par l'onglet « Documents » de la fiche.
+  await page.goto(`/equipe/${membershipId}/documents`);
   await page
     .locator('form')
     .filter({ hasText: 'Adresse d’invitation' })

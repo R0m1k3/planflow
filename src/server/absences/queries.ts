@@ -1,3 +1,5 @@
+import { cache } from 'react';
+
 import { can } from '@/domain/access/authorize';
 import { counterView, type LedgerEntry } from '@/domain/absences/ledger';
 import { monthDates, monthLabel, type Month } from '@/domain/planning/month';
@@ -70,6 +72,103 @@ const STATUS_LABEL = {
 export function statusLabel(status: AbsenceRequest['status']): string {
   return STATUS_LABEL[status];
 }
+
+export interface MemberAbsences {
+  requests: AbsenceRequest[];
+  counters: CounterSummary[];
+}
+
+/**
+ * Absences d'un salarié — onglet de sa fiche.
+ *
+ * Le tableau mensuel répond à « qui est absent ce mois-ci » ; il ne répond pas
+ * à « qu'a pris ce salarié depuis son entrée ». D'où cette lecture, bornée à
+ * une personne et non à un mois.
+ *
+ * Rend `null` plutôt que de lever quand le dossier consulté n'est pas le sien
+ * et que la capacité manque : l'onglet se retire, le reste de la fiche tient.
+ */
+export const listMemberAbsences = cache(async function listMemberAbsences(
+  membershipId: string,
+): Promise<MemberAbsences | null> {
+  return query('timeoff.view_own', async (db, actor) => {
+    if (
+      membershipId !== actor.membershipId &&
+      !can(actor, 'timeoff.view_others')
+    ) {
+      return null;
+    }
+
+    const canSeeMedical = can(actor, 'members.documents.view');
+
+    const member = await db.membership.findUnique({
+      where: { id: membershipId },
+      select: {
+        employeeNumber: true,
+        profile: { select: { firstName: true, lastName: true } },
+      },
+    });
+    if (!member) return null;
+
+    const name =
+      `${member.profile?.firstName ?? ''} ${member.profile?.lastName ?? member.employeeNumber}`.trim();
+
+    const timeOffs = await db.timeOff.findMany({
+      where: { membershipId },
+      include: { absenceType: true },
+      orderBy: { startDate: 'desc' },
+    });
+
+    const counters = await db.counter.findMany({
+      where: { membershipId },
+      include: { operations: true },
+    });
+
+    return {
+      requests: timeOffs.map((entry) => ({
+        id: entry.id,
+        membershipId: entry.membershipId,
+        name,
+        typeLabel:
+          entry.absenceType.isSocialSecurity && !canSeeMedical
+            ? 'Absence'
+            : entry.absenceType.name,
+        colorKey: entry.absenceType.colorKey,
+        isSocialSecurity: entry.absenceType.isSocialSecurity,
+        startDate: entry.startDate.toISOString().slice(0, 10),
+        endDate: entry.endDate.toISOString().slice(0, 10),
+        startHalfDay: entry.startHalfDay,
+        endHalfDay: entry.endHalfDay,
+        days: Number(entry.countedDays?.toString() ?? '0'),
+        status: entry.status,
+        comment:
+          entry.absenceType.isSocialSecurity && !canSeeMedical
+            ? null
+            : entry.comment,
+        decisionComment: entry.decisionComment,
+        requestedAt: entry.requestedAt,
+      })),
+      counters: counters.map((counter) => {
+        const entries: LedgerEntry[] = counter.operations.map((operation) => ({
+          kind: operation.kind,
+          quantity: Number(operation.quantity.toString()),
+          unit: operation.unit,
+          effectiveDate: operation.effectiveDate.toISOString().slice(0, 10),
+        }));
+        const view = counterView(entries, 0);
+        return {
+          membershipId: counter.membershipId,
+          name,
+          counterType: counter.counterType,
+          accrued: view.accrued,
+          taken: view.taken,
+          balance: view.balance,
+          projected: view.projected,
+        };
+      }),
+    };
+  });
+});
 
 export async function getAbsenceBoard(month: Month): Promise<AbsenceBoard> {
   return query('timeoff.view_own', async (db, actor) => {
