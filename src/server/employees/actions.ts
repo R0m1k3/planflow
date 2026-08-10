@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { AuthorizationError, can } from '@/domain/access/authorize';
 import { findOverlaps, validateContract } from '@/domain/contracts/rules';
+import { nextEmployeeNumber } from '@/domain/hr/civil-status';
 import { recordAudit } from '@/server/audit';
 import { mutate } from '@/server/context';
 
@@ -27,11 +28,17 @@ const CONTRACT_TYPES = [
 
 const employeeInput = z.object({
   firstName: z.string().trim().min(1, 'Prénom requis').max(80),
-  lastName: z.string().trim().min(1, 'Nom requis').max(80),
-  employeeNumber: z.string().trim().min(1, 'Matricule requis').max(40),
+  /** Le nom d'usage vaut nom de naissance quand il n'est pas distinct. */
+  birthName: z.string().trim().max(80),
+  lastName: z.string().trim().min(1, 'Nom de famille requis').max(80),
+  /** Vide = proposé par l'application, à la suite du dernier attribué. */
+  employeeNumber: z.string().trim().max(40),
+  birthDate: z.string().trim().max(10),
   /** Vide = salarié géré sans accès applicatif. */
   email: z.string().trim().email('Adresse invalide').or(z.literal('')),
   phone: z.string().trim().max(30),
+  landline: z.string().trim().max(30),
+  smsSchedules: z.boolean(),
 });
 
 /**
@@ -46,12 +53,19 @@ const hiringContractInput = z.object({
   teamId: z.string().trim(),
   contractType: z.enum(CONTRACT_TYPES),
   startDate: z.coerce.date(),
+  /** Heure de prise de poste : la DPAE la demande, la date seule n'y suffit pas. */
+  startTime: z
+    .string()
+    .trim()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Heure de début invalide'),
   endDate: z.string().trim(),
   workTimeArrangement: z.enum(['HOURLY', 'FORFAIT_JOURS']),
   weeklyHours: z.coerce.number().min(0).max(60),
   forfaitDaysPerYear: z.coerce.number().min(0).max(400).optional(),
   forfaitAgreementRef: z.string().trim(),
   forfaitAgreedAt: z.string().trim(),
+  lineManagerId: z.string().trim(),
+  rttPolicyId: z.string().trim(),
 });
 
 /**
@@ -71,14 +85,27 @@ export async function createEmployeeAction(
 ): Promise<ActionState> {
   const parsed = employeeInput.safeParse({
     firstName: formData.get('firstName'),
+    birthName: formData.get('birthName') ?? '',
     lastName: formData.get('lastName'),
-    employeeNumber: formData.get('employeeNumber'),
+    employeeNumber: formData.get('employeeNumber') ?? '',
+    birthDate: formData.get('birthDate') ?? '',
     email: formData.get('email') ?? '',
     phone: formData.get('phone') ?? '',
+    landline: formData.get('landline') ?? '',
+    smsSchedules: formData.get('smsSchedules') === 'on',
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };
+  }
+
+  let birthDate: Date | null = null;
+  if (parsed.data.birthDate) {
+    const candidate = new Date(`${parsed.data.birthDate}T00:00:00Z`);
+    if (Number.isNaN(candidate.getTime()) || candidate > new Date()) {
+      return { error: 'Date de naissance invalide.' };
+    }
+    birthDate = candidate;
   }
 
   // Le contrat n'est tenté que si le formulaire l'a ouvert : créer un salarié
@@ -95,6 +122,9 @@ export async function createEmployeeAction(
       teamId: formData.get('teamId') ?? '',
       contractType: formData.get('contractType') ?? 'CDI',
       startDate: formData.get('startDate'),
+      startTime: formData.get('startTime') || '09:00',
+      lineManagerId: formData.get('lineManagerId') ?? '',
+      rttPolicyId: formData.get('rttPolicyId') ?? '',
       endDate: formData.get('endDate') ?? '',
       workTimeArrangement: formData.get('workTimeArrangement') ?? 'HOURLY',
       weeklyHours: formData.get('weeklyHours') || 35,
@@ -142,18 +172,43 @@ export async function createEmployeeAction(
       const role = await db.role.findFirst({ where: { key: 'employee' } });
       if (!role) throw new Error('Rôle « employee » introuvable.');
 
+      // Le matricule est proposé quand il n'est pas donné. Attribué **dans la
+      // transaction**, à la suite du dernier : deux embauches simultanées ne
+      // peuvent pas tomber sur le même rang, la seconde échouant sur l'unicité
+      // plutôt que d'écraser la première.
+      let employeeNumber = parsed.data.employeeNumber;
+      if (!employeeNumber) {
+        const taken = await db.membership.findMany({
+          select: { employeeNumber: true },
+        });
+        employeeNumber = nextEmployeeNumber(
+          taken.map((entry) => entry.employeeNumber),
+        );
+      }
+
       const existing = await db.membership.findFirst({
-        where: { employeeNumber: parsed.data.employeeNumber },
+        where: { employeeNumber },
       });
       if (existing) {
         throw new ValidationError('Ce matricule est déjà utilisé.');
       }
 
+      if (contract?.lineManagerId) {
+        const manager = await db.membership.findUnique({
+          where: { id: contract.lineManagerId },
+          select: { id: true },
+        });
+        if (!manager) {
+          throw new ValidationError('Responsable hiérarchique introuvable.');
+        }
+      }
+
       const created = await db.membership.create({
         data: {
           roleId: role.id,
-          employeeNumber: parsed.data.employeeNumber,
+          employeeNumber,
           status: parsed.data.email ? 'INVITED' : 'ACTIVE',
+          lineManagerId: contract?.lineManagerId || null,
         } as never,
       });
 
@@ -162,8 +217,15 @@ export async function createEmployeeAction(
           membershipId: created.id,
           firstName: parsed.data.firstName,
           lastName: parsed.data.lastName,
+          // Sans mention contraire, le nom de naissance est le nom d'usage :
+          // laisser le champ vide obligerait à le ressaisir pour l'immense
+          // majorité des dossiers, où les deux coïncident.
+          birthName: parsed.data.birthName || parsed.data.lastName,
+          birthDate: birthDate,
           personalEmail: parsed.data.email || null,
           phone: parsed.data.phone || null,
+          landline: parsed.data.landline || null,
+          smsSchedules: parsed.data.smsSchedules,
         } as never,
       });
 
@@ -181,6 +243,7 @@ export async function createEmployeeAction(
             locationId: location.id,
             contractType: contract.contractType,
             startDate: contract.startDate,
+            startTime: contract.startTime,
             endDate: contractEnd,
             workTimeArrangement: contract.workTimeArrangement,
             weeklyHours: contract.weeklyHours,
@@ -205,6 +268,22 @@ export async function createEmployeeAction(
           }
           await db.teamMember.create({
             data: { teamId: team.id, membershipId: created.id } as never,
+          });
+        }
+
+        if (contract.rttPolicyId) {
+          const policy = await db.rttPolicy.findUnique({
+            where: { id: contract.rttPolicyId },
+            select: { id: true, status: true },
+          });
+          if (!policy || policy.status !== 'ACTIVE') {
+            throw new ValidationError('Politique RTT introuvable ou archivée.');
+          }
+          await db.rttPolicyAssignment.create({
+            data: {
+              rttPolicyId: policy.id,
+              membershipId: created.id,
+            } as never,
           });
         }
 

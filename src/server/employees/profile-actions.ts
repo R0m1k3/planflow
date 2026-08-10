@@ -33,13 +33,44 @@ const optionalText = (max: number) =>
     .max(max)
     .transform((value) => (value === '' ? null : value));
 
+/** Une valeur vide vaut « non renseigné » ; toute autre doit être connue. */
+const optionalEnum = <T extends readonly string[]>(values: T) =>
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === '' || (values as readonly string[]).includes(value),
+      'Valeur inconnue',
+    )
+    .transform((value) => (value === '' ? null : value));
+
 const profileInput = z.object({
   membershipId: z.string().min(1),
+  gender: optionalEnum(['FEMALE', 'MALE', 'UNSPECIFIED'] as const),
   firstName: z.string().trim().min(1, 'Prénom requis').max(80),
+  birthName: optionalText(80),
   lastName: z.string().trim().min(1, 'Nom requis').max(80),
   birthDate: optionalText(10),
   birthPlace: optionalText(120),
+  birthCountry: optionalText(80),
+  birthDepartment: optionalText(80),
   nationality: optionalText(80),
+  maritalStatus: optionalEnum([
+    'SINGLE',
+    'MARRIED',
+    'PACS',
+    'COHABITING',
+    'DIVORCED',
+    'WIDOWED',
+  ] as const),
+  dependents: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === '' || /^\d{1,2}$/.test(value),
+      'Nombre de personnes à charge invalide',
+    )
+    .transform((value) => (value === '' ? null : Number(value))),
   personalEmail: z
     .string()
     .trim()
@@ -50,7 +81,10 @@ const profileInput = z.object({
     )
     .transform((value) => (value === '' ? null : value)),
   phone: optionalText(30),
+  landline: optionalText(30),
+  smsSchedules: z.boolean(),
   addressLine1: optionalText(180),
+  addressLine2: optionalText(180),
   postalCode: optionalText(12),
   city: optionalText(120),
   country: optionalText(80),
@@ -62,18 +96,26 @@ export async function updateProfileAction(
   _previous: ProfileActionState,
   formData: FormData,
 ): Promise<ProfileActionState> {
-  const parsed = profileInput.safeParse(
-    Object.fromEntries(
+  const parsed = profileInput.safeParse({
+    ...Object.fromEntries(
       [
         'membershipId',
+        'gender',
         'firstName',
+        'birthName',
         'lastName',
         'birthDate',
         'birthPlace',
+        'birthCountry',
+        'birthDepartment',
         'nationality',
+        'maritalStatus',
+        'dependents',
         'personalEmail',
         'phone',
+        'landline',
         'addressLine1',
+        'addressLine2',
         'postalCode',
         'city',
         'country',
@@ -81,7 +123,10 @@ export async function updateProfileAction(
         'emergencyContactPhone',
       ].map((key) => [key, formData.get(key) ?? '']),
     ),
-  );
+    // Une case décochée n'est pas envoyée : son absence vaut « non », et la
+    // lire comme une chaîne vide en ferait une valeur inconnue.
+    smsSchedules: formData.get('smsSchedules') === 'on',
+  });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };

@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/Card';
 import {
   listContractLocations,
   listEmployees,
+  listHiringOptions,
 } from '@/server/employees/queries';
 
 export const metadata = { title: 'Équipe · PlanFlow' };
@@ -56,6 +57,11 @@ export default async function EquipePage({
   // Sans `members.register.export`, le bouton du registre ne paraît pas.
   const registerLocations = await listRegisterLocations().catch(() => []);
 
+  const hiringOptions = await listHiringOptions().catch(() => ({
+    managers: [],
+    rttPolicies: [],
+  }));
+
   const filtered = directory.rows.length !== directory.total;
 
   return (
@@ -72,7 +78,10 @@ export default async function EquipePage({
             {registerLocations.length > 0 ? (
               <RegisterDialog locations={registerLocations} />
             ) : null}
-            <AddEmployeeDialog locations={hiringLocations} />
+            <AddEmployeeDialog
+              locations={hiringLocations}
+              options={hiringOptions}
+            />
           </>
         }
       />

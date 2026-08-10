@@ -154,15 +154,16 @@ async function createAccessibleEmployee(page: Page) {
   // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
   // en modale, à la demande.
   await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
-  const form = page.locator('form').filter({ hasText: 'Ajouter' });
+  const form = page.locator('form').filter({ hasText: 'Informations salarié' });
   await form.getByLabel('Prénom').fill('Noé');
-  await form.getByLabel('Nom', { exact: true }).fill(lastName);
+  await form.getByLabel('Nom de famille').fill(lastName);
+  await form.getByRole('button', { name: 'Saisir un matricule' }).click();
   await form.getByLabel('Matricule').fill(`MFA${suffix}`);
   await form.getByLabel('Adresse électronique').fill(email);
   // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
   // pas, et un salarié sans contrat doit rester créable.
   await form.getByLabel('Ouvrir un contrat maintenant').uncheck();
-  await form.getByRole('button', { name: 'Ajouter' }).click();
+  await form.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(lastName) }).click();

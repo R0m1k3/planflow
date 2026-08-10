@@ -33,16 +33,28 @@ export default async function PersonalTab({
   }
 
   const profile: ProfileFields = {
+    gender: text(employee.profile.gender),
     firstName: text(employee.profile.firstName),
+    birthName: text(employee.profile.birthName),
     lastName: text(employee.profile.lastName),
     birthDate: employee.profile.birthDate
       ? employee.profile.birthDate.toISOString().slice(0, 10)
       : '',
     birthPlace: text(employee.profile.birthPlace),
+    birthCountry: text(employee.profile.birthCountry),
+    birthDepartment: text(employee.profile.birthDepartment),
     nationality: text(employee.profile.nationality),
+    maritalStatus: text(employee.profile.maritalStatus),
+    dependents:
+      employee.profile.dependents === null
+        ? ''
+        : String(employee.profile.dependents),
     personalEmail: text(employee.profile.personalEmail),
     phone: text(employee.profile.phone),
+    landline: text(employee.profile.landline),
+    smsSchedules: employee.profile.smsSchedules,
     addressLine1: text(employee.profile.addressLine1),
+    addressLine2: text(employee.profile.addressLine2),
     postalCode: text(employee.profile.postalCode),
     city: text(employee.profile.city),
     country: text(employee.profile.country),
