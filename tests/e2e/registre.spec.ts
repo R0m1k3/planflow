@@ -43,8 +43,13 @@ test('un salarié sans compte applicatif est créable', async ({ page }) => {
   await page.goto('/equipe');
 
   await expect(page.getByRole('heading', { name: 'Équipe' })).toBeVisible();
-  // L'effectif vient de la base, pas du module de démonstration.
-  await expect(page.getByText('E0001')).toBeVisible();
+  // L'effectif vient de la base, pas du module de démonstration : un annuaire
+  // fabriqué à l'écran ne se filtrerait pas par matricule.
+  await page
+    .getByPlaceholder('Rechercher par prénom, nom ou matricule.')
+    .fill('E0001');
+  await expect(page.getByText(/^1 sur \d+ salariés$/)).toBeVisible();
+  await page.goto('/equipe');
 
   // Nom unique par exécution : la base de test n'est pas remise à zéro entre
   // deux passages, et un nom fixe finirait par désigner plusieurs salariés.
@@ -64,9 +69,9 @@ test('un salarié sans compte applicatif est créable', async ({ page }) => {
 
   // Un salarié sans adresse doit exister : la plupart des équipes de vente ne
   // se connectent jamais à l'outil.
-  await expect(
-    page.getByRole('cell', { name: matricule, exact: true }),
-  ).toBeVisible();
+  // Sans compte applicatif, l'annuaire affiche le matricule sous le nom : c'est
+  // la seule adresse à laquelle on désigne ce salarié.
+  await expect(page.getByText(`Matricule ${matricule}`)).toBeVisible();
   // Le nom vit sur le dossier, pas sur le compte : un salarié sans accès
   // applicatif doit tout de même figurer nommément au registre du personnel.
   await expect(

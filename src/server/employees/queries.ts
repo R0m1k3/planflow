@@ -23,6 +23,8 @@ export interface EmployeeListRow {
   firstName: string;
   lastName: string;
   email: string | null;
+  /** Téléphone du dossier : la colonne « Mobile » de l'annuaire. */
+  phone: string | null;
   status: string;
   hasAccount: boolean;
   roleName: string;
@@ -34,6 +36,36 @@ export interface EmployeeListRow {
     forfaitJours: boolean;
   } | null;
   locationName: string | null;
+  teamName: string | null;
+  invitationState: InvitationState | null;
+}
+
+/**
+ * Critères de l'annuaire.
+ *
+ * Tous facultatifs, et tous appliqués **en base** plutôt qu'après lecture :
+ * un effectif de plusieurs centaines de dossiers ne se filtre pas en mémoire à
+ * chaque affichage.
+ */
+export interface EmployeeFilters {
+  /** Prénom, nom ou matricule. */
+  q?: string;
+  locationId?: string;
+  roleId?: string;
+  contractType?: string;
+  /** `active` par défaut : un archivé n'a rien à faire dans l'effectif courant. */
+  presence?: 'active' | 'archived' | 'all';
+  sort?: 'name' | 'number';
+}
+
+export interface EmployeeDirectory {
+  rows: EmployeeListRow[];
+  /** De quoi peupler les listes déroulantes, sans seconde requête à l'écran. */
+  locations: Array<{ id: string; name: string }>;
+  roles: Array<{ id: string; name: string }>;
+  contractTypes: Array<{ value: string; label: string }>;
+  /** Effectif total, avant filtres : « 12 sur 87 » se lit autrement que « 12 ». */
+  total: number;
 }
 
 const CONTRACT_LABELS: Record<string, string> = {
@@ -52,22 +84,104 @@ export function contractLabel(type: string): string {
   return CONTRACT_LABELS[type] ?? type;
 }
 
-export async function listEmployees(): Promise<EmployeeListRow[]> {
+export async function listEmployees(
+  filters: EmployeeFilters = {},
+): Promise<EmployeeDirectory> {
   return query('members.view', async (db) => {
-    const memberships = await db.membership.findMany({
-      where: { archivedAt: null },
-      include: {
-        profile: { select: { firstName: true, lastName: true } },
-        user: { select: { email: true } },
-        role: { select: { name: true } },
-        contracts: {
-          where: { status: 'ACTIVE' },
-          orderBy: { startDate: 'desc' },
-          take: 1,
+    const now = new Date();
+    const search = filters.q?.trim();
+
+    // Un archivé n'appartient plus à l'effectif : il faut le demander.
+    const presence =
+      filters.presence === 'all'
+        ? {}
+        : filters.presence === 'archived'
+          ? { archivedAt: { not: null } }
+          : { archivedAt: null };
+
+    // L'établissement et le type de contrat sont portés par le contrat en
+    // cours, pas par le membership : le filtre passe donc par la relation.
+    const contractFilter =
+      filters.locationId || filters.contractType
+        ? {
+            contracts: {
+              some: {
+                status: 'ACTIVE' as const,
+                ...(filters.locationId
+                  ? { locationId: filters.locationId }
+                  : {}),
+                ...(filters.contractType
+                  ? { contractType: filters.contractType as never }
+                  : {}),
+              },
+            },
+          }
+        : {};
+
+    const searchFilter = search
+      ? {
+          OR: [
+            { employeeNumber: { contains: search, mode: 'insensitive' as const } },
+            {
+              profile: {
+                is: {
+                  OR: [
+                    { firstName: { contains: search, mode: 'insensitive' as const } },
+                    { lastName: { contains: search, mode: 'insensitive' as const } },
+                  ],
+                },
+              },
+            },
+          ],
+        }
+      : {};
+
+    const where = {
+      ...presence,
+      ...contractFilter,
+      ...searchFilter,
+      ...(filters.roleId ? { roleId: filters.roleId } : {}),
+    };
+
+    const [memberships, total, locations, roles] = await Promise.all([
+      db.membership.findMany({
+        where,
+        include: {
+          profile: {
+            select: { firstName: true, lastName: true, phone: true },
+          },
+          user: { select: { email: true } },
+          role: { select: { name: true } },
+          teams: {
+            select: {
+              isPrimary: true,
+              team: { select: { name: true } },
+            },
+          },
+          contracts: {
+            where: { status: 'ACTIVE' },
+            orderBy: { startDate: 'desc' },
+            take: 1,
+          },
+          invitations: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { expiresAt: true, acceptedAt: true, revokedAt: true },
+          },
         },
-      },
-      orderBy: { employeeNumber: 'asc' },
-    });
+        orderBy: { employeeNumber: 'asc' },
+      }),
+      db.membership.count({ where: { archivedAt: null } }),
+      db.location.findMany({
+        where: { archivedAt: null },
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      }),
+      db.role.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
 
     const locationIds = [
       ...new Set(
@@ -76,20 +190,28 @@ export async function listEmployees(): Promise<EmployeeListRow[]> {
           .map((contract) => contract.locationId),
       ),
     ];
-    const locations = await db.location.findMany({
+    const contractLocations = await db.location.findMany({
       where: { id: { in: locationIds } },
       select: { id: true, name: true },
     });
-    const locationNames = new Map(locations.map((l) => [l.id, l.name]));
+    const locationNames = new Map(
+      contractLocations.map((entry) => [entry.id, entry.name]),
+    );
 
-    return memberships.map((membership) => {
+    const rows: EmployeeListRow[] = memberships.map((membership) => {
       const contract = membership.contracts[0];
+      const team =
+        membership.teams.find((entry) => entry.isPrimary) ??
+        membership.teams[0];
+      const invitation = membership.invitations[0];
+
       return {
         id: membership.id,
         employeeNumber: membership.employeeNumber,
         firstName: membership.profile?.firstName ?? '',
         lastName: membership.profile?.lastName ?? membership.employeeNumber,
         email: membership.user?.email ?? null,
+        phone: membership.profile?.phone ?? null,
         status: membership.status,
         hasAccount: membership.userId !== null,
         roleName: membership.role.name,
@@ -105,8 +227,33 @@ export async function listEmployees(): Promise<EmployeeListRow[]> {
         locationName: contract
           ? (locationNames.get(contract.locationId) ?? null)
           : null,
+        teamName: team?.team.name ?? null,
+        invitationState: invitation ? invitationState(invitation, now) : null,
       };
     });
+
+    // Le tri par nom se fait ici : trier en base sur le nom du dossier
+    // demanderait une jointure ordonnée, et « Étienne » se range après
+    // « Etchegaray » pour Postgres, avant pour un lecteur français.
+    if (filters.sort !== 'number') {
+      rows.sort((a, b) =>
+        `${a.lastName} ${a.firstName}`.localeCompare(
+          `${b.lastName} ${b.firstName}`,
+          'fr',
+        ),
+      );
+    }
+
+    return {
+      rows,
+      locations,
+      roles,
+      contractTypes: Object.entries(CONTRACT_LABELS).map(([value, label]) => ({
+        value,
+        label,
+      })),
+      total,
+    };
   });
 }
 
@@ -205,6 +352,9 @@ export const getEmployee = cache(async function getEmployee(
         user: { select: { email: true } },
         role: { select: { name: true } },
         profile: true,
+        teams: {
+          select: { isPrimary: true, team: { select: { name: true } } },
+        },
         contracts: {
           orderBy: { startDate: 'desc' },
           include: {
@@ -279,10 +429,19 @@ export const getEmployee = cache(async function getEmployee(
       firstName: membership.profile?.firstName ?? '',
       lastName: membership.profile?.lastName ?? membership.employeeNumber,
       email: membership.user?.email ?? null,
+      phone: membership.profile?.phone ?? null,
       status: membership.status,
       hasAccount: membership.userId !== null,
       roleName: membership.role.name,
       locationName: location?.name ?? null,
+      teamName:
+        (
+          membership.teams.find((entry) => entry.isPrimary) ??
+          membership.teams[0]
+        )?.team.name ?? null,
+      invitationState: lastInvitation
+        ? invitationState(lastInvitation, new Date())
+        : null,
       contract: active
         ? {
             type: active.contractType,
