@@ -570,6 +570,10 @@ export interface MemberPlacement {
   allLocations: boolean;
   scopedLocations: string[];
   scopedTeams: string[];
+  /** Les mêmes, par identifiant : ce que les formulaires cochent. */
+  scopedLocationIds: string[];
+  teamIds: string[];
+  primaryTeamId: string | null;
 }
 
 export const getMemberPlacement = cache(async function getMemberPlacement(
@@ -600,6 +604,7 @@ export const getMemberPlacement = cache(async function getMemberPlacement(
         scopes: {
           select: {
             allLocations: true,
+            locationId: true,
             location: { select: { name: true } },
             team: { select: { name: true } },
           },
@@ -640,6 +645,39 @@ export const getMemberPlacement = cache(async function getMemberPlacement(
             .filter((name): name is string => Boolean(name)),
         ),
       ],
+      scopedLocationIds: [
+        ...new Set(
+          membership.scopes
+            .map((scope) => scope.locationId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ],
+      teamIds: membership.teams.map((member) => member.team.id),
+      primaryTeamId:
+        membership.teams.find((member) => member.isPrimary)?.team.id ?? null,
     };
   });
 });
+
+/** Établissements et équipes où rattacher quelqu'un. */
+export const listPlacementOptions = cache(
+  async function listPlacementOptions(): Promise<ContractLocation[]> {
+    // `members.view` suffit : ces noms sont déjà affichés par l'annuaire, et
+    // exiger davantage fermerait l'écran à qui a le droit de le lire.
+    return query('members.view', async (db) =>
+      db.location.findMany({
+        where: { archivedAt: null },
+        select: {
+          id: true,
+          name: true,
+          teams: {
+            where: { archivedAt: null },
+            select: { id: true, name: true },
+            orderBy: { position: 'asc' },
+          },
+        },
+        orderBy: { name: 'asc' },
+      }),
+    );
+  },
+);

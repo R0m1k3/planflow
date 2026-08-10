@@ -1,15 +1,25 @@
 import { notFound } from 'next/navigation';
 
 import { InfoCard, InfoGrid, InfoRow } from '@/app/(app)/equipe/[id]/InfoCard';
+import {
+  ScopeForm,
+  TeamsForm,
+} from '@/app/(app)/equipe/[id]/planification/PlacementPanel';
 import { Badge } from '@/components/ui/Badge';
-import { getEmployee, getMemberPlacement } from '@/server/employees/queries';
+import { can } from '@/domain/access/authorize';
+import { requireSession } from '@/server/context';
+import {
+  getEmployee,
+  getMemberPlacement,
+  listPlacementOptions,
+} from '@/server/employees/queries';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Rattachement et périmètre.
  *
- * L'établissement de rattachement est en lecture seule : il est porté par le
+ * L'établissement de rattachement reste en lecture seule : il est porté par le
  * contrat, et le changer sans avenant ferait diverger le planning du document
  * opposable.
  */
@@ -22,7 +32,14 @@ export default async function PlacementTab({
   const employee = await getEmployee(id);
   if (!employee) notFound();
 
-  const placement = await getMemberPlacement(id);
+  const [placement, locations, session] = await Promise.all([
+    getMemberPlacement(id),
+    listPlacementOptions(),
+    requireSession(),
+  ]);
+
+  const canScope = can(session.actor, 'settings.roles.manage');
+  const canTeams = can(session.actor, 'settings.teams.manage');
 
   return (
     <InfoGrid>
@@ -48,6 +65,21 @@ export default async function PlacementTab({
           label="Responsable hiérarchique"
           value={employee.headline.lineManagerName}
         />
+
+        <p className="pt-3 text-micro text-ink-3">
+          L’établissement vient du contrat : il se change par avenant, pas ici.
+        </p>
+
+        {canTeams ? (
+          <div className="pt-3">
+            <TeamsForm
+              membershipId={employee.id}
+              locations={locations}
+              teamIds={placement?.teamIds ?? []}
+              primaryTeamId={placement?.primaryTeamId ?? null}
+            />
+          </div>
+        ) : null}
       </InfoCard>
 
       <InfoCard title="Périmètre d’accès">
@@ -76,6 +108,22 @@ export default async function PlacementTab({
           value={placement?.scopedTeams.join(', ') ?? ''}
         />
         <InfoRow label="Rôle" value={employee.roleName} />
+
+        {canScope ? (
+          <div className="pt-3">
+            <ScopeForm
+              membershipId={employee.id}
+              locations={locations}
+              allLocations={placement?.allLocations ?? false}
+              scopedLocationIds={placement?.scopedLocationIds ?? []}
+            />
+          </div>
+        ) : (
+          <p className="pt-3 text-micro text-ink-3">
+            Élargir un périmètre revient à distribuer des droits : la capacité
+            « Gérer les rôles » est requise.
+          </p>
+        )}
       </InfoCard>
     </InfoGrid>
   );
