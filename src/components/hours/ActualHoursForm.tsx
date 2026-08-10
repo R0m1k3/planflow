@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   saveActualHoursAction,
   validateHoursAction,
@@ -37,7 +38,11 @@ export function ActualHoursForm({ shift }: { shift: HoursShiftRow }) {
   }
 
   return (
-    <form action={formAction} className="flex flex-wrap items-center gap-1.5">
+    <PersistentForm
+      action={formAction}
+      resetAfter={state.ok ? state : null}
+      className="flex flex-wrap items-center gap-1.5"
+    >
       <input type="hidden" name="shiftId" value={shift.id} />
 
       <label className="sr-only" htmlFor={`start-${shift.id}`}>
@@ -90,7 +95,7 @@ export function ActualHoursForm({ shift }: { shift: HoursShiftRow }) {
           {state.error}
         </span>
       ) : null}
-    </form>
+    </PersistentForm>
   );
 }
 

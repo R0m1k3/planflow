@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   saveMappingAction,
   type PayrollActionState,
@@ -31,7 +32,8 @@ export function MappingForm({
   const listId = `codes-${row.key}`;
 
   return (
-    <form
+    <PersistentForm
+      resetAfter={state.ok ? state : null}
       action={formAction}
       className="flex flex-wrap items-center gap-3 border-b border-line-1 px-4 py-3 last:border-b-0"
     >
@@ -85,6 +87,6 @@ export function MappingForm({
       <Button type="submit" size="sm" disabled={pending}>
         Enregistrer
       </Button>
-    </form>
+    </PersistentForm>
   );
 }

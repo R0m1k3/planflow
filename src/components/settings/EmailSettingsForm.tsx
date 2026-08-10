@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   saveEmailSettingsAction,
   sendTestEmailAction,
@@ -42,8 +43,9 @@ export function EmailSettingsForm({
   );
 
   return (
-    <form
+    <PersistentForm
       action={formAction}
+      resetAfter={state.message ? state : null}
       className="grid gap-4 rounded-3 border border-line-1 bg-surface p-4 sm:grid-cols-2"
     >
       <Field
@@ -143,7 +145,7 @@ export function EmailSettingsForm({
           <span className="text-xs text-ok-soft-ink">{state.message}</span>
         ) : null}
       </div>
-    </form>
+    </PersistentForm>
   );
 }
 
@@ -160,7 +162,7 @@ export function TestEmailForm({ defaultTo }: { defaultTo: string }) {
   );
 
   return (
-    <form
+    <PersistentForm
       action={formAction}
       className="flex flex-wrap items-end gap-3 rounded-3 border border-line-2 bg-surface-2 p-3"
     >
@@ -189,7 +191,7 @@ export function TestEmailForm({ defaultTo }: { defaultTo: string }) {
       {state.message ? (
         <p className="w-full text-xs text-ok-soft-ink">{state.message}</p>
       ) : null}
-    </form>
+    </PersistentForm>
   );
 }
 

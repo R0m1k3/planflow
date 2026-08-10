@@ -6,6 +6,7 @@ import { AlertPanel } from '@/components/planning/AlertPanel';
 import { WeekGrid } from '@/components/planning/WeekGrid';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { PersistentForm } from '@/components/ui/PersistentForm';
 import { formatMinutes } from '@/domain/counters/week';
 import {
   displayName,
@@ -16,11 +17,15 @@ import {
   createShiftAction,
   deleteShiftAction,
   duplicateWeekAction,
-  publishWeekAction,
-  unpublishWeekAction,
+  setWeekPublicationAction,
   updateShiftAction,
   type PlanningActionState,
 } from '@/server/planning/actions';
+import {
+  PUBLICATION_INTENT_FIELD,
+  PUBLISH_INTENT,
+  UNPUBLISH_INTENT,
+} from '@/domain/planning/publication';
 import type { BoardLabel, BoardSection } from '@/server/planning/queries';
 
 export interface TeamSectionProps {
@@ -222,12 +227,15 @@ function PublishControl({
   pendingWarnings: number;
 }) {
   const [state, formAction, pending] = useActionState(
-    published ? unpublishWeekAction : publishWeekAction,
+    setWeekPublicationAction,
     empty,
   );
 
   return (
-    <form action={formAction} className="flex flex-wrap items-center gap-2">
+    <PersistentForm
+      action={formAction}
+      className="flex flex-wrap items-center gap-2"
+    >
       <input type="hidden" name="teamId" value={teamId} />
       <input type="hidden" name="week" value={weekParam} />
       {/* Verrou optimiste : la version lue au rendu est renvoyée telle quelle. */}
@@ -254,15 +262,20 @@ function PublishControl({
           {state.error}
         </span>
       ) : null}
+      {/* L'intention voyage sur le bouton, et non dans un champ caché : la
+          réinitialisation que React applique après chaque action remettrait un
+          champ caché à sa valeur d'origine, jamais un bouton. */}
       <Button
         type="submit"
+        name={PUBLICATION_INTENT_FIELD}
+        value={published ? UNPUBLISH_INTENT : PUBLISH_INTENT}
         size="sm"
         variant={published ? 'secondary' : 'primary'}
         disabled={pending}
       >
         {published ? 'Dépublier' : 'Publier'}
       </Button>
-    </form>
+    </PersistentForm>
   );
 }
 

@@ -109,6 +109,28 @@ test('un manager pose un créneau, publie, puis dépublie', async ({ page }) => 
 
   await section.getByRole('button', { name: 'Dépublier' }).click();
   await expect(section.getByText('Brouillon')).toBeVisible();
+
+  // Un second aller-retour, sans recharger la page. Régression : le formulaire
+  // recevait tantôt l'action de publication, tantôt celle de dépublication
+  // selon l'état, et cessait de suivre le changement. Le bouton affichait
+  // « Dépublier » et republiait — sans message d'erreur, puisque l'action
+  // réellement exécutée réussissait.
+  //
+  // Le vérifier deux fois, et non une : le premier envoi d'un chargement
+  // emploie toujours la bonne action, si bien qu'un test qui s'arrêterait là
+  // laisserait passer le défaut selon l'état où la semaine a été trouvée.
+  // Le motif n'est plus demandé : l'alerte a été acquittée au passage
+  // précédent, et l'acquittement survit à la dépublication — c'est justement ce
+  // que garantit le report des acquittements d'une réévaluation à l'autre.
+  const motif = section.getByPlaceholder(/^Motif —/);
+  if (await motif.isVisible()) {
+    await motif.fill('Second passage, même chargement');
+  }
+  await section.getByRole('button', { name: 'Publier' }).click();
+  await expect(section.getByText('Publiée')).toBeVisible();
+
+  await section.getByRole('button', { name: 'Dépublier' }).click();
+  await expect(section.getByText('Brouillon')).toBeVisible();
 });
 
 test('la navigation de semaine change la grille', async ({ page }) => {
