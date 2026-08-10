@@ -74,6 +74,34 @@ Les autres ont une valeur par défaut utilisable : `POSTGRES_PASSWORD`, `POSTGRE
 
 **Après le premier déploiement, relevez la clé dans les journaux du conteneur `app` et conservez-la hors du serveur.**
 
+### Si l’application ne démarre pas : `P1000`
+
+Le journal du conteneur `app` dit toujours quoi faire. Trois cas, dans l’ordre de fréquence.
+
+**`[bootstrap] Le compte d’amorçage « planflow » est lui-même refusé.`**
+
+C’est le piège classique de PostgreSQL en conteneur, et il n’a rien à voir avec le rôle applicatif. **`POSTGRES_PASSWORD` n’est lu qu’à l’initialisation du volume.** Un volume créé lors d’un déploiement antérieur — y compris un déploiement qui avait échoué pour une autre raison — garde le mot de passe d’alors. Le changer dans la pile n’y touche pas : le volume ne se réinitialise jamais.
+
+La base est encore vide ? Repartez d’un volume neuf, c’est le plus sûr :
+
+```bash
+docker compose down
+docker volume rm planflow_db-data
+docker compose up -d
+```
+
+La base contient déjà quelque chose ? Réalignez le mot de passe. L’image PostgreSQL fait confiance aux connexions par socket locale, donc l’ancien mot de passe n’est pas nécessaire :
+
+```bash
+docker compose exec db psql -U planflow \
+  -c "ALTER USER planflow PASSWORD 'planflow-interne';"
+docker compose restart app
+```
+
+**`[bootstrap] Aucun identifiant d’amorçage fourni`** — le service `app` n’a pas `POSTGRES_PASSWORD`. Il l’a par défaut dans le compose fourni ; son absence signale une variable vidée à la main.
+
+**Aucune ligne `[bootstrap]` du tout** — l’image tourne sur une version antérieure à ce mécanisme. Reconstruisez-la (`docker compose up -d --build`, ou dans Portainer *Update the stack* avec *Re-pull image and redeploy*). Un simple redémarrage réutilise l’image existante.
+
 ### Première installation
 
 Les migrations posent le schéma, rien de plus : une instance neuve n'a **aucun compte et aucun utilisateur**. Le jeu de données de démonstration (`pnpm db:seed`) n'y remédie pas et refuse de tourner en production, à raison — personne ne veut de « Maison Rivage » et de salariés fictifs dans son registre du personnel.
