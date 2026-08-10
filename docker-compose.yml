@@ -63,12 +63,21 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    # Volontairement absente du réseau externe : elle n'a besoin que de
-    # l'application. L'y attacher exposerait la base à tout ce que le
-    # reverse-proxy héberge, et le mot de passe par défaut deviendrait alors un
-    # vrai problème.
+    # `interne` suffit à l'application : les deux services s'y joignent déjà, et
+    # rien de ce que fait la base ne passe par le reverse-proxy.
+    #
+    # `nginx_default` est ajouté à la demande de l'exploitant. Il faut en
+    # mesurer la portée : la base devient joignable par **tous** les conteneurs
+    # que sert ce proxy, et non plus par la seule application.
+    # `POSTGRES_PASSWORD` cesse alors d'être une formalité — sa valeur par
+    # défaut ne protège plus rien d'utile, il faut la changer.
+    #
+    # Autre effet à connaître : le nom `db` est publié sur ce réseau partagé. Un
+    # autre service nommé `db` qui s'y attacherait rendrait la résolution
+    # ambiguë pour les deux piles.
     networks:
       - interne
+      - nginx_default
     # Le conteneur reste sur 5432 pour l'application, et le port hôte est publié
     # sur un port non commun, configurable : plusieurs instances PostgreSQL
     # coexistent sur le même serveur, et s'en tenir au 5432 par défaut les
