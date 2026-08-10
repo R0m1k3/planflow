@@ -106,9 +106,51 @@ try {
 } catch (error) {
   // Non bloquant : le rôle est peut-être déjà correct et posé par `db-init`.
   // Faire échouer le démarrage ici priverait d'une installation qui marche.
-  console.error(
-    `[bootstrap] Provisionnement impossible (${error instanceof Error ? error.message : String(error)}).`,
-  );
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(`[bootstrap] Provisionnement impossible (${message}).`);
+
+  // Le cas de très loin le plus fréquent, et le moins évident : le compte
+  // d'amorçage lui-même est refusé.
+  //
+  // `POSTGRES_PASSWORD` n'est lu qu'à **l'initialisation du volume**. Un volume
+  // créé lors d'un déploiement antérieur garde le mot de passe d'alors, et le
+  // changer dans la pile n'y touche pas — le volume ne se réinitialise jamais.
+  // Sans cette explication, on cherche indéfiniment du côté du rôle applicatif,
+  // qui n'y est pour rien.
+  if (/password authentication failed/i.test(message)) {
+    console.error('');
+    console.error(
+      `[bootstrap] Le compte d’amorçage « ${superUser} » est lui-même refusé.`,
+    );
+    console.error(
+      '[bootstrap] POSTGRES_PASSWORD n’est lu qu’à la création du volume de la',
+    );
+    console.error(
+      '[bootstrap] base. Si ce volume vient d’un déploiement antérieur, il porte',
+    );
+    console.error(
+      '[bootstrap] encore l’ancien mot de passe, et le changer dans la pile n’y',
+    );
+    console.error('[bootstrap] change rien.');
+    console.error('');
+    console.error('[bootstrap]   • Base encore vide — repartir d’un volume neuf :');
+    console.error('[bootstrap]       docker compose down');
+    console.error('[bootstrap]       docker volume rm planflow_db-data');
+    console.error('[bootstrap]       docker compose up -d');
+    console.error('');
+    console.error('[bootstrap]   • Base à conserver — réaligner le mot de passe.');
+    console.error(
+      '[bootstrap]     Par la socket locale, qui ne demande pas l’ancien :',
+    );
+    console.error(
+      `[bootstrap]       docker compose exec db psql -U ${superUser} \\`,
+    );
+    console.error(
+      `[bootstrap]         -c "ALTER USER ${superUser} PASSWORD '<celui de la pile>';"`,
+    );
+    console.error('');
+  }
+
   console.error(
     '[bootstrap] La suite dira si le rôle applicatif est utilisable en l’état.',
   );
