@@ -19,6 +19,41 @@ services:
       # Deterministic collation: ordering of employee names must not depend on
       # the host locale, or exports differ between machines.
       LANG: C.UTF-8
+    # Réaligne le mot de passe du compte d'amorçage à **chaque** démarrage.
+    #
+    # `POSTGRES_PASSWORD` n'est lu qu'à la création du volume. Un volume né d'un
+    # déploiement antérieur garde donc le mot de passe d'alors, et plus rien
+    # dans la pile ne peut le corriger : ni l'application, ni `db-init`, tous
+    # deux refusés à l'entrée. La seule position d'où la réparation est possible
+    # est l'intérieur de ce conteneur, où PostgreSQL accepte la socket locale
+    # sans mot de passe.
+    #
+    # Sans cela, une installation ayant connu deux valeurs de mot de passe ne
+    # redémarre plus jamais sans SQL à la main — et le symptôme, un `P1000` sur
+    # le rôle applicatif, désigne le mauvais coupable.
+    #
+    # Le SQL passe par l'entrée standard et non par `-c` : `psql -c` n'interpole
+    # pas les variables, si bien que `:'pw'` y serait envoyé littéralement. Par
+    # l'entrée standard, c'est psql qui met le mot de passe entre guillemets —
+    # une apostrophe dans le mot de passe ne casse donc rien.
+    command:
+      - sh
+      - -c
+      - |
+        (
+          tentative=0
+          while [ $$tentative -lt 60 ]; do
+            if echo "ALTER USER \"$$POSTGRES_USER\" WITH PASSWORD :'pw';" \
+               | psql -q -v ON_ERROR_STOP=1 -v pw="$$POSTGRES_PASSWORD" \
+                      -U "$$POSTGRES_USER" -d postgres >/dev/null 2>&1; then
+              echo "[db] Mot de passe du compte d'amorçage réaligné sur la pile."
+              break
+            fi
+            tentative=$$((tentative + 1))
+            sleep 1
+          done
+        ) &
+        exec docker-entrypoint.sh postgres
     volumes:
       - db-data:/var/lib/postgresql/data
       # Crée le rôle applicatif à la première initialisation du volume.
