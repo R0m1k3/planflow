@@ -1,13 +1,24 @@
 import { notFound } from 'next/navigation';
 
-import { InfoCard, InfoRow } from '@/app/(app)/equipe/[id]/InfoCard';
+import {
+  ContractActions,
+  type ActiveContract,
+} from '@/app/(app)/equipe/[id]/contrats/ContractActions';
+import { NewContractForm } from '@/app/(app)/equipe/[id]/contrats/NewContractForm';
 import { Badge } from '@/components/ui/Badge';
 import { Card, CardHeader, EmptyState } from '@/components/ui/Card';
-import { getEmployee } from '@/server/employees/queries';
+import {
+  getEmployee,
+  listContractLocations,
+} from '@/server/employees/queries';
 
 export const dynamic = 'force-dynamic';
 
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' });
+
+/** Les dates traversent la frontière serveur/client en ISO court : un `Date`
+ *  y perd son fuseau, et « 1er novembre » deviendrait « 31 octobre » à l'ouest. */
+const iso = (value: Date | null) => value?.toISOString().slice(0, 10) ?? null;
 
 export default async function ContractsTab({
   params,
@@ -21,44 +32,49 @@ export default async function ContractsTab({
   const active = employee.contracts.find(
     (contract) => contract.status === 'ACTIVE',
   );
-  const past = employee.contracts.filter(
-    (contract) => contract.id !== active?.id,
-  );
+
+  // La liste n'est chargée que si elle sert : sans contrat en cours, l'écran
+  // propose d'en ouvrir un, et la capacité peut manquer.
+  const locations = active ? [] : await listContractLocations().catch(() => []);
+
+  const activeContract: ActiveContract | null = active
+    ? {
+        id: active.id,
+        label: active.label,
+        startDate: iso(active.startDate) as string,
+        endDate: iso(active.endDate),
+        trialEndDate: iso(active.trialEndDate),
+        weeklyHours: active.weeklyHours,
+        forfaitJours: active.forfaitJours,
+        forfaitDaysPerYear: active.forfaitDaysPerYear,
+        forfaitAgreementRef: active.forfaitAgreementRef,
+        isModulated: active.isModulated,
+        classification: active.classification,
+        coefficient: active.coefficient,
+        locationName: active.locationName,
+        monthlySalary: active.monthlySalary,
+        jobTitle: employee.headline.jobTitle,
+      }
+    : null;
 
   return (
     <div className="flex flex-col gap-5">
-      {active ? (
-        <InfoCard title="Contrat en cours">
-          <InfoRow label="Type" value={active.label} />
-          <InfoRow label="Début du contrat" value={dateFormat.format(active.startDate)} tnum />
-          <InfoRow
-            label="Fin du contrat"
-            value={active.endDate ? dateFormat.format(active.endDate) : ''}
-            tnum
-          />
-          <InfoRow label="Emploi" value={employee.headline.jobTitle} />
-          <InfoRow
-            label="Organisation du temps"
-            value={
-              active.forfaitJours
-                ? `Forfait jours · ${active.forfaitDaysPerYear ?? '—'} jours par an`
-                : `${active.weeklyHours} heures hebdomadaires`
-            }
-          />
-          {employee.canSeeSalary ? (
-            <InfoRow
-              label="Rémunération mensuelle brute"
-              value={active.monthlySalary ? `${active.monthlySalary} €` : ''}
-              tnum
-            />
-          ) : null}
-          <InfoRow label="Établissement" value={employee.locationName} />
-        </InfoCard>
-      ) : (
-        <EmptyState
-          title="Aucun contrat en cours"
-          description="Ce salarié ne peut être ni planifié ni déclaré tant qu’aucune période n’est ouverte."
+      {activeContract ? (
+        <ContractActions
+          contract={activeContract}
+          canEdit={employee.canEdit}
+          canSeeSalary={employee.canSeeSalary}
         />
+      ) : (
+        <div className="flex flex-col gap-4">
+          <EmptyState
+            title="Aucun contrat en cours"
+            description="Ce salarié ne peut être ni planifié ni déclaré tant qu’aucune période n’est ouverte."
+          />
+          {employee.canEdit && locations.length > 0 ? (
+            <NewContractForm membershipId={employee.id} locations={locations} />
+          ) : null}
+        </div>
       )}
 
       <Card>
@@ -70,7 +86,7 @@ export default async function ContractsTab({
           <EmptyState title="Aucun contrat enregistré" />
         ) : (
           <ul>
-            {[...(active ? [active] : []), ...past].map((contract) => (
+            {employee.contracts.map((contract) => (
               <li
                 key={contract.id}
                 className="border-b border-line-1 px-4 py-3 last:border-b-0"
@@ -98,6 +114,12 @@ export default async function ContractsTab({
                     {contract.status === 'ACTIVE' ? 'En cours' : 'Terminé'}
                   </Badge>
                 </div>
+
+                {contract.endReason ? (
+                  <p className="mt-1 text-xs text-ink-3">
+                    Fin · {contract.endReason}
+                  </p>
+                ) : null}
 
                 {contract.amendments.length > 0 ? (
                   <ul className="mt-2 border-l-2 border-line-2 pl-3">

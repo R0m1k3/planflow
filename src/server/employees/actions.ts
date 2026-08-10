@@ -329,3 +329,87 @@ export async function createAmendmentAction(
   if (membershipId) revalidatePath(`/equipe/${membershipId}`);
   return { ok: true };
 }
+
+const endContractInput = z.object({
+  contractId: z.string().min(1),
+  endDate: z.coerce.date(),
+  endReason: z.string().trim().min(1, 'Motif de fin requis').max(300),
+});
+
+/**
+ * Termine un contrat.
+ *
+ * Le contrat n'est pas supprimé : il est **daté et clos**. Un contrôle porte
+ * sur une période révolue, et effacer un contrat terminé effacerait la preuve
+ * que le salarié a travaillé — ainsi que la base de son solde de tout compte.
+ */
+export async function endContractAction(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = endContractInput.safeParse({
+    contractId: formData.get('contractId'),
+    endDate: formData.get('endDate'),
+    endReason: formData.get('endReason'),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };
+  }
+
+  let membershipId = '';
+
+  try {
+    await mutate('members.contract.edit', async (db, actor) => {
+      const contract = await db.userContract.findUnique({
+        where: { id: parsed.data.contractId },
+      });
+      if (!contract) throw new AuthorizationError('members.contract.edit');
+      membershipId = contract.membershipId;
+
+      if (contract.status === 'ENDED') {
+        throw new ValidationError('Ce contrat est déjà terminé.');
+      }
+      if (parsed.data.endDate < contract.startDate) {
+        throw new ValidationError(
+          'La fin du contrat précède son début.',
+        );
+      }
+
+      await db.userContract.update({
+        where: { id: contract.id },
+        data: {
+          endDate: parsed.data.endDate,
+          endReason: parsed.data.endReason,
+          status: 'ENDED',
+          version: { increment: 1 },
+        },
+      });
+
+      await recordAudit(db, {
+        actorMembershipId: actor.membershipId,
+        action: 'contract.end',
+        entityType: 'UserContract',
+        entityId: contract.id,
+        before: { status: contract.status, endDate: contract.endDate?.toISOString() ?? null },
+        after: {
+          status: 'ENDED',
+          endDate: parsed.data.endDate.toISOString(),
+        },
+        reason: parsed.data.endReason,
+      });
+    });
+  } catch (error) {
+    if (error instanceof ValidationError) return { error: error.message };
+    if (error instanceof AuthorizationError) {
+      return { error: "Vous n'avez pas le droit de terminer un contrat." };
+    }
+    throw error;
+  }
+
+  if (membershipId) {
+    revalidatePath(`/equipe/${membershipId}`);
+    revalidatePath('/equipe');
+  }
+  return { ok: true };
+}

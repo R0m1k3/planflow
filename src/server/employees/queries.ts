@@ -155,13 +155,25 @@ export interface EmployeeDetail extends EmployeeListRow {
     label: string;
     startDate: Date;
     endDate: Date | null;
+    trialEndDate: Date | null;
     weeklyHours: string;
     forfaitJours: boolean;
     forfaitDaysPerYear: string | null;
+    forfaitAgreementRef: string | null;
+    isModulated: boolean;
+    classification: string | null;
+    coefficient: string | null;
+    locationName: string | null;
     status: string;
+    endReason: string | null;
     /** Absent quand `members.salary.view` manque. */
     monthlySalary: string | null;
-    amendments: Array<{ id: string; effectiveDate: Date; reason: string | null }>;
+    amendments: Array<{
+      id: string;
+      effectiveDate: Date;
+      reason: string | null;
+      changes: unknown;
+    }>;
   }>;
   canSeeSalary: boolean;
   canInvite: boolean;
@@ -207,11 +219,24 @@ export const getEmployee = cache(async function getEmployee(
     const active = membership.contracts.find(
       (contract) => contract.status === 'ACTIVE',
     );
+
+    // Tous les établissements portés par l'historique, et pas seulement celui
+    // du contrat en cours : un contrat terminé ailleurs reste à lire.
+    const contractLocations = await db.location.findMany({
+      where: {
+        id: {
+          in: [
+            ...new Set(membership.contracts.map((entry) => entry.locationId)),
+          ],
+        },
+      },
+      select: { id: true, name: true },
+    });
+    const locationNames = new Map(
+      contractLocations.map((entry) => [entry.id, entry.name]),
+    );
     const location = active
-      ? await db.location.findUnique({
-          where: { id: active.locationId },
-          select: { name: true },
-        })
+      ? { name: locationNames.get(active.locationId) ?? null }
       : null;
 
     // L'emploi est porté par le contrat, pas par le dossier : il change par
@@ -308,10 +333,17 @@ export const getEmployee = cache(async function getEmployee(
         label: contractLabel(contract.contractType),
         startDate: contract.startDate,
         endDate: contract.endDate,
+        trialEndDate: contract.trialEndDate,
         weeklyHours: contract.weeklyHours.toString(),
         forfaitJours: contract.workTimeArrangement === 'FORFAIT_JOURS',
         forfaitDaysPerYear: contract.forfaitDaysPerYear?.toString() ?? null,
+        forfaitAgreementRef: contract.forfaitAgreementRef,
+        isModulated: contract.isModulated,
+        classification: contract.classification,
+        coefficient: contract.coefficient,
+        locationName: locationNames.get(contract.locationId) ?? null,
         status: contract.status,
+        endReason: contract.endReason,
         monthlySalary: canSeeSalary
           ? (contract.monthlySalary?.toString() ?? null)
           : null,
@@ -319,6 +351,7 @@ export const getEmployee = cache(async function getEmployee(
           id: amendment.id,
           effectiveDate: amendment.effectiveDate,
           reason: amendment.reason,
+          changes: amendment.changes,
         })),
       })),
       canSeeSalary,
@@ -335,6 +368,27 @@ export const getEmployee = cache(async function getEmployee(
     };
   });
 });
+
+/**
+ * Établissements où poser un contrat.
+ *
+ * Une liste à part de celle des réglages : ouvrir un contrat n'exige pas
+ * d'administrer les établissements, et emprunter `settings.access` fermerait
+ * la création à un gestionnaire de paie qui n'a rien à y administrer.
+ */
+export const listContractLocations = cache(
+  async function listContractLocations(): Promise<
+    Array<{ id: string; name: string }>
+  > {
+    return query('members.contract.create', async (db) =>
+      db.location.findMany({
+        where: { archivedAt: null },
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      }),
+    );
+  },
+);
 
 /** Rattachement et périmètre — onglet « Planification et accès ». */
 export interface MemberPlacement {
