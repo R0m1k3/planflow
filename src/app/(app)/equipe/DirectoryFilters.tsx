@@ -11,8 +11,10 @@ import { useRef } from 'react';
  * choix plutôt que de vider la page.
  */
 
+/** Pastilles plutôt que champs : une barre de filtres se survole, elle ne se
+ *  remplit pas. */
 const selectClass =
-  'h-9 min-w-0 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1 outline-none focus-visible:border-focus';
+  'h-10 min-w-0 cursor-pointer rounded-full border border-line-2 bg-surface px-4 text-sm text-ink-1 outline-none hover:bg-surface-2 focus-visible:border-focus';
 
 export interface FilterOptions {
   locations: Array<{ id: string; name: string }>;
@@ -43,7 +45,7 @@ export function DirectoryFilters({ options }: { options: FilterOptions }) {
           type="search"
           defaultValue={current('q')}
           placeholder="Rechercher par prénom, nom ou matricule."
-          className="h-10 rounded-3 border border-line-2 bg-surface px-3.5 text-sm text-ink-1 outline-none placeholder:text-ink-3 focus-visible:border-focus"
+          className="h-11 rounded-full border border-line-2 bg-surface px-4 text-sm text-ink-1 outline-none placeholder:text-ink-3 focus-visible:border-focus"
           onChange={(event) => {
             // La frappe ne déclenche pas une requête par caractère : elle
             // attend un silence. Sans cela, chercher « Dupont » en lance six.

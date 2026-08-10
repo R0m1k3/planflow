@@ -21,6 +21,9 @@ async function createEmployee(page: Page, tag: string) {
   const email = `sacha.${suffix}@exemple.test`;
 
   await page.goto('/equipe');
+  // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
+  // en modale, à la demande.
+  await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
   const form = page.locator('form').filter({ hasText: 'Ajouter' });
   await form.getByLabel('Prénom').fill(firstName);
   await form.getByLabel('Nom', { exact: true }).fill(lastName);

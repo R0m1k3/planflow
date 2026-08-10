@@ -158,6 +158,9 @@ async function inviteWithRole(page: Page, roleLabel: string) {
   const lastName = `Role${suffix}`;
 
   await page.goto('/equipe');
+  // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
+  // en modale, à la demande.
+  await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
   const create = page.locator('form').filter({ hasText: 'Ajouter' });
   await create.getByLabel('Prénom').fill('Alix');
   await create.getByLabel('Nom', { exact: true }).fill(lastName);

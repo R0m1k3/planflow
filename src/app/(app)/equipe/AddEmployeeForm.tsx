@@ -39,9 +39,12 @@ const selectClass =
 
 export function AddEmployeeForm({
   locations,
+  onSaved,
 }: {
   /** Vide quand la capacité d'ouvrir un contrat manque : la section disparaît. */
   locations: ContractLocation[];
+  /** Appelé une fois l'ajout accepté — la modale s'y referme. */
+  onSaved?: () => void;
 }) {
   const [state, formAction] = useActionState<ActionState, FormData>(
     createEmployeeAction,
@@ -50,6 +53,14 @@ export function AddEmployeeForm({
   const [withContract, setWithContract] = useState(locations.length > 0);
   const [locationId, setLocationId] = useState(locations[0]?.id ?? '');
   const [forfait, setForfait] = useState(false);
+  const [acknowledged, setAcknowledged] = useState<ActionState>(empty);
+
+  // Acquitté une fois pour toutes : sans cela, un succès resté en mémoire
+  // refermerait la modale à sa réouverture.
+  if (state !== acknowledged && state.ok) {
+    setAcknowledged(state);
+    onSaved?.();
+  }
 
   const teams =
     locations.find((location) => location.id === locationId)?.teams ?? [];

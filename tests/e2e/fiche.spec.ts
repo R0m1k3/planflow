@@ -14,6 +14,9 @@ async function createEmployee(page: Page) {
   const lastName = `Fiche${suffix}`;
 
   await page.goto('/equipe');
+  // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
+  // en modale, à la demande.
+  await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
   const form = page.locator('form').filter({ hasText: 'Ajouter' });
   await form.getByLabel('Prénom').fill('Awa');
   await form.getByLabel('Nom', { exact: true }).fill(lastName);
@@ -99,6 +102,9 @@ test('une embauche pose le contrat en même temps que le dossier', async ({
   const lastName = `Embauche${suffix}`;
 
   await page.goto('/equipe');
+  // Le formulaire d’embauche n’est plus posé au bas de la liste : il s’ouvre
+  // en modale, à la demande.
+  await page.getByRole('button', { name: 'Ajouter un collaborateur' }).click();
   const form = page.locator('form').filter({ hasText: 'Ajouter' });
   await form.getByLabel('Prénom').fill('Sofia');
   await form.getByLabel('Nom', { exact: true }).fill(lastName);
@@ -113,10 +119,11 @@ test('une embauche pose le contrat en même temps que le dossier', async ({
   await form.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
-  // Le contrat est visible depuis l'annuaire, sans passer par la fiche.
-  await expect(page.getByRole('row', { name: new RegExp(lastName) })).toContainText(
-    'CDI',
-  );
+  // Le rattachement paraît dans l'annuaire : un dossier sans contrat y porte
+  // « Sans contrat », celui-ci porte son établissement.
+  await expect(
+    page.getByRole('row', { name: new RegExp(lastName) }),
+  ).not.toContainText('Sans contrat');
 
   await page.getByRole('link', { name: new RegExp(lastName) }).click();
   // Le bandeau porte le contrat : c'est ce qui distingue un dossier embauché
