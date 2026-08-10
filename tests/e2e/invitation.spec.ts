@@ -26,6 +26,9 @@ async function createEmployee(page: Page, tag: string) {
   await form.getByLabel('Nom', { exact: true }).fill(lastName);
   await form.getByLabel('Matricule').fill(`E2E${suffix}`);
   await form.getByLabel('Adresse électronique').fill(email);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await form.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await form.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 

@@ -18,6 +18,9 @@ async function createEmployee(page: Page) {
   await form.getByLabel('Prénom').fill('Awa');
   await form.getByLabel('Nom', { exact: true }).fill(lastName);
   await form.getByLabel('Matricule').fill(`FIC${suffix}`);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await form.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await form.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
@@ -87,4 +90,38 @@ test('une date de naissance à venir est refusée', async ({ page }) => {
   await page.getByRole('button', { name: 'Enregistrer les modifications' }).click();
 
   await expect(page.getByText('Date de naissance invalide.')).toBeVisible();
+});
+
+test('une embauche pose le contrat en même temps que le dossier', async ({
+  page,
+}) => {
+  const suffix = `${Date.now()}-embauche`;
+  const lastName = `Embauche${suffix}`;
+
+  await page.goto('/equipe');
+  const form = page.locator('form').filter({ hasText: 'Ajouter' });
+  await form.getByLabel('Prénom').fill('Sofia');
+  await form.getByLabel('Nom', { exact: true }).fill(lastName);
+  await form.getByLabel('Matricule').fill(`EMB${suffix}`);
+
+  // Le contrat est proposé coché : un dossier créé sans lui n'apparaît sur
+  // aucune grille et ne se déclare pas.
+  await expect(
+    form.getByLabel('Ouvrir un contrat maintenant'),
+  ).toBeChecked();
+  await form.getByLabel('Début du contrat').fill('2026-01-05');
+  await form.getByRole('button', { name: 'Ajouter' }).click();
+  await expect(page.getByText('Salarié ajouté.')).toBeVisible();
+
+  // Le contrat est visible depuis l'annuaire, sans passer par la fiche.
+  await expect(page.getByRole('row', { name: new RegExp(lastName) })).toContainText(
+    'CDI',
+  );
+
+  await page.getByRole('link', { name: new RegExp(lastName) }).click();
+  // Le bandeau porte le contrat : c'est ce qui distingue un dossier embauché
+  // d'un dossier ouvert.
+  await expect(page.getByText('Type de contrat')).toBeVisible();
+  await page.getByRole('link', { name: 'Contrats', exact: true }).click();
+  await expect(page.getByText('35 heures hebdomadaires')).toBeVisible();
 });

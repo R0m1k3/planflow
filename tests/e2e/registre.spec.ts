@@ -59,6 +59,9 @@ test('un salarié sans compte applicatif est créable', async ({ page }) => {
   await form.locator('input[name="firstName"]').fill('Sans');
   await form.locator('input[name="lastName"]').fill(nom);
   await form.locator('input[name="employeeNumber"]').fill(matricule);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await form.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await page.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 

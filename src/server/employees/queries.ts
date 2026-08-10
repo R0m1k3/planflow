@@ -535,14 +535,26 @@ export const getEmployee = cache(async function getEmployee(
  * d'administrer les établissements, et emprunter `settings.access` fermerait
  * la création à un gestionnaire de paie qui n'a rien à y administrer.
  */
+export interface ContractLocation {
+  id: string;
+  name: string;
+  teams: Array<{ id: string; name: string }>;
+}
+
 export const listContractLocations = cache(
-  async function listContractLocations(): Promise<
-    Array<{ id: string; name: string }>
-  > {
+  async function listContractLocations(): Promise<ContractLocation[]> {
     return query('members.contract.create', async (db) =>
       db.location.findMany({
         where: { archivedAt: null },
-        select: { id: true, name: true },
+        select: {
+          id: true,
+          name: true,
+          teams: {
+            where: { archivedAt: null },
+            select: { id: true, name: true },
+            orderBy: { position: 'asc' },
+          },
+        },
         orderBy: { name: 'asc' },
       }),
     );

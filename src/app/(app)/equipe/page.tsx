@@ -6,7 +6,10 @@ import { DirectoryFilters } from '@/app/(app)/equipe/DirectoryFilters';
 import { PageBody, PageHeader } from '@/components/shell/PageHeader';
 import { Badge, type Tone } from '@/components/ui/Badge';
 import { Card, CardHeader, EmptyState } from '@/components/ui/Card';
-import { listEmployees } from '@/server/employees/queries';
+import {
+  listContractLocations,
+  listEmployees,
+} from '@/server/employees/queries';
 
 export const metadata = { title: 'Équipe · PlanFlow' };
 export const dynamic = 'force-dynamic';
@@ -45,6 +48,10 @@ export default async function EquipePage({
       : { presence: 'active' as const }),
     ...(one(params.tri) === 'number' ? { sort: 'number' as const } : {}),
   });
+
+  // Sans la capacité d'ouvrir un contrat, la liste revient vide et le
+  // formulaire s'en tient à l'identité.
+  const hiringLocations = await listContractLocations().catch(() => []);
 
   const filtered = directory.rows.length !== directory.total;
 
@@ -185,7 +192,7 @@ export default async function EquipePage({
       <Card>
         <CardHeader title="Ajouter un collaborateur" />
         <div className="p-4">
-          <AddEmployeeForm />
+          <AddEmployeeForm locations={hiringLocations} />
         </div>
       </Card>
     </PageBody>
