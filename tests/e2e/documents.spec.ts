@@ -31,11 +31,18 @@ async function createEmployee(page: Page, tag: string) {
   await form.getByLabel('Prénom').fill('Inès');
   await form.getByLabel('Nom', { exact: true }).fill(lastName);
   await form.getByLabel('Matricule').fill(`DOC${suffix}`);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await form.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await form.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(lastName) }).click();
   await expect(page.getByRole('heading', { name: new RegExp(lastName) })).toBeVisible();
+
+  // La fiche s'ouvre sur les informations personnelles : les pièces sont un
+  // onglet, et une route à part entière.
+  await page.goto(`${page.url()}/documents`);
   return { lastName, url: page.url() };
 }
 

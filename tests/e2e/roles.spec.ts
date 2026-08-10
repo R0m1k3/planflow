@@ -163,6 +163,9 @@ async function inviteWithRole(page: Page, roleLabel: string) {
   await create.getByLabel('Nom', { exact: true }).fill(lastName);
   await create.getByLabel('Matricule').fill(`ROL${suffix}`);
   await create.getByLabel('Adresse électronique').fill(email);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await create.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await create.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
@@ -177,6 +180,8 @@ async function inviteWithRole(page: Page, roleLabel: string) {
   const { assignRole } = await import('./support/db');
   await assignRole(membershipId, roleLabel);
 
+  // L'invitation est portée par l'onglet « Documents » de la fiche.
+  await page.goto(`/equipe/${membershipId}/documents`);
   await page
     .locator('form')
     .filter({ hasText: 'Adresse d’invitation' })

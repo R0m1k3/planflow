@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useActionState, useState, useTransition } from 'react';
 
 import { Button } from '@/components/ui/Button';
@@ -28,8 +29,12 @@ export function MfaSettings({
   enrolled: boolean;
   required: boolean;
 }) {
+  const router = useRouter();
   const [offer, setOffer] = useState<OfferState | null>(null);
   const [starting, startTransition] = useTransition();
+  // Les codes restent à l'écran tant que personne n'a dit les avoir notés : ce
+  // sont eux, et non l'horloge, qui décident du moment où l'on passe à la suite.
+  const [codesNoted, setCodesNoted] = useState(false);
 
   const [confirmState, confirm, confirming] = useActionState(
     confirmEnrolmentAction,
@@ -43,8 +48,22 @@ export function MfaSettings({
   const codes = confirmState.recoveryCodes;
   const active = (enrolled || confirmState.ok) && !disableState.ok;
 
-  if (codes && codes.length > 0) {
-    return <RecoveryCodes codes={codes} />;
+  if (codes && codes.length > 0 && !codesNoted) {
+    return (
+      <RecoveryCodes
+        codes={codes}
+        onNoted={() => {
+          setCodesNoted(true);
+          // Le layout applicatif décide de l'écran d'enrôlement au rendu, et un
+          // layout n'est pas rejoué par la navigation client : sans ce
+          // rafraîchissement, l'écran resterait posé sur toutes les pages, quel
+          // que soit le menu choisi. Il est déclenché ici, et non par l'action
+          // d'enrôlement, pour que les codes ne s'effacent pas avant d'avoir été
+          // notés.
+          router.refresh();
+        }}
+      />
+    );
   }
 
   if (active) {
@@ -193,7 +212,13 @@ export function MfaSettings({
  * Ils sont conservés hachés : ni le support ni un administrateur ne peuvent les
  * relire. La seule issue, ensuite, est d'en régénérer une série.
  */
-function RecoveryCodes({ codes }: { codes: string[] }) {
+function RecoveryCodes({
+  codes,
+  onNoted,
+}: {
+  codes: string[];
+  onNoted: () => void;
+}) {
   return (
     <div className="flex flex-col gap-3 p-4">
       <p className="text-sm text-ink-1">
@@ -214,6 +239,11 @@ function RecoveryCodes({ codes }: { codes: string[] }) {
         Affichés une seule fois : ils ne sont pas conservés en clair. Chacun ne
         sert qu’une fois.
       </p>
+      <div>
+        <Button variant="primary" onClick={onNoted}>
+          J’ai noté mes codes, continuer
+        </Button>
+      </div>
     </div>
   );
 }

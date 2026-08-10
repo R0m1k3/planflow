@@ -26,6 +26,9 @@ async function createEmployee(page: Page, tag: string) {
   await form.getByLabel('Nom', { exact: true }).fill(lastName);
   await form.getByLabel('Matricule').fill(`E2E${suffix}`);
   await form.getByLabel('Adresse électronique').fill(email);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await form.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await form.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
@@ -36,6 +39,10 @@ async function createEmployee(page: Page, tag: string) {
   await expect(
     page.getByRole('heading', { name: `${firstName} ${lastName}` }),
   ).toBeVisible();
+
+  // L'accès applicatif est porté par l'onglet « Documents », avec les pièces du
+  // dossier : la fiche s'ouvre ailleurs.
+  await page.goto(`${page.url()}/documents`);
 
   return { firstName, lastName, email, url: page.url() };
 }

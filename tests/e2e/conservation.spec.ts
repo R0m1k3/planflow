@@ -117,10 +117,14 @@ test('une pièce sans politique n’est jamais purgée', async ({ page }) => {
   await create.getByLabel('Prénom').fill('Garde');
   await create.getByLabel('Nom', { exact: true }).fill(`Garde${suffix}`);
   await create.getByLabel('Matricule').fill(`RET${suffix}`);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await create.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await create.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(`Garde${suffix}`) }).click();
+  await page.goto(`${page.url()}/documents`);
   const upload = page.locator('form').filter({ hasText: 'Déposer' });
   await upload.getByLabel('Catégorie').selectOption('OTHER');
   await upload
@@ -167,10 +171,14 @@ test('une pièce échue est effectivement effacée', async ({ page }) => {
   await create.getByLabel('Prénom').fill('Purge');
   await create.getByLabel('Nom', { exact: true }).fill(`Purge${suffix}`);
   await create.getByLabel('Matricule').fill(`PUR${suffix}`);
+  // Le formulaire propose d’ouvrir un contrat d’emblée : ce parcours n’en veut
+  // pas, et un salarié sans contrat doit rester créable.
+  await create.getByLabel('Ouvrir un contrat maintenant').uncheck();
   await create.getByRole('button', { name: 'Ajouter' }).click();
   await expect(page.getByText('Salarié ajouté.')).toBeVisible();
 
   await page.getByRole('link', { name: new RegExp(`Purge${suffix}`) }).click();
+  await page.goto(`${page.url()}/documents`);
   const dossier = page.url();
   const upload = page.locator('form').filter({ hasText: 'Déposer' });
   await upload.getByLabel('Catégorie').selectOption('REGISTER');
