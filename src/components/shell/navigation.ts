@@ -40,6 +40,21 @@ export const NAVIGATION: NavSection[] = [
         label: 'Compteurs de congés payés',
         href: '/absences/calendrier#compteurs',
       },
+      {
+        id: 'analyse-effectifs',
+        label: 'Analyse des effectifs',
+        href: '/rh/analyses/effectifs',
+      },
+      {
+        id: 'analyse-heures',
+        label: 'Analyse des heures',
+        href: '/rh/analyses/heures',
+      },
+      {
+        id: 'analyse-absences',
+        label: 'Analyse des absences',
+        href: '/rh/analyses/absences',
+      },
     ],
   },
   {
