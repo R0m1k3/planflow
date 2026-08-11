@@ -322,6 +322,142 @@ export async function getAbsenceBoard(month: Month): Promise<AbsenceBoard> {
   });
 }
 
+/**
+ * File d'absences filtrée par état — PLAN.md §9, écrans `/absences/*`.
+ *
+ * Les trois files partagent une requête plutôt qu'un écran chacune : la règle
+ * de masquage du motif médical vaut pour les trois, et la dupliquer trois fois
+ * garantirait qu'une des copies finisse par diverger. Une donnée de santé qui
+ * ne fuit que sur l'écran « traitées » reste une fuite.
+ */
+export type AbsenceQueue = 'pending' | 'treated' | 'expired';
+
+export interface QueueFilters {
+  /** Restreint à un type d'absence. */
+  typeId?: string;
+  /** `true` : uniquement les absences Sécurité sociale (filtre relevé à l'audit). */
+  socialSecurityOnly?: boolean;
+}
+
+export interface AbsenceQueueResult {
+  queue: AbsenceQueue;
+  rows: AbsenceRequest[];
+  absenceTypes: Array<{ id: string; code: string; name: string }>;
+  canDecide: boolean;
+  ownMembershipId: string;
+  /** Décomptes des trois files, pour les onglets. */
+  counts: Record<AbsenceQueue, number>;
+}
+
+const QUEUE_STATUSES: Record<
+  AbsenceQueue,
+  Array<AbsenceRequest['status']>
+> = {
+  pending: ['PENDING'],
+  treated: ['ACCEPTED', 'DECLINED', 'CANCELLED'],
+  expired: ['EXPIRED'],
+};
+
+export async function getAbsenceQueue(
+  queue: AbsenceQueue,
+  filters: QueueFilters = {},
+): Promise<AbsenceQueueResult> {
+  return query('timeoff.view_own', async (db, actor) => {
+    const canSeeOthers = can(actor, 'timeoff.view_others');
+    const canDecide = can(actor, 'timeoff.decide');
+    const canSeeMedical = can(actor, 'members.documents.view');
+
+    const scope = canSeeOthers ? {} : { membershipId: actor.membershipId };
+
+    const rows = await db.timeOff.findMany({
+      where: {
+        ...scope,
+        status: { in: QUEUE_STATUSES[queue] },
+        ...(filters.typeId ? { absenceTypeId: filters.typeId } : {}),
+        ...(filters.socialSecurityOnly
+          ? { absenceType: { isSocialSecurity: true } }
+          : {}),
+      },
+      include: { absenceType: true },
+      // La file à traiter se lit par ancienneté — la plus vieille demande est
+      // celle qui coûte le plus au salarié qui attend. Les files closes se
+      // lisent à l'envers : on y cherche ce qui vient d'être décidé.
+      orderBy:
+        queue === 'pending'
+          ? { requestedAt: 'asc' }
+          : { startDate: 'desc' },
+      take: 500,
+    });
+
+    const memberIds = [...new Set(rows.map((entry) => entry.membershipId))];
+    const members = await db.membership.findMany({
+      where: { id: { in: memberIds } },
+      include: { profile: { select: { firstName: true, lastName: true } } },
+    });
+    const nameById = new Map(
+      members.map((member) => [
+        member.id,
+        `${member.profile?.firstName ?? ''} ${member.profile?.lastName ?? member.employeeNumber}`.trim(),
+      ]),
+    );
+
+    const counts = await db.timeOff.groupBy({
+      by: ['status'],
+      where: scope,
+      _count: { _all: true },
+    });
+    const byStatus = new Map(
+      counts.map((row) => [row.status, row._count._all] as const),
+    );
+    const total = (queueKey: AbsenceQueue) =>
+      QUEUE_STATUSES[queueKey].reduce(
+        (sum, status) => sum + (byStatus.get(status) ?? 0),
+        0,
+      );
+
+    const absenceTypes = await db.absenceType.findMany({
+      where: { archivedAt: null },
+      select: { id: true, code: true, name: true },
+      orderBy: { code: 'asc' },
+    });
+
+    return {
+      queue,
+      rows: rows.map((entry) => ({
+        id: entry.id,
+        membershipId: entry.membershipId,
+        name: nameById.get(entry.membershipId) ?? 'Salarié',
+        typeLabel:
+          entry.absenceType.isSocialSecurity && !canSeeMedical
+            ? 'Absence'
+            : entry.absenceType.name,
+        colorKey: entry.absenceType.colorKey,
+        isSocialSecurity: entry.absenceType.isSocialSecurity,
+        startDate: entry.startDate.toISOString().slice(0, 10),
+        endDate: entry.endDate.toISOString().slice(0, 10),
+        startHalfDay: entry.startHalfDay,
+        endHalfDay: entry.endHalfDay,
+        days: Number(entry.countedDays?.toString() ?? '0'),
+        status: entry.status,
+        comment:
+          entry.absenceType.isSocialSecurity && !canSeeMedical
+            ? null
+            : entry.comment,
+        decisionComment: entry.decisionComment,
+        requestedAt: entry.requestedAt,
+      })),
+      absenceTypes,
+      canDecide,
+      ownMembershipId: actor.membershipId,
+      counts: {
+        pending: total('pending'),
+        treated: total('treated'),
+        expired: total('expired'),
+      },
+    };
+  });
+}
+
 /** Absences acceptées d'une période, pour la grille de planning. */
 export async function acceptedAbsencesBetween(
   membershipIds: string[],

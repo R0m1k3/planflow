@@ -52,7 +52,7 @@ test('une entrée de navigation non construite mène à un écran explicite', as
   page,
 }) => {
   // La barre latérale n'affiche que la section courante : on l'ouvre d'abord.
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
   // « Politiques de congés » fait partie du périmètre visé mais n'est pas
   // encore construit : l'entrée reste, et mène à un écran qui le dit.
   await page.getByRole('link', { name: 'Politiques de congés' }).click();

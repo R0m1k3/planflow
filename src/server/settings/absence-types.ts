@@ -231,7 +231,7 @@ export async function updateAbsenceTypeAction(
   }
 
   revalidatePath('/reglages/types-absence');
-  revalidatePath('/conges');
+  revalidatePath('/absences/calendrier');
   return { ok: true };
 }
 
@@ -262,5 +262,5 @@ export async function archiveAbsenceTypeAction(
   });
 
   revalidatePath('/reglages/types-absence');
-  revalidatePath('/conges');
+  revalidatePath('/absences/calendrier');
 }

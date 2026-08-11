@@ -32,9 +32,14 @@ export const NAVIGATION: NavSection[] = [
       { id: 'entrees', label: 'Entrées et sorties', href: '/?liste=entrees' },
       { id: 'profils', label: 'Profils incomplets', href: '/?liste=profils' },
       { id: 'titres', label: 'Titres de séjour', href: '/?liste=titres' },
-      // Ancre plutôt que route : `/conges` appartient à la section Congés, et
-      // deux entrées allumées pour un même écran rendent la navigation muette.
-      { id: 'soldes-cp', label: 'Compteurs de congés payés', href: '/conges#compteurs' },
+      // Ancre plutôt que route : le calendrier appartient à la section Congés,
+      // et deux entrées allumées pour un même écran rendent la navigation
+      // muette.
+      {
+        id: 'soldes-cp',
+        label: 'Compteurs de congés payés',
+        href: '/absences/calendrier#compteurs',
+      },
     ],
   },
   {
@@ -61,8 +66,14 @@ export const NAVIGATION: NavSection[] = [
     id: 'conges',
     label: 'Congés',
     items: [
-      { id: 'calendrier', label: 'Calendrier des absences', href: '/conges' },
-      { id: 'attente', label: 'Demandes en attente', href: '/conges#attente' },
+      {
+        id: 'calendrier',
+        label: 'Calendrier des absences',
+        href: '/absences/calendrier',
+      },
+      { id: 'attente', label: 'Demandes à traiter', href: '/absences/a-traiter' },
+      { id: 'traitees', label: 'Traitées', href: '/absences/traitees' },
+      { id: 'expirees', label: 'Expirées', href: '/absences/expirees' },
       { id: 'politiques', label: 'Politiques de congés' },
     ],
   },

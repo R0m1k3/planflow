@@ -21,7 +21,9 @@ describe('matches', () => {
   });
 
   it('écarte les liens d’ancre', () => {
-    expect(matches('/conges#attente', '/conges')).toBe(false);
+    expect(
+      matches('/absences/calendrier#compteurs', '/absences/calendrier'),
+    ).toBe(false);
   });
 });
 
@@ -61,7 +63,8 @@ describe('sectionForPath', () => {
   it('trouve la section portant la route courante', () => {
     expect(sectionForPath('/planning/semaine').id).toBe('plannings');
     expect(sectionForPath('/equipe/camille-ferrand').id).toBe('equipe');
-    expect(sectionForPath('/conges').id).toBe('conges');
+    expect(sectionForPath('/absences/calendrier').id).toBe('conges');
+    expect(sectionForPath('/absences/a-traiter').id).toBe('conges');
   });
 
   it('retombe sur la première section pour une route inconnue', () => {
