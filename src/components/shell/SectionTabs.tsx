@@ -34,10 +34,14 @@ export function SectionTabs({
   if (section.items.length === 0) return null;
 
   return (
+    // Les onglets **passent à la ligne**, ils ne défilent pas. Une barre de
+    // défilement horizontale cache la moitié des entrées derrière un geste que
+    // rien n'annonce : on ne sait pas ce qu'on ne voit pas. Deux rangées
+    // prennent seize pixels de plus et montrent tout.
     <nav
       aria-label={`Section ${section.label}`}
       data-print="hide"
-      className="flex gap-1 overflow-x-auto rounded-3 border border-line-1 bg-surface p-1.5"
+      className="flex flex-wrap gap-1 rounded-3 border border-line-1 bg-surface p-1.5"
     >
       {section.items.map((item) => {
         const current = item.href ? isActive(item.href, pathname) : false;

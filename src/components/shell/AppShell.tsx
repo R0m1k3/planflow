@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { SectionTabs } from '@/components/shell/SectionTabs';
+import { SettingsRail } from '@/components/shell/SettingsRail';
 import { ThemeToggle } from '@/components/shell/ThemeToggle';
 import { Button } from '@/components/ui/Button';
 import { cx } from '@/lib/cx';
@@ -32,6 +33,7 @@ export function AppShell({
 }: AppShellProps) {
   const pathname = usePathname();
   const section = sectionForPath(pathname);
+  const isSettings = section.id === 'reglages';
 
   return (
     <div className="flex min-h-dvh flex-col bg-canvas text-ink-1">
@@ -127,11 +129,32 @@ export function AppShell({
       */}
       <main className="min-h-0 flex-1 overflow-auto">
         <div className="mx-auto flex min-h-full w-[1280px] flex-col">
-          <div className="px-6 pt-5">
-            <SectionTabs section={section} pathname={pathname} />
-          </div>
+          {/*
+            Deux navigations de section, pour deux usages.
 
-          {children}
+            Partout, des onglets : la section tient en quelques entrées et le
+            contenu garde toute la largeur. Aux réglages, un rail vertical : une
+            vingtaine d'entrées en onglets prendraient trois rangées au-dessus de
+            chaque écran, et changeraient de forme d'une page à l'autre selon la
+            longueur des libellés. On traverse les réglages, on ne fait pas
+            d'aller-retour entre eux pendant qu'on travaille.
+          */}
+          {isSettings ? (
+            // Le rail porte la marge gauche ; le contenu garde la sienne, celle
+            // de `PageBody`. Les additionner ferait dériver la colonne des
+            // réglages par rapport à toutes les autres pages.
+            <div className="flex min-h-full flex-1 gap-2 pl-6">
+              <SettingsRail section={section} pathname={pathname} />
+              <div className="min-w-0 flex-1">{children}</div>
+            </div>
+          ) : (
+            <>
+              <div className="px-6 pt-6">
+                <SectionTabs section={section} pathname={pathname} />
+              </div>
+              {children}
+            </>
+          )}
 
           <p
             data-print="hide"
