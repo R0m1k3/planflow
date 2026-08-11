@@ -95,7 +95,11 @@ export const NAVIGATION: NavSection[] = [
       { id: 'attente', label: 'Demandes à traiter', href: '/absences/a-traiter' },
       { id: 'traitees', label: 'Traitées', href: '/absences/traitees' },
       { id: 'expirees', label: 'Expirées', href: '/absences/expirees' },
-      { id: 'politiques', label: 'Politiques de congés' },
+      {
+        id: 'politiques',
+        label: 'Politiques de RTT',
+        href: '/reglages/politiques-rtt',
+      },
     ],
   },
   {
