@@ -23,7 +23,7 @@ test('un manager ne peut ni voir ni modifier les établissements', async ({
 }) => {
   await signIn(page, 'manager.nantes@example.test');
 
-  // La barre latérale ne propose pas la section, mais c'est un confort :
+  // Les onglets ne proposent pas la section, mais c'est un confort :
   // le contrôle qui compte est celui du serveur, testé en accédant à l'URL.
   await page.goto('/reglages/etablissements');
 

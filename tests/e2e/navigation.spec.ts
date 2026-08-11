@@ -51,7 +51,8 @@ test('le thème bascule et survit à un rechargement', async ({ page }) => {
 test('une entrée de navigation non construite mène à un écran explicite', async ({
   page,
 }) => {
-  // La barre latérale n'affiche que la section courante : on l'ouvre d'abord.
+  // Les onglets n'affichent que les entrées de la section courante : on
+  // l'ouvre d'abord.
   await page.goto('/absences/calendrier');
   // « Politiques de congés » fait partie du périmètre visé mais n'est pas
   // encore construit : l'entrée reste, et mène à un écran qui le dit.

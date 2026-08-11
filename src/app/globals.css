@@ -411,6 +411,13 @@ body {
     min-width: 0 !important;
   }
 
+  /* La colonne centrale est de largeur fixe à l'écran — c'est ce qui rend la
+     grille reconnaissable d'un poste à l'autre. Sur une feuille, cette largeur
+     n'a plus de sens et déborderait de la page. */
+  .w-\[1280px\] {
+    width: auto !important;
+  }
+
   [data-print='hide'],
   nav,
   aside {

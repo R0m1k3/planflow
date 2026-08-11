@@ -12,7 +12,7 @@ test('chaque tuile mène à ses lignes sources', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Aperçu RH' })).toBeVisible();
 
   // Les tuiles sont des liens, pas des chiffres décoratifs. On vise celle du
-  // contenu, pas l'entrée homonyme de la barre latérale.
+  // contenu, pas l'onglet de section homonyme.
   const tile = page
     .locator('main')
     .getByRole('link', { name: /Profils incomplets/ })
