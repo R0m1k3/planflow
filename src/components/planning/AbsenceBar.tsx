@@ -1,6 +1,15 @@
+import type { AbsenceColorKey } from '@/domain/absences/colors';
 import { cx } from '@/lib/cx';
 
-export type AbsenceKind = 'cp' | 'rtt' | 'maladie' | 'sans-solde' | 'attente';
+/**
+ * Familles d'absence, pour la teinte de la barre — voir
+ * `src/domain/absences/colors.ts`.
+ *
+ * Le repli est `sans-solde`, gris, et c'est délibérément le plus terne : une
+ * teinte inconnue doit se remarquer comme une configuration incomplète, pas se
+ * fondre dans les congés payés.
+ */
+export type AbsenceKind = AbsenceColorKey;
 
 const KINDS: Record<AbsenceKind, { bg: string; ink: string; edge: string }> = {
   cp: {
@@ -17,6 +26,28 @@ const KINDS: Record<AbsenceKind, { bg: string; ink: string; edge: string }> = {
     bg: 'var(--color-surface-3)',
     ink: 'var(--color-ink-2)',
     edge: 'var(--color-line-3)',
+  },
+  famille: {
+    bg: 'var(--post-rss-bg)',
+    ink: 'var(--post-rss-fg)',
+    edge: 'var(--post-rss-edge)',
+  },
+  formation: {
+    bg: 'var(--post-for-bg)',
+    ink: 'var(--post-for-fg)',
+    edge: 'var(--post-for-edge)',
+  },
+  ferie: {
+    bg: 'var(--post-enc-bg)',
+    ink: 'var(--post-enc-fg)',
+    edge: 'var(--post-enc-edge)',
+  },
+  // Une sanction se distingue d'une absence ordinaire : elle est subie, elle se
+  // conteste, et elle ne se lit pas comme un congé.
+  sanction: {
+    bg: 'var(--color-danger-soft)',
+    ink: 'var(--color-danger-soft-ink)',
+    edge: 'var(--color-danger)',
   },
   'sans-solde': {
     bg: 'var(--color-surface-2)',

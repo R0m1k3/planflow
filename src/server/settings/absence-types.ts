@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { AuthorizationError } from '@/domain/access/authorize';
+import { isAbsenceColorKey } from '@/domain/absences/colors';
 import { recordAudit } from '@/server/audit';
 import { mutate, query } from '@/server/context';
 
@@ -112,7 +113,7 @@ const createInput = z.object({
     .max(20)
     .regex(/^[A-Za-z0-9_-]+$/, 'Lettres, chiffres, tirets et soulignés'),
   name: z.string().trim().min(1, 'Nom requis').max(120),
-  colorKey: z.string().trim().min(1).max(40),
+  colorKey: z.string().refine(isAbsenceColorKey, 'Famille de couleur inconnue'),
   ...flags,
 });
 
@@ -120,7 +121,7 @@ function readForm(formData: FormData) {
   return {
     code: formData.get('code'),
     name: formData.get('name'),
-    colorKey: formData.get('colorKey') || 'neutral',
+    colorKey: formData.get('colorKey') || 'sans-solde',
     isPaid: formData.get('isPaid') === 'on',
     countsAsWorkTime: formData.get('countsAsWorkTime') === 'on',
     affectsPaidLeaveAccrual: formData.get('affectsPaidLeaveAccrual') === 'on',
@@ -179,7 +180,7 @@ export async function createAbsenceTypeAction(
 const updateInput = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1, 'Nom requis').max(120),
-  colorKey: z.string().trim().min(1).max(40),
+  colorKey: z.string().refine(isAbsenceColorKey, 'Famille de couleur inconnue'),
   ...flags,
 });
 

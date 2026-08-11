@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 
 import { Field, FormError, SubmitButton } from '@/components/ui/Form';
+import { ABSENCE_COLORS } from '@/domain/absences/colors';
 import { PersistentForm } from '@/components/ui/PersistentForm';
 import {
   createAbsenceTypeAction,
@@ -77,13 +78,24 @@ function SharedFields({ row }: { row?: AbsenceTypeRow }) {
         defaultValue={row?.name}
         placeholder="Congé payé"
       />
-      <Field
-        label="Clé de couleur"
-        name="colorKey"
-        required
-        maxLength={40}
-        defaultValue={row?.colorKey ?? 'neutral'}
-      />
+      <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="text-sm font-medium">Famille de couleur</span>
+        <select
+          name="colorKey"
+          defaultValue={row?.colorKey ?? 'sans-solde'}
+          className="h-9 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+        >
+          {ABSENCE_COLORS.map((color) => (
+            <option key={color.key} value={color.key}>
+              {color.label}
+            </option>
+          ))}
+        </select>
+        <span className="text-micro text-ink-3">
+          La teinte groupe, le libellé précise. Une couleur par type rendrait la
+          grille illisible bien avant le vingtième.
+        </span>
+      </label>
       <Field
         label="Délai de prévenance"
         name="minNoticeDays"

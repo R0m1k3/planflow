@@ -1,6 +1,7 @@
 import { AbsenceBar, type AbsenceKind } from '@/components/planning/AbsenceBar';
 import { CounterStrip } from '@/components/planning/CounterStrip';
 import { ShiftChip } from '@/components/planning/ShiftChip';
+import { isAbsenceColorKey } from '@/domain/absences/colors';
 import { computeWeekCounters } from '@/domain/counters/week';
 import {
   displayName,
@@ -246,8 +247,5 @@ function Row({
  * repli neutre : une teinte inconnue vaut mieux affichée en gris qu'absente.
  */
 function absenceKind(colorKey: string): AbsenceKind {
-  const known: AbsenceKind[] = ['cp', 'rtt', 'maladie', 'sans-solde', 'attente'];
-  return known.includes(colorKey as AbsenceKind)
-    ? (colorKey as AbsenceKind)
-    : 'sans-solde';
+  return isAbsenceColorKey(colorKey) ? colorKey : 'sans-solde';
 }

@@ -45,16 +45,64 @@ const RETENTION: ReadonlyArray<
 /**
  * Types d'absence d'amorce.
  *
+ * Liste relevée sur le sélecteur du produit audité, recoupée avec les rubriques
+ * du dossier de paie. Elle couvre ce qu'un commerce de détail rencontre
+ * réellement — un « congé sans solde » et un « congé payé » ne suffisent pas à
+ * tenir un registre.
+ *
+ * **Les codes sont internes et stables.** Ils ne sont montrés nulle part et ne
+ * correspondent à aucune nomenclature externe : ils servent à référencer un
+ * type sans dépendre de son libellé, qui se renomme.
+ *
  * `silaeCode` reste **nul** : la correspondance entre un type et une rubrique
  * de paie appartient au dossier du client. La renseigner ici imputerait des
  * congés à la rubrique d'un autre cabinet.
+ *
+ * `À VALIDER` — les drapeaux sont des valeurs d'amorce. `isSocialSecurity` suit
+ * la nature de l'arrêt et ne se discute pas ; l'acquisition de congés pendant
+ * une absence, en revanche, dépend de la convention et se règle depuis
+ * `/reglages/types-absence`.
+ *
+ * « Repos hebdomadaire » figure au sélecteur du produit audité et **pas ici** :
+ * c'est un repos légal, porté par le modèle `Rest`, pas une absence qui se
+ * demande. En faire un type d'absence laisserait un manager refuser une
+ * obligation.
  */
 const ABSENCE_TYPES = [
-  { code: 'CP', name: 'Congés payés', colorKey: 'cp', isPaid: true, social: false, notice: 30 },
-  { code: 'RTT', name: 'RTT', colorKey: 'rtt', isPaid: true, social: false, notice: 7 },
-  { code: 'MAL', name: 'Arrêt maladie', colorKey: 'maladie', isPaid: false, social: true, notice: null },
-  { code: 'SS', name: 'Congé sans solde', colorKey: 'sans-solde', isPaid: false, social: false, notice: 15 },
-  { code: 'RC', name: 'Repos compensateur', colorKey: 'rtt', isPaid: true, social: false, notice: 7 },
+  // --- Congés et repos ----------------------------------------------------
+  { code: 'CP', name: 'Congé payé', colorKey: 'cp', isPaid: true, social: false, notice: 30, accrual: true, justify: false },
+  { code: 'RTT', name: 'RTT', colorKey: 'rtt', isPaid: true, social: false, notice: 7, accrual: true, justify: false },
+  { code: 'RC', name: 'Repos compensateur', colorKey: 'rtt', isPaid: true, social: false, notice: 7, accrual: true, justify: false },
+  { code: 'RC_NUIT', name: 'Repos compensateur de nuit', colorKey: 'rtt', isPaid: true, social: false, notice: 7, accrual: true, justify: false },
+  { code: 'RC_HAB', name: "Repos compensateur d'habillement", colorKey: 'rtt', isPaid: true, social: false, notice: 7, accrual: true, justify: false },
+  { code: 'RECUP_JF', name: 'Récupération jour férié', colorKey: 'rtt', isPaid: true, social: false, notice: 7, accrual: true, justify: false },
+  { code: 'JF', name: 'Jour férié', colorKey: 'ferie', isPaid: true, social: false, notice: null, accrual: true, justify: false },
+  { code: 'CSS', name: 'Congé sans solde', colorKey: 'sans-solde', isPaid: false, social: false, notice: 15, accrual: false, justify: false },
+
+  // --- Santé et accidents — catégories particulières -----------------------
+  { code: 'MAL', name: 'Arrêt maladie', colorKey: 'maladie', isPaid: false, social: true, notice: null, accrual: false, justify: true },
+  { code: 'MP', name: 'Maladie professionnelle', colorKey: 'maladie', isPaid: false, social: true, notice: null, accrual: true, justify: true },
+  { code: 'AT', name: 'Accident du travail', colorKey: 'maladie', isPaid: false, social: true, notice: null, accrual: true, justify: true },
+  { code: 'AT_TRAJET', name: 'Accident de trajet', colorKey: 'maladie', isPaid: false, social: true, notice: null, accrual: true, justify: true },
+  { code: 'VM', name: 'Visite médicale', colorKey: 'maladie', isPaid: true, social: false, notice: null, accrual: true, justify: true },
+
+  // --- Famille -------------------------------------------------------------
+  { code: 'MAT', name: 'Congé maternité', colorKey: 'famille', isPaid: false, social: true, notice: null, accrual: true, justify: true },
+  { code: 'PAT', name: 'Congé paternité', colorKey: 'famille', isPaid: false, social: true, notice: null, accrual: true, justify: true },
+  { code: 'PAR', name: 'Congé parental', colorKey: 'famille', isPaid: false, social: false, notice: 30, accrual: false, justify: true },
+  { code: 'NAISS', name: 'Congé supplémentaire de naissance', colorKey: 'famille', isPaid: true, social: false, notice: null, accrual: true, justify: true },
+  { code: 'EVT_FAM', name: 'Évènement familial', colorKey: 'famille', isPaid: true, social: false, notice: null, accrual: true, justify: true },
+
+  // --- Formation et obligations -------------------------------------------
+  { code: 'FORM', name: 'Formation', colorKey: 'formation', isPaid: true, social: false, notice: 15, accrual: true, justify: false },
+  { code: 'EXAM', name: 'Congé pour examen', colorKey: 'formation', isPaid: true, social: false, notice: 15, accrual: true, justify: true },
+
+  // --- Absences non planifiées et sanctions -------------------------------
+  { code: 'ABS_JUS', name: 'Absence justifiée', colorKey: 'sans-solde', isPaid: false, social: false, notice: null, accrual: false, justify: true },
+  { code: 'ABS_INJ', name: 'Absence injustifiée', colorKey: 'sans-solde', isPaid: false, social: false, notice: null, accrual: false, justify: false },
+  { code: 'INDISPO', name: 'Indisponibilité ponctuelle', colorKey: 'sans-solde', isPaid: false, social: false, notice: null, accrual: false, justify: false },
+  { code: 'MAP_D', name: 'Mise à pied disciplinaire', colorKey: 'sanction', isPaid: false, social: false, notice: null, accrual: false, justify: true },
+  { code: 'MAP_C', name: 'Mise à pied conservatoire', colorKey: 'sanction', isPaid: false, social: false, notice: null, accrual: false, justify: true },
 ] as const;
 
 export async function installReferentials(
@@ -87,9 +135,9 @@ export async function installReferentials(
         colorKey: type.colorKey,
         isPaid: type.isPaid,
         countsAsWorkTime: false,
-        affectsPaidLeaveAccrual: !type.social,
+        affectsPaidLeaveAccrual: type.accrual,
         isSocialSecurity: type.social,
-        requiresJustification: type.social,
+        requiresJustification: type.justify,
         minNoticeDays: type.notice,
       },
     });
