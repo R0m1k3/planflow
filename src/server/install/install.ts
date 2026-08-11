@@ -13,19 +13,21 @@ import {
   type InstallationForm,
 } from '@/domain/install/rules';
 import { hashPassword } from '@/server/auth/session';
+import { installReferentials } from '@/server/install/referentials';
 
 /**
  * Contenu d'une instance neuve — PLAN.md §5.
  *
- * Le seed, lui, installe une démonstration : deux établissements, des salariés
- * fictifs, quatre semaines de planning. Il refuse de tourner en production, et
- * c'est bien ainsi. Il restait donc un trou : après les migrations, une
- * instance de production a le schéma et rien d'autre — pas de compte, pas
- * d'utilisateur, personne pour se connecter.
+ * Le seed, lui, installe une démonstration : des salariés fictifs, des
+ * plannings, des absences. Il refuse de tourner en production, et c'est bien
+ * ainsi. Il restait donc un trou : après les migrations, une instance de
+ * production a le schéma et rien d'autre — pas de compte, pas d'utilisateur,
+ * personne pour se connecter.
  *
- * Ce module comble ce trou, et **rien de plus** : le catalogue des capacités,
- * les rôles fournis, un compte, un établissement, un propriétaire. Aucune
- * donnée d'exemple.
+ * Ce module comble ce trou : catalogue des capacités, rôles fournis, compte,
+ * établissement, propriétaire, puis les **référentiels** sans lesquels rien ne
+ * s'accroche (voir `referentials.ts`). Aucune donnée d'exemple : pas un
+ * salarié, pas un créneau, pas une absence.
  */
 
 export interface InstalledInstance {
@@ -105,13 +107,19 @@ export async function installAccount(
     });
   }
 
-  await tx.location.create({
+  const location = await tx.location.create({
     data: {
       accountId: account.id,
       name: data.locationName,
       timezone: data.timezone,
     },
   });
+
+  // Étiquettes, types d'absence, convention d'amorce, conservation et jours
+  // fériés. Ce ne sont pas des exemples : sans eux, l'instance a le schéma et
+  // rien à quoi l'accrocher — pas de demande d'absence saisissable, pas de
+  // créneau nommé, et un moteur de règles muet.
+  await installReferentials(tx, account.id, location.id);
 
   const user = await tx.user.create({
     data: {

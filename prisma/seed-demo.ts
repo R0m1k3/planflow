@@ -31,11 +31,20 @@ import { evaluateSchedule } from '../src/server/compliance/evaluate';
 import { withTenant } from '../src/server/tenant';
 
 /**
- * Jeu de données de départ — PLAN.md §11.
+ * Jeu de démonstration — PLAN.md §11.
  *
- * **Entièrement fictif.** Deux établissements, des équipes, et les rôles
- * fournis. Le mot de passe de démonstration n'a de sens qu'en développement ;
- * il est refusé si NODE_ENV vaut production.
+ * **Entièrement fictif, et réservé aux tests.** Deux établissements, des
+ * salariés inventés, quatre semaines de planning, des absences. Il sert au
+ * harnais Playwright et à qui veut voir l'application peuplée ; il n'a rien à
+ * faire sur une instance de travail, fût-elle de développement — des noms
+ * inventés dans un annuaire réel se confondent avec de vrais salariés.
+ *
+ * Une instance neuve ne passe donc **plus** par ce fichier : l'écran de
+ * première installation pose le compte, le propriétaire et les référentiels
+ * (`src/server/install/referentials.ts`). Il n'y a rien à semer pour démarrer.
+ *
+ * Le mot de passe de démonstration n'a de sens qu'en développement ; il est
+ * refusé si NODE_ENV vaut production.
  */
 
 const DEMO_PASSWORD = 'planflow-demo-2026';

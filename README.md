@@ -104,9 +104,11 @@ docker compose restart app
 
 ### Première installation
 
-Les migrations posent le schéma, rien de plus : une instance neuve n'a **aucun compte et aucun utilisateur**. Le jeu de données de démonstration (`pnpm db:seed`) n'y remédie pas et refuse de tourner en production, à raison — personne ne veut de « Maison Rivage » et de salariés fictifs dans son registre du personnel.
+Les migrations posent le schéma, rien de plus : une instance neuve n'a **aucun compte et aucun utilisateur**. Il n'y a rien à semer pour démarrer — et surtout pas le jeu de démonstration (`pnpm db:seed:demo`), réservé au harnais de tests : des salariés inventés dans un annuaire réel se confondent avec de vrais salariés, et il refuse de toute façon de tourner en production.
 
 À la place, la première visite est redirigée vers `/installation`. L'écran demande le nom de l'entreprise, un premier établissement avec son fuseau horaire, et le compte qui administrera l'instance. Il crée le compte, le catalogue des capacités, les cinq rôles fournis, et vous connecte.
+
+Il pose aussi les **référentiels** sans lesquels rien ne s'accroche : les douze étiquettes de planning, cinq types d'absence, la convention d'amorce IDCC 1517 avec l'origine de chacun de ses paramètres, les durées de conservation et les jours fériés des deux prochaines années. Ce ne sont pas des exemples mais des minima : sans type d'absence aucune demande n'est saisissable, et sans convention le moteur de règles laisse passer une semaine de soixante heures sans rien dire. Tout se modifie ensuite depuis les réglages — la convention notamment, qui se réédite en version datée.
 
 Deux choses à savoir :
 

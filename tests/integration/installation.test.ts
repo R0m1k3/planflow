@@ -122,6 +122,37 @@ describeIfDb('première installation', () => {
     );
   });
 
+  it('pose les référentiels sans lesquels rien ne s’accroche', async () => {
+    // Une instance installée doit être utilisable, pas seulement peuplée d'un
+    // compte. Sans type d'absence aucune demande n'est saisissable ; sans
+    // convention, le moteur de règles laisse passer une semaine de soixante
+    // heures sans rien dire.
+    await installThenRollback(form(), async (tx, instance) => {
+      const where = { accountId: instance.accountId };
+
+      expect(await tx.label.count({ where })).toBeGreaterThan(0);
+      expect(await tx.absenceType.count({ where })).toBeGreaterThan(0);
+      expect(await tx.collectiveAgreement.count({ where })).toBe(1);
+      expect(await tx.retentionPolicy.count({ where })).toBeGreaterThan(0);
+      expect(await tx.holiday.count({ where })).toBeGreaterThan(0);
+
+      // Aucune donnée d'exemple en revanche : le propriétaire est le seul
+      // salarié, et il n'a ni planning ni absence.
+      expect(await tx.membership.count({ where })).toBe(1);
+      expect(await tx.shift.count({ where })).toBe(0);
+      expect(await tx.timeOff.count({ where })).toBe(0);
+
+      // Le dimanche du maire s'autorise par arrêté municipal : en poser un
+      // rendrait opposable un quota que personne n'a accordé.
+      expect(await tx.authorisedSunday.count({ where })).toBe(0);
+
+      // Le code Silae d'un type d'absence appartient au dossier du client :
+      // l'inventer imputerait des congés à la rubrique d'un autre cabinet.
+      const types = await tx.absenceType.findMany({ where });
+      expect(types.every((type) => type.silaeCode === null)).toBe(true);
+    });
+  });
+
   it('rattache le propriétaire à tous les établissements', async () => {
     await installThenRollback(form(), async (tx, instance) => {
       const membership = await tx.membership.findUniqueOrThrow({
