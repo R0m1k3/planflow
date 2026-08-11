@@ -12,6 +12,13 @@ import {
   maritalStatusLabel,
 } from '@/domain/hr/civil-status';
 import {
+  COUNTRY_OPTIONS,
+  NATIONALITY_OPTIONS,
+  countryLabel,
+  nationalityLabel,
+} from '@/domain/legal/countries';
+import { DEPARTMENTS, departmentLabel } from '@/domain/legal/departments';
+import {
   updateProfileAction,
   updateSensitiveAction,
   type ProfileActionState,
@@ -153,22 +160,31 @@ export function PersonalInfoPanel({
                   defaultValue={profile.birthName}
                 />
                 <Field label="Nom de famille" name="lastName" required defaultValue={profile.lastName} />
-                <Field label="Nationalité" name="nationality" defaultValue={profile.nationality} />
+                <Select
+                  label="Nationalité"
+                  name="nationality"
+                  defaultValue={profile.nationality}
+                  options={NATIONALITY_OPTIONS}
+                />
                 <Field
                   label="Date de naissance"
                   name="birthDate"
                   type="date"
                   defaultValue={profile.birthDate}
                 />
-                <Field
+                <Select
                   label="Pays de naissance"
                   name="birthCountry"
                   defaultValue={profile.birthCountry}
+                  options={COUNTRY_OPTIONS}
                 />
-                <Field
+                {/* Renseigné pour une naissance en France ; laissé vide
+                    ailleurs, où la notion n'existe pas. */}
+                <Select
                   label="Département de naissance"
                   name="birthDepartment"
                   defaultValue={profile.birthDepartment}
+                  options={DEPARTMENTS}
                 />
                 <Field
                   label="Commune de naissance"
@@ -226,7 +242,12 @@ export function PersonalInfoPanel({
                   <Field label="Code postal" name="postalCode" defaultValue={profile.postalCode} />
                   <Field label="Ville" name="city" defaultValue={profile.city} />
                 </div>
-                <Field label="Pays" name="country" defaultValue={profile.country} />
+                <Select
+                  label="Pays"
+                  name="country"
+                  defaultValue={profile.country}
+                  options={COUNTRY_OPTIONS}
+                />
               </div>
             </InfoCard>
 
@@ -267,10 +288,13 @@ export function PersonalInfoPanel({
               <InfoRow label="Prénom" value={profile.firstName} />
               <InfoRow label="Nom de naissance" value={profile.birthName} />
               <InfoRow label="Nom de famille" value={profile.lastName} />
-              <InfoRow label="Nationalité" value={profile.nationality} />
+              <InfoRow label="Nationalité" value={nationalityLabel(profile.nationality || null)} />
               <InfoRow label="Date de naissance" value={readableDate(profile.birthDate)} tnum />
-              <InfoRow label="Pays de naissance" value={profile.birthCountry} />
-              <InfoRow label="Département de naissance" value={profile.birthDepartment} />
+              <InfoRow label="Pays de naissance" value={countryLabel(profile.birthCountry || null)} />
+              <InfoRow
+                label="Département de naissance"
+                value={departmentLabel(profile.birthDepartment || null)}
+              />
               <InfoRow label="Commune de naissance" value={profile.birthPlace} />
               <InfoRow
                 label="Situation familiale"
@@ -295,7 +319,7 @@ export function PersonalInfoPanel({
               <InfoRow label="Complément d’adresse" value={profile.addressLine2} />
               <InfoRow label="Code postal" value={profile.postalCode} tnum />
               <InfoRow label="Ville" value={profile.city} />
-              <InfoRow label="Pays" value={profile.country} />
+              <InfoRow label="Pays" value={countryLabel(profile.country || null)} />
             </InfoCard>
 
             <InfoCard title="Contact d’urgence">

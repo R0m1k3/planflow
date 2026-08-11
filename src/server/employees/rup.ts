@@ -2,6 +2,8 @@ import 'server-only';
 
 import { cache } from 'react';
 
+import { nationalityLabel } from '@/domain/legal/countries';
+
 import { genderShort } from '@/domain/hr/civil-status';
 import type { RupPerson } from '@/domain/legal/rup';
 import { peopleWithGaps } from '@/domain/legal/rup';
@@ -82,7 +84,9 @@ export const getRegisterData = cache(async function getRegisterData(
         '',
       firstName: contract.membership.profile?.firstName ?? '',
       sex: genderShort(contract.membership.profile?.gender ?? null),
-      nationality: contract.membership.profile?.nationality ?? null,
+      nationality: nationalityLabel(
+        contract.membership.profile?.nationality ?? null,
+      ),
       birthDate: contract.membership.profile?.birthDate ?? null,
       jobTitle: contract.jobTitleId
         ? (jobTitleNames.get(contract.jobTitleId) ?? null)
@@ -152,7 +156,9 @@ export const listRegisterLocations = cache(
               '',
             firstName: contract.membership.profile?.firstName ?? '',
             sex: genderShort(contract.membership.profile?.gender ?? null),
-            nationality: contract.membership.profile?.nationality ?? null,
+            nationality: nationalityLabel(
+        contract.membership.profile?.nationality ?? null,
+      ),
             birthDate: contract.membership.profile?.birthDate ?? null,
             jobTitle: contract.jobTitleId ? 'x' : null,
             qualification: contract.classification,

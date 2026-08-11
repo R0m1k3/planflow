@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
 import { AuthorizationError, can } from '@/domain/access/authorize';
+import { COUNTRIES } from '@/domain/legal/countries';
+import { DEPARTMENT_CODES } from '@/domain/legal/departments';
 import { recordAudit } from '@/server/audit';
 import { mutate } from '@/server/context';
 import { encryptOptional } from '@/server/crypto';
@@ -44,6 +46,8 @@ const optionalEnum = <T extends readonly string[]>(values: T) =>
     )
     .transform((value) => (value === '' ? null : value));
 
+const COUNTRY_CODES = COUNTRIES.map((country) => country.code);
+
 const profileInput = z.object({
   membershipId: z.string().min(1),
   gender: optionalEnum(['FEMALE', 'MALE', 'UNSPECIFIED'] as const),
@@ -52,9 +56,14 @@ const profileInput = z.object({
   lastName: z.string().trim().min(1, 'Nom requis').max(80),
   birthDate: optionalText(10),
   birthPlace: optionalText(120),
-  birthCountry: optionalText(80),
-  birthDepartment: optionalText(80),
-  nationality: optionalText(80),
+  // Codes de liste fermée, pas des libellés. Un dossier saisi avant la liste
+  // porte encore « France » en clair : le sélecteur ne trouve pas d'option
+  // correspondante, affiche « non renseigné », et la première correction du
+  // dossier remplace la valeur par son code. Elle n'est ni perdue en silence
+  // ni opposée à qui vient corriger un champ voisin.
+  birthCountry: optionalEnum(COUNTRY_CODES),
+  birthDepartment: optionalEnum(DEPARTMENT_CODES),
+  nationality: optionalEnum(COUNTRY_CODES),
   maritalStatus: optionalEnum([
     'SINGLE',
     'MARRIED',
@@ -87,7 +96,7 @@ const profileInput = z.object({
   addressLine2: optionalText(180),
   postalCode: optionalText(12),
   city: optionalText(120),
-  country: optionalText(80),
+  country: optionalEnum(COUNTRY_CODES),
   emergencyContactName: optionalText(120),
   emergencyContactPhone: optionalText(30),
 });
