@@ -19,6 +19,14 @@ model Account {
   name                  String
   siren                 String?
   apeCode               String?
+  /// Siège social. Il figure sur les documents édités et au registre unique du
+  /// personnel ; il n'est pas déduit de l'établissement, qui peut être ailleurs.
+  addressLine           String?
+  postalCode            String?
+  city                  String?
+  country               String   @default("FR")
+  /// Fuseau du compte. Un établissement peut le surcharger (Location.timezone).
+  timezone              String   @default("Europe/Paris")
   collectiveAgreementId String?
   /// Surcharges d'accord d'entreprise (PLAN.md §6.3). Vide aujourd'hui :
   /// l'organisation auditée n'a pas d'accord d'entreprise.
@@ -37,6 +45,69 @@ model Account {
   documentTemplates DocumentTemplate[]
   legalConfig LegalConfigEntry[]
   installation Installation?
+  preferences AccountPreferences?
+}
+
+/// Préférences du compte — PLAN.md §9, réglages « préférences » et « paie ».
+///
+/// Trois blocs typés plutôt qu'un sac de clés-valeurs. Ce n'est pas de la
+/// rigueur pour la rigueur : `smoothOvertimeMonthly` change le **calcul** des
+/// heures supplémentaires, et un réglage qui change un calcul doit être lisible
+/// dans le schéma, migrable, et impossible à renseigner de travers. Un JSON
+/// libre rendrait indétectable une clé mal orthographiée — la préférence
+/// paraîtrait active et ne le serait pas.
+///
+/// Une ligne par compte, créée à la demande : l'absence de ligne vaut « tous
+/// les défauts », et les défauts sont ceux du modèle.
+model AccountPreferences {
+  accountId String @id
+
+  // --- Plannings ---------------------------------------------------------
+  /// Compter un repas par créneau sans saisie.
+  defaultMealPerShift        Boolean @default(false)
+  /// Pauses payées : elles cessent alors d'être déduites du temps de travail.
+  paidBreaks                 Boolean @default(false)
+  /// Interdire au salarié de modifier son repas.
+  lockEmployeeMeals          Boolean @default(false)
+  /// Le salarié voit son total d'heures planifiées et réelles de la semaine.
+  employeesSeeOwnTotals      Boolean @default(true)
+  /// Le salarié voit le planning des autres membres de son équipe.
+  employeesSeeTeamPlanning   Boolean @default(false)
+  /// Masquer les compteurs — et les alertes — des salariés au forfait jours.
+  /// Un forfait jours ne se compte pas en heures : afficher un écart
+  /// hebdomadaire sur ces lignes produit une alerte qui n'a pas de sens.
+  hideForfaitCounters        Boolean @default(true)
+  /// Heure à partir de laquelle un créneau est « du soir », en minutes depuis
+  /// minuit. 1200 = 20:00.
+  eveningShiftStartMinutes   Int     @default(1200)
+
+  // --- Droits ------------------------------------------------------------
+  employeesEditOwnProfile    Boolean @default(true)
+  employeesSeeOwnTimesheets  Boolean @default(true)
+  /// Annuaire ouvert : téléphone et adresse e-mail de toute l'équipe.
+  employeesSeeTeamContacts   Boolean @default(false)
+  /// Un salarié créé par un manager est planifiable sans validation.
+  managerCreatedArePlannable Boolean @default(false)
+  directorsSharePeople       Boolean @default(false)
+  directorsAccessHrDashboard Boolean @default(true)
+  directorsSeePaidLeave      Boolean @default(true)
+  managersSeePaidLeave       Boolean @default(false)
+
+  // --- Paie --------------------------------------------------------------
+  /// Décompter les heures supplémentaires au mois plutôt qu'à la semaine.
+  ///
+  /// **Risque juridique.** Le décompte hebdomadaire est le principe (art.
+  /// L3121-28) ; lisser au mois suppose un accord d'aménagement du temps de
+  /// travail. Faux par défaut, et l'écran le dit.
+  smoothOvertimeMonthly      Boolean @default(false)
+  /// Inclure repos et absences dans les heures normales.
+  includeRestInNormalHours   Boolean @default(false)
+  /// Générer le matricule à la création plutôt que de le saisir.
+  autoEmployeeNumber         Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 /// Marqueur d'installation de l'instance — une ligne, jamais deux.

@@ -121,7 +121,10 @@ export const NAVIGATION: NavSection[] = [
     id: 'reglages',
     label: 'Réglages',
     items: [
+      { id: 'compte', label: 'Informations du compte', href: '/reglages/compte' },
       { id: 'sites', label: 'Établissements', href: '/reglages/etablissements' },
+      { id: 'preferences', label: 'Préférences', href: '/reglages/preferences' },
+      { id: 'paie-reglages', label: 'Réglages de paie', href: '/reglages/paie' },
       { id: 'registre', label: 'Registre de paramétrage', href: '/reglages/registre' },
       { id: 'email', label: 'Envoi de courrier', href: '/reglages/email' },
       { id: 'securite', label: 'Sécurité', href: '/reglages/securite' },
