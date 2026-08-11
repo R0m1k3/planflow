@@ -147,6 +147,22 @@ export async function getWeekBoard(
         schedules.map((schedule) => [schedule.teamId, schedule]),
       );
 
+      // Repos posés sur la semaine. Seul le compensateur alimente le compteur
+      // RC du bandeau ; le repos hebdomadaire est chargé avec, parce que les
+      // deux se posent sur la même table et que filtrer ici coûterait une
+      // seconde requête pour une distinction que le domaine fait déjà.
+      const rests = await db.rest.findMany({
+        where: {
+          weeklyScheduleId: { in: schedules.map((schedule) => schedule.id) },
+        },
+        select: {
+          weeklyScheduleId: true,
+          membershipId: true,
+          restType: true,
+          minutes: true,
+        },
+      });
+
       const shifts = await db.shift.findMany({
         where: {
           weeklyScheduleId: { in: schedules.map((schedule) => schedule.id) },
@@ -236,6 +252,13 @@ export async function getWeekBoard(
           location.timezone,
           isPublished,
           absenceInputs,
+          rests
+            .filter((rest) => rest.weeklyScheduleId === schedule?.id)
+            .map((rest) => ({
+              membershipId: rest.membershipId,
+              restType: rest.restType,
+              minutes: rest.minutes,
+            })),
         );
 
         const teamAlerts = alerts

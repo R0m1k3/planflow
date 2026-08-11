@@ -22,6 +22,15 @@ export interface WeekCounters {
   sundaysWorked: number;
   /** Jours de repos dans la semaine. */
   restDays: number;
+  /**
+   * Repos compensateur posé sur la semaine, en minutes.
+   *
+   * Distinct de `restDays` : un jour sans créneau est un jour sans travail,
+   * tandis qu'un repos compensateur est une **contrepartie due** — au dimanche
+   * travaillé, au dépassement de contingent. Les confondre ferait disparaître
+   * du bandeau la seule valeur qui dit qu'une dette existe.
+   */
+  compensatoryRestMinutes: number;
 }
 
 export interface WeekCountersView extends WeekCounters {
@@ -31,6 +40,7 @@ export interface WeekCountersView extends WeekCounters {
   plannedLabel: string;
   absenceLabel: string;
   deltaLabel: string;
+  compensatoryRestLabel: string;
   tone: DeltaTone;
 }
 
@@ -74,6 +84,7 @@ export function computeWeekCounters(input: WeekCounters): WeekCountersView {
     plannedLabel: formatMinutes(input.plannedMinutes),
     absenceLabel: formatMinutes(input.absenceMinutes),
     deltaLabel: formatDelta(deltaMinutes),
+    compensatoryRestLabel: formatMinutes(input.compensatoryRestMinutes),
     tone: deltaTone(deltaMinutes),
   };
 }

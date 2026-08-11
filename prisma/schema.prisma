@@ -105,6 +105,25 @@ model AccountPreferences {
   /// Générer le matricule à la création plutôt que de le saisir.
   autoEmployeeNumber         Boolean @default(false)
 
+  // --- Impression --------------------------------------------------------
+  /// Paysage par défaut : une semaine tient en largeur, pas en hauteur.
+  printLandscape             Boolean @default(true)
+  /// Densité : « large » lisible à distance, « compact » pour un gros effectif.
+  printDensity               String  @default("large")
+  printContractTotals        Boolean @default(true)
+  /// Créneaux des autres équipes, pour situer une journée d'ensemble.
+  printOtherTeams            Boolean @default(false)
+  printSunday                Boolean @default(true)
+  /// Colonne d'émargement — une signature manuscrite ne vaut pas décompte du
+  /// temps de travail, mais reste demandée pour l'affichage en salle.
+  printSignatureColumn       Boolean @default(true)
+
+  // --- Productivité ------------------------------------------------------
+  /// Objectif de chiffre d'affaires par heure travaillée, en euros.
+  /// Nul tant qu'aucun objectif n'est fixé : zéro serait un objectif, pas une
+  /// absence d'objectif.
+  productivityTargetPerHour  Decimal? @db.Decimal(10, 2)
+
   updatedAt DateTime @updatedAt
 
   account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)

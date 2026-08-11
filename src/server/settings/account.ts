@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { AuthorizationError } from '@/domain/access/authorize';
 import {
+  isPrintDensity,
   PREFERENCE_KEYS,
   timeToMinutes,
 } from '@/domain/settings/preferences';
@@ -52,6 +53,14 @@ export interface Preferences {
   smoothOvertimeMonthly: boolean;
   includeRestInNormalHours: boolean;
   autoEmployeeNumber: boolean;
+  printLandscape: boolean;
+  printDensity: string;
+  printContractTotals: boolean;
+  printOtherTeams: boolean;
+  printSunday: boolean;
+  printSignatureColumn: boolean;
+  /** Chaîne décimale, ou `null` quand aucun objectif n'est fixé. */
+  productivityTargetPerHour: string | null;
 }
 
 const DEFAULTS: Preferences = {
@@ -73,6 +82,13 @@ const DEFAULTS: Preferences = {
   smoothOvertimeMonthly: false,
   includeRestInNormalHours: false,
   autoEmployeeNumber: false,
+  printLandscape: true,
+  printDensity: 'large',
+  printContractTotals: true,
+  printOtherTeams: false,
+  printSunday: true,
+  printSignatureColumn: true,
+  productivityTargetPerHour: null,
 };
 
 export async function getAccountIdentity(): Promise<AccountIdentity | null> {
@@ -103,8 +119,20 @@ export async function getPreferences(): Promise<Preferences> {
     });
     if (!row) return DEFAULTS;
 
-    const { accountId: _ignored, updatedAt: _stamp, ...values } = row;
-    return values;
+    const {
+      accountId: _ignored,
+      updatedAt: _stamp,
+      productivityTargetPerHour,
+      ...values
+    } = row;
+
+    return {
+      ...values,
+      // Un Decimal Prisma ne traverse pas la frontière serveur/client. Une
+      // chaîne le fait sans perdre de décimale, ce qu'un `number` ne garantit
+      // pas sur un montant.
+      productivityTargetPerHour: productivityTargetPerHour?.toString() ?? null,
+    };
   });
 }
 
@@ -219,9 +247,25 @@ export async function savePreferencesAction(
     return { error: 'Formulaire incomplet : aucun réglage à enregistrer.' };
   }
 
-  const values: Record<string, boolean | number> = {};
+  const values: Record<string, boolean | number | string> = {};
   for (const key of scope) {
     values[key] = formData.get(key) === 'on';
+  }
+
+  // L'orientation et la densité vivent dans le même formulaire que les
+  // interrupteurs d'impression : elles ne sont lues que si le formulaire les
+  // porte, sinon un autre bloc les remettrait à leur défaut.
+  const orientation = formData.get('printOrientation');
+  if (typeof orientation === 'string' && orientation !== '') {
+    values.printLandscape = orientation === 'landscape';
+  }
+
+  const density = formData.get('printDensity');
+  if (typeof density === 'string' && density !== '') {
+    if (!isPrintDensity(density)) {
+      return { error: 'Densité d’impression inconnue.' };
+    }
+    values.printDensity = density;
   }
 
   const eveningRaw = formData.get('eveningShiftStart');
@@ -270,5 +314,72 @@ export async function savePreferencesAction(
 
   revalidatePath('/reglages/preferences');
   revalidatePath('/reglages/paie');
+  revalidatePath('/reglages/impression');
+  return { ok: true };
+}
+
+const productivityInput = z.object({
+  target: z
+    .union([
+      z.literal(''),
+      z.coerce
+        .number()
+        .min(0, 'Un objectif négatif n’a pas de sens')
+        .max(100_000),
+    ])
+    .transform((value) => (value === '' ? null : value)),
+});
+
+/**
+ * Objectif de productivité, en euros de chiffre d'affaires par heure.
+ *
+ * Vider le champ **efface** l'objectif au lieu de le mettre à zéro : zéro est
+ * un objectif inatteignable, l'absence de valeur dit qu'aucun objectif n'a été
+ * fixé. Un écran qui afficherait « 0 €/h attendu » pousserait à corriger un
+ * réglage qui n'existe pas.
+ */
+export async function saveProductivityTargetAction(
+  _previous: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = productivityInput.safeParse({
+    target: formData.get('target') ?? '',
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };
+  }
+
+  try {
+    await mutate('settings.access', async (db, actor) => {
+      const before = await db.accountPreferences.findUnique({
+        where: { accountId: actor.accountId },
+      });
+
+      await db.accountPreferences.upsert({
+        where: { accountId: actor.accountId },
+        create: { productivityTargetPerHour: parsed.data.target } as never,
+        update: { productivityTargetPerHour: parsed.data.target },
+      });
+
+      await recordAudit(db, {
+        actorMembershipId: actor.membershipId,
+        action: 'account.productivity.update',
+        entityType: 'AccountPreferences',
+        entityId: actor.accountId,
+        before: {
+          productivityTargetPerHour:
+            before?.productivityTargetPerHour?.toString() ?? null,
+        },
+        after: { productivityTargetPerHour: parsed.data.target },
+      });
+    });
+  } catch (error) {
+    if (error instanceof AuthorizationError) {
+      return { error: "Vous n'avez pas le droit de modifier les réglages." };
+    }
+    throw error;
+  }
+
+  revalidatePath('/reglages/productivite');
   return { ok: true };
 }

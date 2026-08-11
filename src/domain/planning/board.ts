@@ -77,6 +77,19 @@ export interface AbsenceInput {
 }
 
 /**
+ * Repos posé sur la semaine.
+ *
+ * Seul le repos **compensateur** alimente le compteur RC : le repos
+ * hebdomadaire est un droit déjà pris, tandis que le compensateur est une
+ * contrepartie due, et le bandeau doit dire laquelle des deux est en jeu.
+ */
+export interface RestInput {
+  membershipId: string;
+  restType: 'WEEKLY_REST' | 'COMPENSATORY_REST';
+  minutes: number | null;
+}
+
+/**
  * Range les créneaux d'une semaine en lignes × sept colonnes.
  *
  * Le jour de rattachement se déduit de `startAt` **vu depuis le fuseau de
@@ -91,8 +104,18 @@ export function buildRows(
   timeZone: string,
   isPublished: boolean,
   absences: AbsenceInput[] = [],
+  rests: RestInput[] = [],
 ): { rows: BoardRow[]; unassignedRow: BoardRow | null } {
   const columnOf = new Map(weekDates.map((date, index) => [date, index]));
+
+  const compensatoryByMember = new Map<string, number>();
+  for (const rest of rests) {
+    if (rest.restType !== 'COMPENSATORY_REST') continue;
+    compensatoryByMember.set(
+      rest.membershipId,
+      (compensatoryByMember.get(rest.membershipId) ?? 0) + (rest.minutes ?? 0),
+    );
+  }
 
   const emptyDays = (): BoardShift[][] =>
     Array.from({ length: 7 }, () => [] as BoardShift[]);
@@ -199,6 +222,8 @@ export function buildRows(
         ),
         sundaysWorked: sundaysByMember.get(person.membershipId)?.size ?? 0,
         restDays: 7 - worked,
+        compensatoryRestMinutes:
+          compensatoryByMember.get(person.membershipId) ?? 0,
       },
     } satisfies BoardRow;
   });
@@ -221,6 +246,7 @@ export function buildRows(
           absenceMinutes: 0,
           sundaysWorked: 0,
           restDays: 0,
+          compensatoryRestMinutes: 0,
         },
       }
     : null;

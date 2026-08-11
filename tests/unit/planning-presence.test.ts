@@ -20,6 +20,7 @@ function row(overrides: Partial<BoardRow> = {}): BoardRow {
       absenceMinutes: 0,
       sundaysWorked: 0,
       restDays: 0,
+      compensatoryRestMinutes: 0,
     },
     days: [[], [], [], [], [], [], []],
     absences: [],

@@ -14,11 +14,13 @@ describe('catalogue de préférences', () => {
   });
 
   it('range chaque préférence dans un seul groupe', () => {
-    const grouped = [
-      ...togglesOf('planning'),
-      ...togglesOf('rights'),
-      ...togglesOf('payroll'),
+    // Les groupes se déduisent du catalogue plutôt que d'être listés ici : une
+    // liste tenue à la main laisserait un groupe entier sans écran, et le test
+    // passerait quand même.
+    const groups = [
+      ...new Set(PREFERENCE_TOGGLES.map((toggle) => toggle.group)),
     ];
+    const grouped = groups.flatMap((group) => togglesOf(group));
     expect(grouped).toHaveLength(PREFERENCE_TOGGLES.length);
   });
 

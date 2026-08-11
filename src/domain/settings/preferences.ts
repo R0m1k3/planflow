@@ -8,7 +8,27 @@
  * le JSX.
  */
 
-export type PreferenceGroup = 'planning' | 'rights' | 'payroll';
+export type PreferenceGroup = 'planning' | 'rights' | 'payroll' | 'print';
+
+/** Densités d'impression. Liste fermée : elle décide d'une mise en page. */
+export const PRINT_DENSITIES = [
+  {
+    key: 'large',
+    label: 'Grande',
+    hint: 'Moins de salariés par page, lisible à distance sur un mur.',
+  },
+  {
+    key: 'compact',
+    label: 'Compacte',
+    hint: 'Tout l’effectif sur une page, au prix de la lisibilité de loin.',
+  },
+] as const;
+
+export type PrintDensity = (typeof PRINT_DENSITIES)[number]['key'];
+
+export function isPrintDensity(value: string): value is PrintDensity {
+  return PRINT_DENSITIES.some((density) => density.key === value);
+}
 
 export interface PreferenceToggle {
   key: string;
@@ -137,6 +157,34 @@ export const PREFERENCE_TOGGLES: PreferenceToggle[] = [
     group: 'payroll',
     label: 'Générer le matricule automatiquement',
     hint: 'Décoché, le matricule est saisi à l’embauche — utile quand il doit correspondre à celui du logiciel de paie.',
+  },
+
+  // --- Impression --------------------------------------------------------
+  {
+    key: 'printContractTotals',
+    group: 'print',
+    label: 'Imprimer les totaux contractuels et planifiés',
+    hint: 'Ajoute une colonne de totaux par salarié.',
+  },
+  {
+    key: 'printOtherTeams',
+    group: 'print',
+    label: 'Imprimer les créneaux des autres équipes',
+    hint: 'Situe la journée d’ensemble sur la feuille d’une équipe.',
+  },
+  {
+    key: 'printSunday',
+    group: 'print',
+    label: 'Imprimer le dimanche',
+    hint: 'À décocher pour un établissement qui n’ouvre jamais ce jour-là : la colonne gagnée profite aux six autres.',
+  },
+  {
+    key: 'printSignatureColumn',
+    group: 'print',
+    label: 'Imprimer la colonne « émargements »',
+    hint: 'Colonne vierge pour signature manuscrite.',
+    warning:
+      'Un émargement papier ne vaut pas décompte du temps de travail : le décompte reste celui de PlanFlow, pas celui de la feuille signée.',
   },
 ];
 
