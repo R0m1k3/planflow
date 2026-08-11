@@ -22,6 +22,11 @@ import {
 } from '../src/domain/compliance/idcc1517';
 import { frenchHolidays } from '../src/domain/absences/holidays';
 import { PAYROLL_ELEMENT_DEFINITIONS } from '../src/domain/payroll/elements';
+import {
+  ABSENCE_CODES,
+  ELEMENT_CODES,
+  INCOMPLETE_IN_DOSSIER,
+} from './seed-data/silae-frouard';
 import { evaluateSchedule } from '../src/server/compliance/evaluate';
 import { withTenant } from '../src/server/tenant';
 
@@ -586,9 +591,10 @@ async function main() {
 
 
   console.log('→ Types d’absence');
-  // `silaeCode` reste **null** : les codes AB-* du dossier sont connus, leur
-  // signification ne l'est pas. Les associer ici reviendrait à deviner à quel
-  // type d'absence correspond AB-300, ce qui produirait une paie fausse.
+  // `silaeCode` vient du paramétrage Silae du dossier, relevé le 11 août 2026
+  // (voir `seed-data/silae-frouard.ts`). Il n'a rien d'universel : la
+  // correspondance entre AB-300 et « congés payés » appartient à ce dossier, et
+  // un autre client du même cabinet peut la numéroter autrement.
   const absenceTypes = [
     { code: 'CP', name: 'Congés payés', colorKey: 'cp', isPaid: true, social: false, notice: 30 },
     { code: 'RTT', name: 'RTT', colorKey: 'rtt', isPaid: true, social: false, notice: 7 },
@@ -600,12 +606,17 @@ async function main() {
   for (const type of absenceTypes) {
     await prisma.absenceType.upsert({
       where: { accountId_code: { accountId: account.id, code: type.code } },
-      update: { name: type.name, colorKey: type.colorKey },
+      update: {
+        name: type.name,
+        colorKey: type.colorKey,
+        silaeCode: ABSENCE_CODES[type.code] ?? null,
+      },
       create: {
         accountId: account.id,
         code: type.code,
         name: type.name,
         colorKey: type.colorKey,
+        silaeCode: ABSENCE_CODES[type.code] ?? null,
         isPaid: type.isPaid,
         countsAsWorkTime: false,
         affectsPaidLeaveAccrual: !type.social,
@@ -709,12 +720,18 @@ async function main() {
   console.log(`  ${demoAbsences.length} absences`);
 
   console.log('→ Correspondances Silae');
-  // Semées **non confirmées**, y compris quand le code se lit dans son libellé
-  // (`EV-HDimanche`). Proposer n'est pas confirmer : seul le gestionnaire de
-  // paie sait si le code est le bon dans ce dossier, et l'export refuse de
-  // tourner tant qu'il ne l'a pas dit.
+  // Les codes viennent du paramétrage du dossier, actif et coché côté Combo :
+  // ils sont donc semés **confirmés**. Un code déduit d'un libellé le serait
+  // non confirmé — proposer n'est pas confirmer — mais ceux-ci sont relevés
+  // dans la configuration réelle, pas devinés.
+  //
+  // Ce qui n'a pas de code au dossier reste absent plutôt que semé à vide :
+  // l'export refuse alors de tourner en listant les manques, ce qui est le
+  // comportement voulu (§8).
+  let seededMappings = 0;
   for (const definition of PAYROLL_ELEMENT_DEFINITIONS) {
-    if (!definition.suggestedCode) continue;
+    const code = ELEMENT_CODES[definition.key] ?? definition.suggestedCode;
+    if (!code) continue;
     const existing = await prisma.silaeCodeMapping.findFirst({
       where: { accountId: account.id, sourceKey: definition.key },
     });
@@ -724,16 +741,29 @@ async function main() {
       data: {
         accountId: account.id,
         sourceKey: definition.key,
-        silaeCode: definition.suggestedCode,
+        silaeCode: code,
         label: definition.label,
         kind: definition.kind,
-        confirmed: false,
+        confirmed: Boolean(ELEMENT_CODES[definition.key]),
       },
     });
+    seededMappings += 1;
   }
-  console.log(
-    `  ${PAYROLL_ELEMENT_DEFINITIONS.filter((d) => d.suggestedCode).length} proposées, aucune confirmée`,
+  const missingElements = PAYROLL_ELEMENT_DEFINITIONS.filter(
+    (definition) =>
+      !ELEMENT_CODES[definition.key] && !definition.suggestedCode,
   );
+  console.log(`  ${seededMappings} correspondances`);
+  if (missingElements.length > 0) {
+    console.log(
+      `  ⚠ sans code au dossier : ${missingElements.map((d) => d.label).join(', ')}`,
+    );
+  }
+  if (INCOMPLETE_IN_DOSSIER.length > 0) {
+    console.log(
+      `  ⚠ ${INCOMPLETE_IN_DOSSIER.length} rubriques incomplètes côté Silae (préfixe « AB- » sans numéro) : ${INCOMPLETE_IN_DOSSIER.map((row) => row.label).join(', ')}`,
+    );
+  }
 
   console.log('→ Matricules Silae');
   // Fictifs, à la forme observée dans le dossier : cinq chiffres cadrés à zéro.
