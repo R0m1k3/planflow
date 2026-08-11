@@ -25,17 +25,34 @@ import type {
 
 const empty: ActionState = {};
 
+/**
+ * Les neuf types de contrat, par ordre alphabétique.
+ *
+ * Pas de « CDI en premier » : le classement par fréquence supposée fait chercher
+ * les huit autres, et se lit comme un défaut à accepter. L'ordre alphabétique
+ * ne privilégie rien et se parcourt sans réfléchir.
+ */
 const CONTRACT_TYPES = [
-  ['CDI', 'CDI'],
-  ['CDD', 'CDD'],
   ['APPRENTISSAGE', 'Apprentissage'],
-  ['STAGIAIRE', 'Stagiaire'],
-  ['SAISONNIER', 'Saisonnier'],
-  ['EXTRA', 'Extra'],
-  ['INTERIM', 'Intérim'],
+  ['CDD', 'CDD'],
+  ['CDI', 'CDI'],
   ['DIRIGEANT_ASSIMILE_SALARIE', 'Dirigeant assimilé salarié'],
   ['DIRIGEANT_NON_SALARIE', 'Dirigeant non salarié'],
+  ['EXTRA', 'Extra'],
+  ['INTERIM', 'Intérim'],
+  ['SAISONNIER', 'Saisonnier'],
+  ['STAGIAIRE', 'Stagiaire'],
 ] as const;
+
+/** Marque d'obligation, annoncée aussi aux lecteurs d'écran. */
+function Required() {
+  return (
+    <span className="text-danger">
+      <span aria-hidden>*</span>
+      <span className="sr-only"> (requis)</span>
+    </span>
+  );
+}
 
 const selectClass =
   'h-9 min-w-0 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1 outline-none focus-visible:border-focus';
@@ -136,20 +153,6 @@ export function AddEmployeeForm({
         />
         <Field label="Téléphone mobile" name="phone" type="tel" />
 
-        <label className="flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="smsSchedules"
-            className="mt-0.5 size-4 accent-[var(--accent)]"
-          />
-          <span>
-            <span className="font-medium">Envoyer les plannings par SMS</span>
-            <span className="block text-micro text-ink-3">
-              Consentement du salarié : à recueillir avant de l’activer.
-            </span>
-          </span>
-        </label>
-
         <Field label="Téléphone fixe" name="landline" type="tel" />
       </Section>
 
@@ -186,9 +189,22 @@ export function AddEmployeeForm({
                 />
               </div>
 
+              {/* Aucune valeur par défaut : un type de contrat pré-rempli est
+                  un type que personne n'a choisi, et il commande les règles de
+                  durée comme la déclaration. */}
               <label className="flex min-w-0 flex-col gap-1.5">
-                <span className="text-sm font-medium">Type de contrat</span>
-                <select name="contractType" className={selectClass}>
+                <span className="text-sm font-medium">
+                  Type de contrat <Required />
+                </span>
+                <select
+                  name="contractType"
+                  required
+                  defaultValue=""
+                  className={selectClass}
+                >
+                  <option value="" disabled>
+                    Sélectionnez un type
+                  </option>
                   {CONTRACT_TYPES.map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
@@ -279,16 +295,35 @@ export function AddEmployeeForm({
                 </select>
               </label>
 
+              {/* L'équipe est **requise** avec un contrat. Le planning
+                  s'ordonne par équipe : un salarié rattaché à l'établissement
+                  mais à aucune équipe n'apparaît sur aucune grille, et rien ne
+                  le signale avant la première semaine à couvrir. */}
               <label className="flex min-w-0 flex-col gap-1.5">
-                <span className="text-sm font-medium">Équipe</span>
-                <select name="teamId" className={selectClass}>
-                  <option value="">Aucune pour l’instant</option>
+                <span className="text-sm font-medium">
+                  Équipe <Required />
+                </span>
+                <select
+                  name="teamId"
+                  required
+                  defaultValue=""
+                  className={selectClass}
+                >
+                  <option value="" disabled>
+                    Sélectionnez une équipe
+                  </option>
                   {teams.map((team) => (
                     <option key={team.id} value={team.id}>
                       {team.name}
                     </option>
                   ))}
                 </select>
+                {teams.length === 0 ? (
+                  <span className="text-micro text-danger">
+                    Cet établissement n’a aucune équipe : créez-en une dans
+                    Réglages · Établissements avant d’ouvrir un contrat ici.
+                  </span>
+                ) : null}
               </label>
 
               <label className="flex min-w-0 flex-col gap-1.5">

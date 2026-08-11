@@ -48,7 +48,6 @@ export interface ProfileFields {
   personalEmail: string;
   phone: string;
   landline: string;
-  smsSchedules: boolean;
   addressLine1: string;
   addressLine2: string;
   postalCode: string;
@@ -217,20 +216,6 @@ export function PersonalInfoPanel({
                   defaultValue={profile.personalEmail}
                 />
                 <Field label="Téléphone mobile" name="phone" type="tel" defaultValue={profile.phone} />
-                <label className="flex items-start gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    name="smsSchedules"
-                    defaultChecked={profile.smsSchedules}
-                    className="mt-0.5 size-4 accent-[var(--accent)]"
-                  />
-                  <span>
-                    <span className="font-medium">Notifications SMS</span>
-                    <span className="block text-micro text-ink-3">
-                      Consentement du salarié : à recueillir avant de l’activer.
-                    </span>
-                  </span>
-                </label>
                 <Field label="Téléphone fixe" name="landline" type="tel" defaultValue={profile.landline} />
                 <Field label="Adresse" name="addressLine1" defaultValue={profile.addressLine1} />
                 <Field
@@ -310,10 +295,6 @@ export function PersonalInfoPanel({
             <InfoCard title="Coordonnées">
               <InfoRow label="Adresse électronique personnelle" value={profile.personalEmail} />
               <InfoRow label="Téléphone mobile" value={profile.phone} tnum />
-              <InfoRow
-                label="Notifications SMS"
-                value={profile.smsSchedules ? 'Oui' : 'Non'}
-              />
               <InfoRow label="Téléphone fixe" value={profile.landline} tnum />
               <InfoRow label="Adresse" value={profile.addressLine1} />
               <InfoRow label="Complément d’adresse" value={profile.addressLine2} />

@@ -91,7 +91,6 @@ const profileInput = z.object({
     .transform((value) => (value === '' ? null : value)),
   phone: optionalText(30),
   landline: optionalText(30),
-  smsSchedules: z.boolean(),
   addressLine1: optionalText(180),
   addressLine2: optionalText(180),
   postalCode: optionalText(12),
@@ -132,9 +131,6 @@ export async function updateProfileAction(
         'emergencyContactPhone',
       ].map((key) => [key, formData.get(key) ?? '']),
     ),
-    // Une case décochée n'est pas envoyée : son absence vaut « non », et la
-    // lire comme une chaîne vide en ferait une valeur inconnue.
-    smsSchedules: formData.get('smsSchedules') === 'on',
   });
 
   if (!parsed.success) {

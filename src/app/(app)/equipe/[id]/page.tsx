@@ -52,7 +52,6 @@ export default async function PersonalTab({
     personalEmail: text(employee.profile.personalEmail),
     phone: text(employee.profile.phone),
     landline: text(employee.profile.landline),
-    smsSchedules: employee.profile.smsSchedules,
     addressLine1: text(employee.profile.addressLine1),
     addressLine2: text(employee.profile.addressLine2),
     postalCode: text(employee.profile.postalCode),

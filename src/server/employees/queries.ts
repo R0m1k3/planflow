@@ -285,7 +285,6 @@ export interface EmployeeProfileDetail {
   country: string | null;
   phone: string | null;
   landline: string | null;
-  smsSchedules: boolean;
   personalEmail: string | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
@@ -487,7 +486,6 @@ export const getEmployee = cache(async function getEmployee(
             country: membership.profile.country,
             phone: membership.profile.phone,
             landline: membership.profile.landline,
-            smsSchedules: membership.profile.smsSchedules,
             personalEmail: membership.profile.personalEmail,
             emergencyContactName: membership.profile.emergencyContactName,
             emergencyContactPhone: membership.profile.emergencyContactPhone,

@@ -603,10 +603,6 @@ model EmployeeProfile {
   landline     String?
   personalEmail String?
 
-  /// Envoi des plannings par SMS. Un consentement, donc explicitement faux
-  /// par défaut : la charge de la preuve pèse sur l'employeur.
-  smsSchedules Boolean @default(false)
-
   socialSecurityNumberEnc Bytes?
   ibanEnc                 Bytes?
   bicEnc                  Bytes?

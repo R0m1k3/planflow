@@ -38,7 +38,6 @@ const employeeInput = z.object({
   email: z.string().trim().email('Adresse invalide').or(z.literal('')),
   phone: z.string().trim().max(30),
   landline: z.string().trim().max(30),
-  smsSchedules: z.boolean(),
 });
 
 /**
@@ -50,7 +49,10 @@ const employeeInput = z.object({
  */
 const hiringContractInput = z.object({
   locationId: z.string().min(1, 'Établissement requis'),
-  teamId: z.string().trim(),
+  // Requise avec un contrat : le planning s'ordonne par équipe, et un salarié
+  // sans rattachement n'apparaît sur aucune grille. Le formulaire l'impose déjà,
+  // mais le contrôle du navigateur ne protège pas une action serveur.
+  teamId: z.string().trim().min(1, 'Choisissez une équipe.'),
   contractType: z.enum(CONTRACT_TYPES),
   startDate: z.coerce.date(),
   /** Heure de prise de poste : la DPAE la demande, la date seule n'y suffit pas. */
@@ -92,7 +94,6 @@ export async function createEmployeeAction(
     email: formData.get('email') ?? '',
     phone: formData.get('phone') ?? '',
     landline: formData.get('landline') ?? '',
-    smsSchedules: formData.get('smsSchedules') === 'on',
   });
 
   if (!parsed.success) {
@@ -225,7 +226,6 @@ export async function createEmployeeAction(
           personalEmail: parsed.data.email || null,
           phone: parsed.data.phone || null,
           landline: parsed.data.landline || null,
-          smsSchedules: parsed.data.smsSchedules,
         } as never,
       });
 
