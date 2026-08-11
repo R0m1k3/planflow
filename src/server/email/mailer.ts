@@ -37,6 +37,7 @@ export type EmailKind =
   | 'INVITATION'
   | 'PASSWORD_RESET'
   | 'PLANNING_PUBLISHED'
+  | 'SHIFT_ASSIGNED'
   | 'TIMEOFF_DECISION'
   | 'LEAVE_NOTICE';
 

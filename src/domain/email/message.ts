@@ -161,6 +161,43 @@ export function testMessage(to: string, accountName: string): Message {
   return { to, subject: 'Test d’envoi PlanFlow', text, html };
 }
 
+export interface ShiftAssignedInput {
+  firstName: string;
+  /** Jour rédigé, « lundi 10 août ». */
+  day: string;
+  start: string;
+  end: string;
+  teamName: string;
+}
+
+/**
+ * Avis d'affectation d'un créneau.
+ *
+ * Le message dit le jour, l'horaire et l'équipe, et rien de plus : ni le motif,
+ * ni le reste du planning. Un avis qui recopierait la semaine entière ferait
+ * sortir de l'application des données que le destinataire n'a pas demandées, et
+ * qu'un courriel transfère sans contrôle.
+ */
+export function shiftAssignedMessage(
+  to: string,
+  input: ShiftAssignedInput,
+): Message {
+  const subject = `Nouveau créneau le ${input.day}`;
+  const { text, html } = render({
+    title: subject,
+    intro: `Bonjour ${input.firstName},`,
+    body: [
+      `Un créneau vous a été ajouté le ${input.day}, de ${input.start} à ${input.end}.`,
+      `Équipe : ${input.teamName}.`,
+      'Votre planning à jour reste consultable dans PlanFlow.',
+    ],
+    footer:
+      'Avis automatique — en cas d’erreur, adressez-vous à votre responsable.',
+  });
+
+  return { to, subject, text, html };
+}
+
 /**
  * Message d'erreur d'envoi, débarrassé de tout secret.
  *

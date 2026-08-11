@@ -17,7 +17,15 @@ import {
   zonedDate,
   zonedInstant,
 } from '@/domain/planning/week';
+import {
+  breakTotals,
+  normaliseBreaks,
+  BreakError,
+  type BreakInput,
+} from '@/domain/planning/breaks';
+import { shiftAssignedMessage } from '@/domain/email/message';
 import { recordAudit } from '@/server/audit';
+import { sendEmail } from '@/server/email/mailer';
 import { evaluateAround, evaluateSchedule } from '@/server/compliance/evaluate';
 import { mutate } from '@/server/context';
 import { assertPeriodOpen, PeriodLockedError } from '@/server/payroll/periods';
@@ -69,7 +77,34 @@ const shiftInput = z.object({
   mealCount: z.coerce.number().int().min(0).max(5).default(0),
   labelId: z.string().optional(),
   note: z.string().trim().max(500).optional(),
+  notify: z.boolean().default(false),
 });
+
+/**
+ * Pauses saisies dans le formulaire.
+ *
+ * Trois champs répétés, lus par position : la ligne *n* est faite du n-ième
+ * `breakDuration`, du n-ième `breakStart` et de la n-ième case `breakPaid`. Une
+ * case non cochée n'étant pas envoyée, la valeur de `breakPaid` porte l'index
+ * de sa ligne plutôt qu'un simple « on ».
+ */
+function readBreaks(formData: FormData): Array<Partial<BreakInput>> {
+  const durations = formData.getAll('breakDuration').map(String);
+  const starts = formData.getAll('breakStart').map(String);
+  const labels = formData.getAll('breakLabel').map(String);
+  const paid = new Set(formData.getAll('breakPaid').map(String));
+
+  return durations.map((duration, index) => {
+    if (duration.trim() === '') return {};
+    const start = starts[index]?.trim();
+    return {
+      durationMinutes: Number(duration),
+      startMinutes: start ? Number(start) : null,
+      isPaid: paid.has(String(index)),
+      label: labels[index]?.trim() || null,
+    };
+  });
+}
 
 async function loadTeamContext(db: ScopedClient, teamId: string) {
   const team = await db.team.findUnique({
@@ -131,11 +166,14 @@ export async function createShiftAction(
     mealCount: formData.get('mealCount') || 0,
     labelId: formData.get('labelId') || undefined,
     note: formData.get('note') || undefined,
+    notify: formData.get('notify') === 'on',
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };
   }
+
+  const rawBreaks = readBreaks(formData);
 
   const week = parseWeekParam(parsed.data.week);
   if (!week) return { error: 'Semaine invalide.' };
@@ -164,6 +202,17 @@ export async function createShiftAction(
 
       const { from, to } = weekBounds(week, location.timezone);
 
+      // Les envois sont **différés à la fin de la transaction**. Écrire un
+      // courriel au fil des créneaux enverrait des avis pour des jours qu'un
+      // refus sur le dernier jour finirait par annuler — un salarié prévenu
+      // d'un créneau qui n'existe pas.
+      const notifications: Array<{
+        membershipId: string;
+        localDate: string;
+        start: string;
+        end: string;
+      }> = [];
+
       // La répétition est **tout ou rien**. Un jour refusé annule la
       // transaction entière : une répétition à demi appliquée laisserait un
       // planning que personne n'a voulu, et qu'il faudrait défaire à la main
@@ -179,7 +228,17 @@ export async function createShiftAction(
         // interdirait de planifier un inventaire 22 h–02 h.
         if (endAt <= startAt) endAt = new Date(endAt.getTime() + 86_400_000);
 
-        const worked = shiftMinutes(startAt, endAt, parsed.data.breakMinutes);
+        // Les pauses détaillées font foi quand il y en a ; le champ « total »
+        // reste le repli du formulaire réduit. Deux sources pour la même
+        // valeur, mais une seule gagne, et elle est explicite.
+        const span = Math.round((endAt.getTime() - startAt.getTime()) / 60_000);
+        const breaks = normaliseBreaks(rawBreaks, span);
+        const totals =
+          breaks.length > 0
+            ? breakTotals(breaks)
+            : { breakMinutes: parsed.data.breakMinutes, paidBreakMinutes: 0 };
+
+        const worked = shiftMinutes(startAt, endAt, totals.breakMinutes);
         if (worked <= 0) {
           throw new ValidationError(
             'La pause dépasse la durée du créneau — rien ne serait travaillé.',
@@ -209,12 +268,35 @@ export async function createShiftAction(
             localDate: new Date(`${localDate}T00:00:00Z`),
             startAt,
             endAt,
-            breakMinutes: parsed.data.breakMinutes,
+            breakMinutes: totals.breakMinutes,
+            paidBreakMinutes: totals.paidBreakMinutes,
             mealCount: parsed.data.mealCount,
             labelId: parsed.data.labelId ?? null,
             note: parsed.data.note ?? null,
           } as never,
         });
+
+        for (const [position, entry] of breaks.entries()) {
+          await db.shiftBreak.create({
+            data: {
+              shiftId: created.id,
+              startMinutes: entry.startMinutes,
+              durationMinutes: entry.durationMinutes,
+              isPaid: entry.isPaid,
+              label: entry.label,
+              position,
+            } as never,
+          });
+        }
+
+        if (parsed.data.notify && created.membershipId) {
+          notifications.push({
+            membershipId: created.membershipId,
+            localDate,
+            start: parsed.data.start,
+            end: parsed.data.end,
+          });
+        }
 
         await recordAudit(db, {
           actorMembershipId: actor.membershipId,
@@ -233,6 +315,12 @@ export async function createShiftAction(
       }
 
       await assertNoBlocking(db, schedule.id);
+
+      // Après le dernier contrôle : un créneau bloquant annule la transaction,
+      // et l'avis ne doit pas partir pour un planning qui n'a pas été écrit.
+      for (const notice of notifications) {
+        await notifyShiftAssigned(db, notice, team.name);
+      }
     });
   } catch (error) {
     return toState(error, 'Vous ne pouvez pas créer de créneau ici.');
@@ -240,6 +328,50 @@ export async function createShiftAction(
 
   revalidatePath('/planning/semaine');
   return { ok: true };
+}
+
+const dayFormat = new Intl.DateTimeFormat('fr-FR', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'UTC',
+});
+
+/**
+ * Prévient un salarié qu'un créneau lui a été posé.
+ *
+ * L'échec n'interrompt pas : un serveur SMTP indisponible ne doit pas empêcher
+ * de planifier. `sendEmail` journalise l'échec, et le journal d'envois répond à
+ * « je n'ai rien reçu » mieux qu'une transaction annulée.
+ *
+ * Un salarié sans compte n'a pas d'adresse : il est prévenu par le planning
+ * affiché, comme aujourd'hui.
+ */
+async function notifyShiftAssigned(
+  db: ScopedClient,
+  notice: { membershipId: string; localDate: string; start: string; end: string },
+  teamName: string,
+): Promise<void> {
+  const membership = await db.membership.findUnique({
+    where: { id: notice.membershipId },
+    include: { user: { select: { email: true, firstName: true } } },
+  });
+  if (!membership?.user?.email) return;
+
+  const day = dayFormat.format(new Date(`${notice.localDate}T00:00:00Z`));
+
+  await sendEmail(
+    db,
+    shiftAssignedMessage(membership.user.email, {
+      firstName: membership.user.firstName,
+      day,
+      start: notice.start,
+      end: notice.end,
+      teamName,
+    }),
+    'SHIFT_ASSIGNED',
+    membership.id,
+  );
 }
 
 const moveInput = z.object({
@@ -277,6 +409,8 @@ export async function updateShiftAction(
     return { error: parsed.error.issues[0]?.message ?? 'Formulaire invalide' };
   }
 
+  const rawBreaks = readBreaks(formData);
+
   try {
     await mutate('planning.edit', async (db, actor) => {
       const shift = await db.shift.findUnique({
@@ -312,7 +446,14 @@ export async function updateShiftAction(
       );
       if (endAt <= startAt) endAt = new Date(endAt.getTime() + 86_400_000);
 
-      if (shiftMinutes(startAt, endAt, parsed.data.breakMinutes) <= 0) {
+      const span = Math.round((endAt.getTime() - startAt.getTime()) / 60_000);
+      const breaks = normaliseBreaks(rawBreaks, span);
+      const totals =
+        breaks.length > 0
+          ? breakTotals(breaks)
+          : { breakMinutes: parsed.data.breakMinutes, paidBreakMinutes: 0 };
+
+      if (shiftMinutes(startAt, endAt, totals.breakMinutes) <= 0) {
         throw new ValidationError(
           'La pause dépasse la durée du créneau — rien ne serait travaillé.',
         );
@@ -330,13 +471,31 @@ export async function updateShiftAction(
           localDate: new Date(`${parsed.data.localDate}T00:00:00Z`),
           startAt,
           endAt,
-          breakMinutes: parsed.data.breakMinutes,
+          breakMinutes: totals.breakMinutes,
+          paidBreakMinutes: totals.paidBreakMinutes,
           mealCount: parsed.data.mealCount,
           labelId: parsed.data.labelId ?? null,
           note: parsed.data.note ?? null,
           version: { increment: 1 },
         },
       });
+
+      // Les pauses sont **remplacées**, pas fusionnées. Le formulaire porte
+      // l'état voulu au complet ; rapprocher ligne à ligne inventerait une
+      // identité que la saisie n'a pas, et ferait survivre une pause retirée.
+      await db.shiftBreak.deleteMany({ where: { shiftId: shift.id } });
+      for (const [position, entry] of breaks.entries()) {
+        await db.shiftBreak.create({
+          data: {
+            shiftId: shift.id,
+            startMinutes: entry.startMinutes,
+            durationMinutes: entry.durationMinutes,
+            isPaid: entry.isPaid,
+            label: entry.label,
+            position,
+          } as never,
+        });
+      }
 
       await recordAudit(db, {
         actorMembershipId: actor.membershipId,
@@ -829,6 +988,9 @@ function assertMayEditPublished(actor: Actor): void {
 
 function toState(error: unknown, denied: string): PlanningActionState {
   if (error instanceof ValidationError) return { error: error.message };
+  // Une pause mal saisie se corrige dans le formulaire : le message dit
+  // laquelle et pourquoi, plutôt qu'un refus général.
+  if (error instanceof BreakError) return { error: error.message };
   // Le verrou de période porte son propre message, qui explique la sortie :
   // déverrouiller, ou régulariser sur la période suivante.
   if (error instanceof PeriodLockedError) return { error: error.message };

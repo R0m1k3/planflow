@@ -12,12 +12,22 @@ import { shiftMinutes } from '@/domain/counters/week';
 import { zonedClock, zonedDate } from '@/domain/planning/week';
 import type { PosteCode } from '@/lib/design/postes';
 
+/** Pause telle qu'affichée : le détail suffit à rouvrir le formulaire. */
+export interface ShiftBreakView {
+  startMinutes: number | null;
+  durationMinutes: number;
+  isPaid: boolean;
+  label: string | null;
+}
+
 export interface BoardShiftInput {
   id: string;
   membershipId: string | null;
   startAt: Date;
   endAt: Date;
   breakMinutes: number;
+  paidBreakMinutes: number;
+  breaks: ShiftBreakView[];
   mealCount: number;
   poste: PosteCode;
   /** Étiquette telle qu'enregistrée, pour rouvrir le créneau sur la sienne. */
@@ -32,7 +42,11 @@ export interface BoardShift {
   /** « 09:00–17:00 », en heure locale de l'établissement. */
   time: string;
   minutes: number;
+  /** Pauses non rémunérées, déduites du temps travaillé. */
   breakMinutes: number;
+  /** Pauses rémunérées : comptées comme repos, pas déduites. */
+  paidBreakMinutes: number;
+  breaks: ShiftBreakView[];
   mealCount: number;
   labelId: string | null;
   state: ShiftState;
@@ -144,6 +158,8 @@ export function buildRows(
       time: `${zonedClock(shift.startAt, timeZone)}–${zonedClock(shift.endAt, timeZone)}`,
       minutes,
       breakMinutes: shift.breakMinutes,
+      paidBreakMinutes: shift.paidBreakMinutes,
+      breaks: shift.breaks,
       mealCount: shift.mealCount,
       labelId: shift.labelId,
       state: shiftState(shift.isValidated, isPublished, shift.membershipId),

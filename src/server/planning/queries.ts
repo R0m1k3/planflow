@@ -177,10 +177,20 @@ export async function getWeekBoard(
           startAt: true,
           endAt: true,
           breakMinutes: true,
+          paidBreakMinutes: true,
           mealCount: true,
           isValidated: true,
           note: true,
           labelId: true,
+          breaks: {
+            orderBy: { position: 'asc' },
+            select: {
+              startMinutes: true,
+              durationMinutes: true,
+              isPaid: true,
+              label: true,
+            },
+          },
         },
       });
 
@@ -241,6 +251,13 @@ export async function getWeekBoard(
             startAt: shift.startAt,
             endAt: shift.endAt,
             breakMinutes: shift.breakMinutes,
+            paidBreakMinutes: shift.paidBreakMinutes,
+            breaks: shift.breaks.map((entry) => ({
+              startMinutes: entry.startMinutes,
+              durationMinutes: entry.durationMinutes,
+              isPaid: entry.isPaid,
+              label: entry.label,
+            })),
             mealCount: shift.mealCount,
             labelId: shift.labelId,
             poste: posteOf(paletteById.get(shift.labelId ?? '')),

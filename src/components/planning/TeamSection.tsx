@@ -444,18 +444,10 @@ function ShiftComposer({
         />
       </Field>
 
-      <Field label="Pause (min)" htmlFor="composer-break">
-        <input
-          id="composer-break"
-          name="breakMinutes"
-          type="number"
-          min={0}
-          max={600}
-          step={5}
-          defaultValue={editing ? target.shift.breakMinutes : 0}
-          className="h-8 w-20 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
-        />
-      </Field>
+      <BreakRows
+        initial={editing ? target.shift.breaks : []}
+        fallbackMinutes={editing ? target.shift.breakMinutes : 0}
+      />
 
       <Field label="Repas" htmlFor="composer-meals">
         <input
@@ -501,7 +493,18 @@ function ShiftComposer({
       </Field>
 
       {editing ? null : (
-        <RepeatDays dates={dates} days={days} selected={localDate} />
+        <>
+          <RepeatDays dates={dates} days={days} selected={localDate} />
+
+          {/* Décoché par défaut, à l'inverse du produit audité. Un avis par
+              créneau posé remplit vite une boîte : c'est la publication de la
+              semaine qui prévient, et cette case sert au créneau ajouté après
+              coup — le cas où le salarié ne verrait rien sans elle. */}
+          <label className="flex items-center gap-2 text-sm text-ink-2">
+            <input type="checkbox" name="notify" />
+            Prévenir le salarié par courriel
+          </label>
+        </>
       )}
 
       <div className="flex items-center gap-2">
@@ -519,6 +522,139 @@ function ShiftComposer({
         </p>
       ) : null}
     </form>
+  );
+}
+
+/**
+ * Pauses d'un créneau, une ligne par pause.
+ *
+ * Un total unique ne disait pas ce qui composait la journée : deux pauses de
+ * vingt minutes et une coupure de deux heures s'écrivaient « 120 », et rien ne
+ * permettait de les distinguer — ni à l'écran, ni au contrôle.
+ *
+ * Le début est facultatif. Beaucoup de pauses se prennent « quand c'est
+ * calme » : imposer une heure obligerait à inventer une précision que le
+ * planning n'a pas, et qu'un contrôle prendrait pour un engagement.
+ */
+function BreakRows({
+  initial,
+  fallbackMinutes,
+}: {
+  initial: ReadonlyArray<{
+    startMinutes: number | null;
+    durationMinutes: number;
+    isPaid: boolean;
+    label: string | null;
+  }>;
+  fallbackMinutes: number;
+}) {
+  // Un créneau enregistré avant le détail des pauses n'a qu'un total : il est
+  // repris comme une pause unique plutôt que perdu.
+  const seeded =
+    initial.length > 0
+      ? initial
+      : fallbackMinutes > 0
+        ? [
+            {
+              startMinutes: null,
+              durationMinutes: fallbackMinutes,
+              isPaid: false,
+              label: null,
+            },
+          ]
+        : [];
+
+  const [rows, setRows] = useState(seeded);
+
+  return (
+    <fieldset className="flex w-full flex-col gap-1.5">
+      <legend className="text-micro font-medium tracking-[0.04em] text-ink-3 uppercase">
+        Pauses
+      </legend>
+
+      {rows.length === 0 ? (
+        <p className="text-micro text-ink-3">Aucune pause.</p>
+      ) : null}
+
+      {rows.map((row, index) => (
+        <div key={index} className="flex flex-wrap items-center gap-2">
+          <input
+            name="breakDuration"
+            type="number"
+            min={1}
+            max={600}
+            step={5}
+            required
+            defaultValue={row.durationMinutes}
+            aria-label={`Durée de la pause ${index + 1}, en minutes`}
+            className="h-8 w-20 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+          />
+          <span className="text-micro text-ink-3">min</span>
+
+          <input
+            name="breakStart"
+            type="number"
+            min={0}
+            step={5}
+            defaultValue={row.startMinutes ?? ''}
+            placeholder="début"
+            aria-label={`Début de la pause ${index + 1}, en minutes après la prise de poste`}
+            className="h-8 w-24 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+          />
+
+          <input
+            name="breakLabel"
+            type="text"
+            maxLength={60}
+            defaultValue={row.label ?? ''}
+            placeholder="libellé"
+            aria-label={`Libellé de la pause ${index + 1}`}
+            className="h-8 w-28 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+          />
+
+          <label className="flex items-center gap-1 text-micro text-ink-2">
+            {/* La valeur porte l'index : une case non cochée n'est pas envoyée,
+                et « on » seul ne dirait pas quelle ligne est payée. */}
+            <input
+              type="checkbox"
+              name="breakPaid"
+              value={String(index)}
+              defaultChecked={row.isPaid}
+            />
+            rémunérée
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setRows(rows.filter((_, at) => at !== index))}
+            className="rounded-2 px-1.5 py-0.5 text-micro text-ink-3 hover:text-danger"
+          >
+            Retirer
+            <span className="sr-only">{` la pause ${index + 1}`}</span>
+          </button>
+        </div>
+      ))}
+
+      <div>
+        <Button
+          type="button"
+          size="sm"
+          onClick={() =>
+            setRows([
+              ...rows,
+              {
+                startMinutes: null,
+                durationMinutes: 20,
+                isPaid: false,
+                label: null,
+              },
+            ])
+          }
+        >
+          + Ajouter une pause
+        </Button>
+      </div>
+    </fieldset>
   );
 }
 

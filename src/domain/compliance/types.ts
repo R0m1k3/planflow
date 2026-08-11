@@ -98,7 +98,16 @@ export interface ComplianceShift {
   id: string;
   startAt: Date;
   endAt: Date;
+  /** Pauses non rémunérées, déduites du temps de travail. */
   breakMinutes: number;
+  /**
+   * Pauses rémunérées.
+   *
+   * Elles ne se déduisent pas du temps travaillé, mais restent du repos : la
+   * règle de pause minimale les compte. Sans elles, un créneau où la pause de
+   * vingt minutes est payée passerait pour un créneau sans pause.
+   */
+  paidBreakMinutes: number;
   /** Faux pour un besoin non couvert : aucune règle de personne ne s'applique. */
   assigned: boolean;
 }

@@ -819,7 +819,13 @@ model Shift {
   startAt   DateTime @db.Timestamptz
   endAt     DateTime @db.Timestamptz
 
+  /// Somme des pauses **non rémunérées**, déduite du temps de travail. C'est
+  /// le total qui compte en paie ; le détail vit dans `ShiftBreak`.
   breakMinutes       Int  @default(0)
+  /// Somme des pauses **rémunérées**. Non déduite du temps travaillé, mais
+  /// comptée comme repos : la règle de pause minimale regarde les deux, sans
+  /// quoi une pause payée passerait pour une absence de pause.
+  paidBreakMinutes   Int  @default(0)
   actualStartAt      DateTime? @db.Timestamptz
   actualEndAt        DateTime? @db.Timestamptz
   actualBreakMinutes Int?
@@ -833,10 +839,39 @@ model Shift {
   version     Int      @default(0)
 
   schedule WeeklySchedule @relation(fields: [weeklyScheduleId], references: [id], onDelete: Cascade)
+  breaks   ShiftBreak[]
 
   @@index([accountId])
   @@index([weeklyScheduleId, localDate])
   @@index([membershipId, localDate])
+}
+
+/// Pause d'un créneau.
+///
+/// Plusieurs pauses par créneau, et pas un total unique : une coupure de deux
+/// heures en milieu de journée et deux pauses de vingt minutes ne se planifient
+/// pas de la même façon et ne se contrôlent pas pareil — la seconde satisfait
+/// la pause minimale de six heures, la première interroge l'amplitude.
+///
+/// `startMinutes` est facultatif. Beaucoup de pauses se prennent « quand c'est
+/// calme » : imposer une heure obligerait à inventer une précision que le
+/// planning n'a pas, et qu'un contrôle prendrait pour un engagement.
+model ShiftBreak {
+  id           String  @id @default(cuid())
+  accountId    String
+  shiftId      String
+  /// Minutes depuis le début du créneau. Null = pause non située.
+  startMinutes Int?
+  durationMinutes Int
+  /// Rémunérée : la durée n'est pas déduite du temps de travail effectif.
+  isPaid       Boolean @default(false)
+  label        String?
+  position     Int     @default(0)
+
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([shiftId])
 }
 
 /// Repos de journée — hebdomadaire ou compensateur. Les pauses *dans* un
@@ -1430,6 +1465,8 @@ enum EmailKind {
   INVITATION
   PASSWORD_RESET
   PLANNING_PUBLISHED
+  /// Créneau ajouté ou déplacé hors d'une publication de semaine.
+  SHIFT_ASSIGNED
   TIMEOFF_DECISION
   LEAVE_NOTICE
 }

@@ -37,7 +37,14 @@ function shift(
   const startAt = zonedInstant(date, start, TZ);
   let endAt = zonedInstant(date, end, TZ);
   if (endAt <= startAt) endAt = new Date(endAt.getTime() + 86_400_000);
-  return { id: `s${sequence}`, startAt, endAt, breakMinutes, assigned };
+  return {
+    id: `s${sequence}`,
+    startAt,
+    endAt,
+    breakMinutes,
+    paidBreakMinutes: 0,
+    assigned,
+  };
 }
 
 function context(over: Partial<ComplianceContext> = {}): ComplianceContext {

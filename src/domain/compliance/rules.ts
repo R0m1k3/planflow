@@ -363,16 +363,21 @@ export const minBreakAfterThreshold: Rule = (context) => {
         (shift.endAt.getTime() - shift.startAt.getTime()) / MINUTE,
       );
       if (span <= thresholdMinutes) return [];
-      if (shift.breakMinutes >= minBreakMinutes) return [];
+
+      // Rémunérée ou non, une pause est une pause. Ne compter que la part
+      // déduite ferait alerter un créneau dont la pause de vingt minutes est
+      // payée — c'est-à-dire précisément l'employeur le plus généreux.
+      const restMinutes = shift.breakMinutes + shift.paidBreakMinutes;
+      if (restMinutes >= minBreakMinutes) return [];
 
       return [
         violation(
           'MIN_BREAK_AFTER_THRESHOLD',
-          `${shift.breakMinutes} min de pause pour ${hours(span)} de présence : minimum ${minBreakMinutes} min au-delà de ${hours(thresholdMinutes)}.`,
+          `${restMinutes} min de pause pour ${hours(span)} de présence : minimum ${minBreakMinutes} min au-delà de ${hours(thresholdMinutes)}.`,
           {
             localDate: zonedDate(shift.startAt, context.timeZone),
             context: {
-              breakMinutes: shift.breakMinutes,
+              breakMinutes: restMinutes,
               requiredMinutes: minBreakMinutes,
               spanMinutes: span,
             },

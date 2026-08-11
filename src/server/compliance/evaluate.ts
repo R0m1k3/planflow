@@ -67,6 +67,7 @@ interface LoadedShift {
   startAt: Date;
   endAt: Date;
   breakMinutes: number;
+  paidBreakMinutes: number;
 }
 
 /**
@@ -262,6 +263,7 @@ async function buildContexts(
       startAt: true,
       endAt: true,
       breakMinutes: true,
+      paidBreakMinutes: true,
     },
   });
 
@@ -277,6 +279,7 @@ async function buildContexts(
       startAt: true,
       endAt: true,
       breakMinutes: true,
+      paidBreakMinutes: true,
     },
   });
 
@@ -321,6 +324,7 @@ async function buildContexts(
         startAt: shift.startAt,
         endAt: shift.endAt,
         breakMinutes: shift.breakMinutes,
+        paidBreakMinutes: shift.paidBreakMinutes,
         assigned: shift.membershipId !== null,
       }));
 
