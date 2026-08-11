@@ -50,6 +50,12 @@ export const NAVIGATION: NavSection[] = [
       { id: 'jour', label: 'Vue jour', href: '/planning/jour' },
       { id: 'etiquettes', label: 'Vue par poste', href: '/planning/etiquettes' },
       { id: 'mois', label: 'Vue mois', href: '/planning/mois' },
+      {
+        id: 'presences',
+        label: 'Présences et absences',
+        href: '/planning/presences',
+      },
+      { id: 'impression', label: 'Planning à afficher', href: '/planning/impression' },
       { id: 'besoins', label: 'Besoins non couverts' },
       { id: 'modeles', label: "Modèles d'ouverture" },
     ],
