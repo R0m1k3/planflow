@@ -276,7 +276,7 @@ function EmployeeHome() {
         </li>
         <li>
           <Link
-            href="/conges"
+            href="/absences/calendrier"
             className="flex h-full flex-col gap-1 rounded-3 border border-line-1 bg-surface p-4 hover:bg-surface-2"
           >
             <span className="text-sm font-medium text-ink-1">

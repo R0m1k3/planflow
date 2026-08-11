@@ -32,9 +32,29 @@ export const NAVIGATION: NavSection[] = [
       { id: 'entrees', label: 'Entrées et sorties', href: '/?liste=entrees' },
       { id: 'profils', label: 'Profils incomplets', href: '/?liste=profils' },
       { id: 'titres', label: 'Titres de séjour', href: '/?liste=titres' },
-      // Ancre plutôt que route : `/conges` appartient à la section Congés, et
-      // deux entrées allumées pour un même écran rendent la navigation muette.
-      { id: 'soldes-cp', label: 'Compteurs de congés payés', href: '/conges#compteurs' },
+      // Ancre plutôt que route : le calendrier appartient à la section Congés,
+      // et deux entrées allumées pour un même écran rendent la navigation
+      // muette.
+      {
+        id: 'soldes-cp',
+        label: 'Compteurs de congés payés',
+        href: '/absences/calendrier#compteurs',
+      },
+      {
+        id: 'analyse-effectifs',
+        label: 'Analyse des effectifs',
+        href: '/rh/analyses/effectifs',
+      },
+      {
+        id: 'analyse-heures',
+        label: 'Analyse des heures',
+        href: '/rh/analyses/heures',
+      },
+      {
+        id: 'analyse-absences',
+        label: 'Analyse des absences',
+        href: '/rh/analyses/absences',
+      },
     ],
   },
   {
@@ -45,6 +65,12 @@ export const NAVIGATION: NavSection[] = [
       { id: 'jour', label: 'Vue jour', href: '/planning/jour' },
       { id: 'etiquettes', label: 'Vue par poste', href: '/planning/etiquettes' },
       { id: 'mois', label: 'Vue mois', href: '/planning/mois' },
+      {
+        id: 'presences',
+        label: 'Présences et absences',
+        href: '/planning/presences',
+      },
+      { id: 'impression', label: 'Planning à afficher', href: '/planning/impression' },
       { id: 'besoins', label: 'Besoins non couverts' },
       { id: 'modeles', label: "Modèles d'ouverture" },
     ],
@@ -61,9 +87,19 @@ export const NAVIGATION: NavSection[] = [
     id: 'conges',
     label: 'Congés',
     items: [
-      { id: 'calendrier', label: 'Calendrier des absences', href: '/conges' },
-      { id: 'attente', label: 'Demandes en attente', href: '/conges#attente' },
-      { id: 'politiques', label: 'Politiques de congés' },
+      {
+        id: 'calendrier',
+        label: 'Calendrier des absences',
+        href: '/absences/calendrier',
+      },
+      { id: 'attente', label: 'Demandes à traiter', href: '/absences/a-traiter' },
+      { id: 'traitees', label: 'Traitées', href: '/absences/traitees' },
+      { id: 'expirees', label: 'Expirées', href: '/absences/expirees' },
+      {
+        id: 'politiques',
+        label: 'Politiques de RTT',
+        href: '/reglages/politiques-rtt',
+      },
     ],
   },
   {
@@ -74,14 +110,27 @@ export const NAVIGATION: NavSection[] = [
       { id: 'paie', label: 'Préparation de paie', href: '/paie' },
       { id: 'periodes', label: 'Périodes de paie', href: '/paie/periodes' },
       { id: 'silae', label: 'Codes Silae', href: '/paie/silae' },
-      { id: 'activite', label: "Journal d'activité" },
+      {
+        id: 'activite',
+        label: "Journal d'activité",
+        href: '/rapports/activite',
+      },
     ],
   },
   {
     id: 'reglages',
     label: 'Réglages',
     items: [
+      { id: 'compte', label: 'Informations du compte', href: '/reglages/compte' },
       { id: 'sites', label: 'Établissements', href: '/reglages/etablissements' },
+      { id: 'preferences', label: 'Préférences', href: '/reglages/preferences' },
+      { id: 'paie-reglages', label: 'Réglages de paie', href: '/reglages/paie' },
+      { id: 'impression', label: 'Impression', href: '/reglages/impression' },
+      {
+        id: 'productivite',
+        label: 'Productivité',
+        href: '/reglages/productivite',
+      },
       { id: 'registre', label: 'Registre de paramétrage', href: '/reglages/registre' },
       { id: 'email', label: 'Envoi de courrier', href: '/reglages/email' },
       { id: 'securite', label: 'Sécurité', href: '/reglages/securite' },
@@ -90,8 +139,24 @@ export const NAVIGATION: NavSection[] = [
         label: 'Durées de conservation',
         href: '/reglages/conservation',
       },
-      { id: 'convention', label: 'Convention collective' },
-      { id: 'postes', label: 'Postes et étiquettes' },
+      { id: 'rgpd', label: 'RGPD', href: '/reglages/rgpd' },
+      {
+        id: 'modeles',
+        label: 'Modèles de documents',
+        href: '/reglages/modeles-documents',
+      },
+      {
+        id: 'convention',
+        label: 'Convention collective',
+        href: '/reglages/convention',
+      },
+      { id: 'emplois', label: 'Emplois', href: '/reglages/emplois' },
+      { id: 'etiquettes', label: 'Étiquettes', href: '/reglages/etiquettes' },
+      {
+        id: 'types-absence',
+        label: 'Types d’absence',
+        href: '/reglages/types-absence',
+      },
       { id: 'roles', label: 'Rôles et permissions', href: '/reglages/roles' },
     ],
   },

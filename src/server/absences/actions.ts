@@ -229,7 +229,7 @@ export async function requestTimeOffAction(
     return toState(error, "Vous n'avez pas le droit de poser cette absence.");
   }
 
-  revalidatePath('/conges');
+  revalidatePath('/absences/calendrier');
   return warning ? { ok: true, warning } : { ok: true };
 }
 
@@ -328,7 +328,7 @@ export async function decideTimeOffAction(
     return toState(error, "Vous n'avez pas le droit de décider de cette demande.");
   }
 
-  revalidatePath('/conges');
+  revalidatePath('/absences/calendrier');
   return { ok: true };
 }
 
@@ -384,7 +384,7 @@ export async function cancelTimeOffAction(
     return toState(error, "Vous n'avez pas le droit d'annuler cette absence.");
   }
 
-  revalidatePath('/conges');
+  revalidatePath('/absences/calendrier');
   return { ok: true };
 }
 
@@ -462,7 +462,7 @@ export async function adjustCounterAction(
     return toState(error, "Vous n'avez pas le droit d'ajuster un compteur.");
   }
 
-  revalidatePath('/conges');
+  revalidatePath('/absences/calendrier');
   return { ok: true };
 }
 

@@ -194,6 +194,28 @@ describe('buildRows', () => {
       '14:00–19:00',
     ]);
   });
+
+  it('ne compte au RC que le repos compensateur', () => {
+    // Le repos hebdomadaire est un droit déjà pris ; le compensateur est une
+    // contrepartie due. Les additionner ferait disparaître la dette dans un
+    // total qui ne veut rien dire.
+    const { rows } = buildRows([person()], [], DATES, TZ, false, [], [
+      { membershipId: 'm1', restType: 'COMPENSATORY_REST', minutes: 420 },
+      { membershipId: 'm1', restType: 'WEEKLY_REST', minutes: 2100 },
+    ]);
+
+    expect(rows[0]?.counters.compensatoryRestMinutes).toBe(420);
+  });
+
+  it('tolère un repos sans durée', () => {
+    // `Rest.minutes` est nullable : un repos posé sans durée vaut zéro minute,
+    // pas NaN — un NaN se propagerait au bandeau et à l'export.
+    const { rows } = buildRows([person()], [], DATES, TZ, false, [], [
+      { membershipId: 'm1', restType: 'COMPENSATORY_REST', minutes: null },
+    ]);
+
+    expect(rows[0]?.counters.compensatoryRestMinutes).toBe(0);
+  });
 });
 
 describe('shiftState', () => {

@@ -27,9 +27,16 @@ function Cell({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Les cinq compteurs d'une ligne salarié : contrat, planifié, absences, écart,
- * dimanches et repos. Rendus depuis `computeWeekCounters`, jamais recalculés
- * localement.
+ * Les cinq compteurs d'une ligne salarié — PLAN.md §7.4 : **heures
+ * contractuelles, planifié, absences, écart, repos compensateur**.
+ *
+ * Ce sont ces cinq-là et pas d'autres. Les dimanches travaillés et les jours de
+ * repos se lisent sur la grille ; le repos compensateur, lui, ne se lit nulle
+ * part ailleurs — c'est une contrepartie **due**, et l'omettre du bandeau
+ * masque la seule valeur qui dit qu'une dette existe.
+ *
+ * Rendus depuis `computeWeekCounters`, jamais recalculés localement : la même
+ * implémentation alimente la grille, le rapport d'heures et l'export de paie.
  */
 export function CounterStrip({
   counters,
@@ -57,7 +64,10 @@ export function CounterStrip({
         <span className="rounded-full bg-accent-soft px-1.5 py-px font-medium text-accent-soft-ink">
           Forfait jours
         </span>
+        {/* Un forfait jours reste soumis aux repos : le RC s'affiche, l'écart
+            horaire non. */}
         <Cell label="Rep." value={String(counters.restDays)} />
+        <Cell label="RC" value={counters.compensatoryRestLabel} />
       </div>
     );
   }
@@ -71,6 +81,7 @@ export function CounterStrip({
         ·
       </span>
       <Cell label="Planif." value={counters.plannedLabel} />
+      <Cell label="Abs." value={counters.absenceLabel} />
       <span
         className={cx(
           'tnum rounded-full px-1.5 py-px font-semibold',
@@ -80,8 +91,7 @@ export function CounterStrip({
       >
         {counters.deltaLabel}
       </span>
-      <Cell label="Dim." value={String(counters.sundaysWorked)} />
-      <Cell label="Rep." value={String(counters.restDays)} />
+      <Cell label="RC" value={counters.compensatoryRestLabel} />
     </div>
   );
 }

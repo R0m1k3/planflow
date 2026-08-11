@@ -50,6 +50,7 @@ describe('computeWeekCounters', () => {
       absenceMinutes: h(18),
       sundaysWorked: 0,
       restDays: 5,
+      compensatoryRestMinutes: 0,
     });
 
     expect(counters.deltaMinutes).toBe(0);
@@ -64,6 +65,7 @@ describe('computeWeekCounters', () => {
       absenceMinutes: 0,
       sundaysWorked: 2,
       restDays: 2,
+      compensatoryRestMinutes: 0,
     });
 
     expect(counters.deltaLabel).toBe('+1 h 30');
@@ -77,6 +79,7 @@ describe('computeWeekCounters', () => {
       absenceMinutes: 0,
       sundaysWorked: 0,
       restDays: 2,
+      compensatoryRestMinutes: 0,
     });
 
     expect(counters.deltaLabel).toBe('−1 h 45');

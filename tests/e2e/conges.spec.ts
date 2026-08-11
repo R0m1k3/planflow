@@ -55,7 +55,7 @@ function nextWeekday(weekday: number): string {
  * attente » et « acceptée » bloquent.
  */
 async function release(page: Page, marker: string, month?: string) {
-  await page.goto(month ? `/conges?mois=${month}` : '/conges');
+  await page.goto(month ? `/absences/calendrier?mois=${month}` : '/absences/calendrier');
 
   const pending = page
     .locator('section')
@@ -117,7 +117,7 @@ async function request(
 test('le formulaire nomme le dernier jour d’absence, pas la date de fin', async ({
   page,
 }) => {
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
   // Le libellé exact coûte moins cher qu'une régularisation de solde.
   await expect(
     page.getByText('Dernier jour d’absence', { exact: true }),
@@ -128,7 +128,7 @@ test('le formulaire nomme le dernier jour d’absence, pas la date de fin', asyn
 });
 
 test('une demande apparaît dans la file, puis se décide', async ({ page }) => {
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
 
   const from = isoDate(0);
   const to = isoDate(4);
@@ -160,7 +160,7 @@ test('une demande apparaît dans la file, puis se décide', async ({ page }) => 
   // La ligne est visée par **ses** dates, pas par « la première de ce
   // salarié » : les passages précédents en laissent d'autres dans le même
   // mois, et certaines n'offrent plus de bouton d'annulation.
-  await page.goto(`/conges?mois=${from.slice(0, 7)}`);
+  await page.goto(`/absences/calendrier?mois=${from.slice(0, 7)}`);
   const accepted = page
     .locator('section')
     .filter({ hasText: 'Absences du mois' })
@@ -173,7 +173,7 @@ test('une demande apparaît dans la file, puis se décide', async ({ page }) => 
 });
 
 test('deux absences qui se recouvrent sont refusées', async ({ page }) => {
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
 
   await release(page, 'Chevauchement ');
 
@@ -208,7 +208,7 @@ test('deux absences qui se recouvrent sont refusées', async ({ page }) => {
 });
 
 test('une période sans jour décomptable est refusée', async ({ page }) => {
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
 
   // Un dimanche seul : jamais ouvrable, donc rien à décompter.
   const sunday = nextWeekday(0);
@@ -222,7 +222,7 @@ test('une période sans jour décomptable est refusée', async ({ page }) => {
 });
 
 test('un jour férié dans la période n’est pas décompté', async ({ page }) => {
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
 
   // Un jour férié pris au hasard parmi ceux de l'année : la période qui
   // l'englobe ne doit pas le décompter, et l'utilisateur n'a pas eu à scinder
@@ -263,7 +263,7 @@ test('un jour férié dans la période n’est pas décompté', async ({ page })
 test('une date de fin antérieure au début rappelle la règle', async ({
   page,
 }) => {
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
 
   const form = await request(page, {
     from: isoDate(22),
@@ -277,7 +277,7 @@ test('une date de fin antérieure au début rappelle la règle', async ({
 });
 
 test('le solde revient à son niveau après un aller-retour', async ({ page }) => {
-  await page.goto('/conges');
+  await page.goto('/absences/calendrier');
 
   const counters = page.locator('section').filter({ hasText: 'Compteurs' });
   await expect(counters).toBeVisible();
