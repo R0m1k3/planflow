@@ -12,6 +12,7 @@ export function Card({ children, className }: CardProps) {
     <section
       className={cx(
         'overflow-hidden rounded-3 border border-line-1 bg-surface',
+        'shadow-e1',
         className,
       )}
     >
@@ -29,8 +30,13 @@ export interface CardHeaderProps {
 
 export function CardHeader({ title, badge, action }: CardHeaderProps) {
   return (
+    // Le filet de marge marque l'en-tête, comme la marge d'un registre marque
+    // le début d'une écriture. Il remplace le fond gris qu'on met d'ordinaire
+    // là : un aplat de plus sur un écran de tableaux ajoute du bruit, un trait
+    // de 2 px suffit à dire « ici commence quelque chose ».
     <header className="flex items-center gap-2.5 border-b border-line-1 px-4 py-3">
-      <h2 className="text-md font-semibold">{title}</h2>
+      <span aria-hidden className="-ml-4 h-5 w-[2px] rounded-r-full bg-accent" />
+      <h2 className="text-md font-semibold tracking-[-0.015em]">{title}</h2>
       {badge}
       <span className="flex-1" />
       {action}

@@ -6,19 +6,23 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md';
 
 const VARIANTS: Record<ButtonVariant, string> = {
+  // Le primaire porte une ombre courte : c'est le seul élément de l'interface
+  // qui se soulève, et il n'y en a qu'un par écran.
   primary:
-    'border-accent bg-accent text-accent-ink hover:bg-accent-hover active:bg-accent-press',
+    'border-accent bg-accent text-accent-ink shadow-e1 hover:bg-accent-hover active:bg-accent-press active:shadow-none',
   secondary:
-    'border-line-3 bg-surface text-ink-1 hover:bg-surface-2 active:bg-surface-3',
+    'border-line-2 bg-surface text-ink-1 hover:border-line-3 hover:bg-surface-2 active:bg-surface-3',
   ghost:
     'border-transparent bg-transparent text-ink-2 hover:bg-surface-2 hover:text-ink-1',
   danger:
-    'border-danger bg-danger text-danger-ink hover:bg-danger-hover active:bg-danger-hover',
+    'border-danger bg-danger text-danger-ink shadow-e1 hover:bg-danger-hover active:bg-danger-hover active:shadow-none',
 };
 
+/* Cibles plus hautes : 26 px était sous le seuil confortable au pointeur, et
+   nettement sous les 44 px recommandés au doigt sur la version installable. */
 const SIZES: Record<ButtonSize, string> = {
-  sm: 'h-[26px] px-2.5 text-xs',
-  md: 'h-8 px-3.5 text-sm',
+  sm: 'h-8 px-3 text-xs',
+  md: 'h-9 px-4 text-sm',
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

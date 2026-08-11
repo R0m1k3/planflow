@@ -14,74 +14,98 @@
    ========================================================================== */
 
 @theme {
-  --font-ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'Cascadia Mono', 'Segoe UI Mono',
-    'Liberation Mono', Menlo, monospace;
+  /* IBM Plex — servi depuis l'application, jamais depuis un CDN (voir
+     src/app/layout.tsx). Le repli système suit en cas d'échec de chargement :
+     un planning doit rester lisible même quand la fonte ne l'est pas. */
+  --font-ui: var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular,
+    'Cascadia Mono', 'Segoe UI Mono', 'Liberation Mono', Menlo, monospace;
 
-  --text-micro: 11px;
-  --text-xs: 12px;
-  --text-sm: 13px;
-  --text-md: 14px;
-  --text-lg: 16px;
-  --text-xl: 20px;
-  --text-2xl: 26px;
-  --text-3xl: 32px;
+  /* Échelle relevée d'un cran : l'ancienne partait de 14 px de corps et 11 px
+     de micro-libellé, ce qui se lit mal huit heures par jour sur un écran de
+     back-office. Le corps est à 15 px, et rien ne descend sous 12. */
+  --text-micro: 12px;
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 21px;
+  --text-2xl: 27px;
+  --text-3xl: 34px;
 
-  --radius-1: 3px;
-  --radius-2: 6px;
-  --radius-3: 10px;
-  --radius-4: 14px;
+  /* Rayons courts. Un planning est un tableau de bord, pas une carte de
+     visite : au-delà de 8 px les cellules perdent leur alignement optique. */
+  --radius-1: 2px;
+  --radius-2: 5px;
+  --radius-3: 8px;
+  --radius-4: 12px;
   --radius-full: 999px;
 
   --ease-organic: cubic-bezier(0.2, 0.7, 0.3, 1);
   --ease-organic-out: cubic-bezier(0, 0.6, 0.35, 1);
 
-  /* Neutres chauds — la base « organique » du thème. */
-  --color-canvas: oklch(0.976 0.008 85);
-  --color-surface: oklch(0.996 0.005 85);
-  --color-surface-2: oklch(0.958 0.01 85);
-  --color-surface-3: oklch(0.932 0.012 85);
-  --color-line-1: oklch(0.905 0.012 85);
-  --color-line-2: oklch(0.852 0.014 85);
-  --color-line-3: oklch(0.735 0.016 85);
-  --color-ink-1: oklch(0.255 0.02 140);
-  --color-ink-2: oklch(0.445 0.016 135);
-  --color-ink-3: oklch(0.545 0.014 120);
+  /* ---- Neutres froids ---------------------------------------------------
+     Papier légèrement bleuté plutôt que crème. Le crème réchauffe et fatigue
+     moins sur un texte long ; ici l'écran porte des tableaux de chiffres et des
+     aplats colorés, et un fond chaud décale la perception de ces aplats — un
+     jaune de poste vire au vert, un rouge d'alerte s'éteint. Le neutre froid
+     laisse la couleur dire ce qu'elle dit.
+     --------------------------------------------------------------------- */
+  --color-canvas: oklch(0.979 0.004 250);
+  --color-surface: oklch(1 0 0);
+  --color-surface-2: oklch(0.965 0.005 250);
+  --color-surface-3: oklch(0.938 0.008 250);
+  --color-line-1: oklch(0.912 0.008 250);
+  --color-line-2: oklch(0.858 0.011 250);
+  --color-line-3: oklch(0.72 0.015 250);
 
-  --color-accent: oklch(0.44 0.078 158);
-  --color-accent-hover: oklch(0.385 0.08 158);
-  --color-accent-press: oklch(0.335 0.072 158);
-  --color-accent-ink: oklch(0.985 0.008 158);
-  --color-accent-soft: oklch(0.935 0.03 158);
-  --color-accent-soft-ink: oklch(0.315 0.06 158);
+  /* Encre plus dense qu'avant, et franchement bleutée. `ink-3` monte à 0.50 :
+     à 0.545 sur ce papier, les libellés secondaires passaient sous 4,5:1. */
+  --color-ink-1: oklch(0.215 0.018 258);
+  --color-ink-2: oklch(0.405 0.018 256);
+  --color-ink-3: oklch(0.50 0.017 254);
 
-  --color-focus: oklch(0.52 0.16 252);
+  /* Bleu d'acte. Il ne sert qu'à trois choses : le filet actif, les liens, et
+     le bouton qui engage. Tout le reste du produit est en gris et en état. */
+  --color-accent: oklch(0.435 0.135 258);
+  --color-accent-hover: oklch(0.375 0.135 258);
+  --color-accent-press: oklch(0.325 0.12 258);
+  --color-accent-ink: oklch(0.99 0.004 258);
+  --color-accent-soft: oklch(0.945 0.028 258);
+  --color-accent-soft-ink: oklch(0.335 0.11 258);
 
-  --color-danger: oklch(0.475 0.145 30);
-  --color-danger-hover: oklch(0.415 0.145 30);
-  --color-danger-ink: oklch(0.985 0.006 30);
-  --color-danger-soft: oklch(0.94 0.035 30);
-  --color-danger-soft-ink: oklch(0.355 0.105 30);
+  /* Focus en cyan : distinct du bleu d'accent, sinon l'anneau disparaît sur le
+     bouton primaire, c'est-à-dire là où il compte le plus. */
+  --color-focus: oklch(0.58 0.155 218);
 
-  --color-warn: oklch(0.745 0.125 78);
-  --color-warn-ink: oklch(0.255 0.055 60);
-  --color-warn-soft: oklch(0.945 0.045 82);
-  --color-warn-soft-ink: oklch(0.375 0.085 60);
+  --color-danger: oklch(0.505 0.175 27);
+  --color-danger-hover: oklch(0.445 0.175 27);
+  --color-danger-ink: oklch(0.99 0.005 27);
+  --color-danger-soft: oklch(0.955 0.03 27);
+  --color-danger-soft-ink: oklch(0.395 0.13 27);
 
-  --color-ok: oklch(0.475 0.095 148);
-  --color-ok-soft: oklch(0.935 0.035 148);
-  --color-ok-soft-ink: oklch(0.315 0.07 148);
+  --color-warn: oklch(0.70 0.145 65);
+  --color-warn-ink: oklch(0.24 0.06 55);
+  --color-warn-soft: oklch(0.958 0.045 78);
+  --color-warn-soft-ink: oklch(0.415 0.10 55);
 
-  --color-info: oklch(0.475 0.105 245);
-  --color-info-soft: oklch(0.935 0.035 245);
-  --color-info-soft-ink: oklch(0.325 0.08 245);
+  --color-ok: oklch(0.505 0.115 158);
+  --color-ok-soft: oklch(0.955 0.033 158);
+  --color-ok-soft-ink: oklch(0.365 0.085 158);
 
-  --shadow-e1: 0 1px 2px oklch(0.3 0.02 85 / 0.08);
+  --color-info: oklch(0.505 0.115 240);
+  --color-info-soft: oklch(0.955 0.03 240);
+  --color-info-soft-ink: oklch(0.365 0.09 240);
+
+  /* Ombres froides et courtes. Une ombre longue sur un tableau dense fait
+     flotter les cartes les unes au-dessus des autres et brouille la lecture
+     des colonnes. */
+  --shadow-e1: 0 1px 1px oklch(0.35 0.03 258 / 0.06);
   --shadow-e2:
-    0 1px 2px oklch(0.3 0.02 85 / 0.06), 0 6px 14px oklch(0.3 0.02 85 / 0.07);
+    0 1px 2px oklch(0.35 0.03 258 / 0.07), 0 4px 10px oklch(0.35 0.03 258 / 0.06);
   --shadow-e3:
-    0 2px 6px oklch(0.3 0.02 85 / 0.08), 0 16px 40px oklch(0.3 0.02 85 / 0.14);
+    0 2px 4px oklch(0.35 0.03 258 / 0.08), 0 14px 34px oklch(0.35 0.03 258 / 0.12);
 }
 
 :root {
@@ -111,12 +135,16 @@
      toujours écrit dans le bloc (voir ShiftChip).
      --------------------------------------------------------------------- */
   --tier-dir: -1;
-  --chip-bg-l: 0.905;
-  --chip-bg-c: 0.042;
-  --chip-fg-l: 0.315;
-  --chip-fg-c: 0.055;
-  --chip-edge-l: 0.52;
-  --chip-edge-c: 0.12;
+  /* Retendus pour le papier froid : fonds un cran plus clairs et moins
+     chargés, encre un cran plus sombre. Sur l'ancien fond crème, les aplats
+     tiraient tous vers le même beige moyen et la grille devenait un patchwork ;
+     ici ils restent des repères, et le texte du bloc passe 7:1. */
+  --chip-bg-l: 0.928;
+  --chip-bg-c: 0.038;
+  --chip-fg-l: 0.29;
+  --chip-fg-c: 0.062;
+  --chip-edge-l: 0.545;
+  --chip-edge-c: 0.115;
 
   --post-cai-h: 250;
   --post-cai-t: 0;
@@ -336,6 +364,30 @@ body {
   font-size: var(--text-md);
   line-height: var(--lh-ui);
   -webkit-font-smoothing: antialiased;
+  /* Zéro barré partout. Sur un écran couvert de codes — AB-300, HS-HS25, un
+     matricule — la confusion entre 0 et O se paie en ligne de paie fausse. */
+  font-variant-numeric: slashed-zero;
+}
+
+/* Les titres se resserrent, les micro-libellés s'écartent. Cette respiration
+   inverse est ce qui distingue une hiérarchie d'un simple changement de corps :
+   à 27 px, l'espacement par défaut d'une grotesque paraît lâche ; à 12 px, il
+   colle. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  line-height: var(--lh-tight);
+}
+
+/* Les codes se lisent en chasse fixe : ils se recopient caractère par
+   caractère, souvent à la main, dans un autre logiciel. */
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  font-variant-numeric: slashed-zero;
 }
 
 *,
@@ -355,6 +407,66 @@ body {
    d'une ligne à l'autre et la comparaison devient pénible. */
 .tnum {
   font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Le filet — élément de structure du produit
+
+   Un planning est lu comme un registre : des lignes, des colonnes, et des
+   filets qui disent où commence quoi. Plutôt que d'entourer chaque bloc d'une
+   bordure complète, la structure est portée par un **filet de marge** de 2 px
+   à gauche de ce qui est actif ou de ce qui compte. C'est la marge rouge du
+   cahier, appliquée à une interface.
+
+   Deux règles, pour que ce ne soit pas un ornement :
+   - un filet marque une **appartenance** (cette section, cet onglet), jamais
+     une décoration ;
+   - il ne double jamais une bordure existante.
+   ========================================================================== */
+.spine {
+  border-left: 2px solid var(--color-accent);
+  padding-left: 0.875rem;
+}
+
+.spine-quiet {
+  border-left: 2px solid var(--color-line-2);
+  padding-left: 0.875rem;
+}
+
+/* Sur-titre : le petit libellé qui nomme une zone sans lui voler la vedette.
+   Interlettré large et gradé haut — à cette taille, la graisse porte mieux la
+   lisibilité que le corps. */
+.eyebrow {
+  font-size: var(--text-micro);
+  font-weight: 650;
+  letter-spacing: 0.085em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* Un chiffre qu'on vient lire, par opposition à un chiffre dans une phrase :
+   compteur d'heures, effectif, écart. Tabulaire, dense, sans ambiguïté entre
+   le zéro et le O. */
+.figure {
+  font-variant-numeric: tabular-nums lining-nums slashed-zero;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+  color: var(--color-ink-1);
+}
+
+/* ---- Le dimanche ---------------------------------------------------------
+   La seule colonne du planning qui porte une conséquence de droit : L3132-27
+   impose une rémunération au moins double **et** un repos compensateur
+   équivalent. Elle est donc marquée dans la grille — fond très légèrement
+   teinté, et un filet double à sa gauche, celui qu'on trace dans un registre
+   pour séparer ce qui se totalise à part.
+
+   Le marquage ne remplace aucune alerte : le moteur de règles reste seul juge.
+   Il évite de découvrir un dimanche planifié au moment de la paie.
+   ------------------------------------------------------------------------ */
+.col-sunday {
+  background: var(--color-warn-soft);
+  box-shadow: inset 2px 0 0 var(--color-warn), inset 5px 0 0 var(--color-surface);
 }
 
 @media (prefers-reduced-motion: reduce) {
