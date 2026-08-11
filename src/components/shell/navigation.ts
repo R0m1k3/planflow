@@ -91,7 +91,11 @@ export const NAVIGATION: NavSection[] = [
       { id: 'paie', label: 'Préparation de paie', href: '/paie' },
       { id: 'periodes', label: 'Périodes de paie', href: '/paie/periodes' },
       { id: 'silae', label: 'Codes Silae', href: '/paie/silae' },
-      { id: 'activite', label: "Journal d'activité" },
+      {
+        id: 'activite',
+        label: "Journal d'activité",
+        href: '/rapports/activite',
+      },
     ],
   },
   {
