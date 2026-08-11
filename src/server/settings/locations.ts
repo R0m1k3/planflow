@@ -101,6 +101,15 @@ export async function createLocationAction(
         } as never,
       });
 
+      // Une première équipe, tout de suite. Le planning s'ordonne par équipe :
+      // un établissement qui n'en a aucune ne se planifie pas, et rien ne le
+      // dit avant la première semaine à couvrir — où le message « pas encore
+      // d'équipe » se lit « il n'y a personne ». Elle se renomme, et rien
+      // n'empêche d'en ajouter d'autres.
+      await db.team.create({
+        data: { locationId: created.id, name: 'Équipe', position: 0 } as never,
+      });
+
       await recordAudit(db, {
         actorMembershipId: actor.membershipId,
         action: 'location.create',

@@ -118,6 +118,14 @@ describeIfDb('première installation', () => {
         });
         expect(location.timezone).toBe('America/Martinique');
         expect(location.name).toBe('Siège');
+
+        // Et une première équipe : sans elle, le planning n'a aucune ligne où
+        // poser un créneau, et l'écran annonce « pas encore d'équipe » à qui
+        // vient d'installer l'instance.
+        const teams = await tx.team.findMany({
+          where: { locationId: location.id },
+        });
+        expect(teams).toHaveLength(1);
       },
     );
   });

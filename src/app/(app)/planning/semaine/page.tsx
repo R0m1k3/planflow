@@ -100,10 +100,28 @@ export default async function SemainePage({ searchParams }: PageProps) {
         ) : null}
       </div>
 
+      {/* Le planning s'ordonne par équipe : sans équipe, il n'y a pas de ligne
+          où poser un créneau, même quand des salariés sont rattachés à
+          l'établissement. Dire ce qui manque ne suffit pas — l'écran dit aussi
+          où le créer, sans quoi le message se lit « il n'y a personne ». */}
       {board.sections.length === 0 ? (
-        <p className="rounded-3 border border-line-1 bg-surface p-4 text-sm text-ink-2">
-          Cet établissement n’a pas encore d’équipe.
-        </p>
+        <div className="rounded-3 border border-line-1 bg-surface p-4 text-sm text-ink-2">
+          <p className="mb-1 font-medium text-ink-1">
+            Cet établissement n’a pas encore d’équipe.
+          </p>
+          <p>
+            Le planning se construit équipe par équipe : chacune porte son propre
+            état de publication. Créez-en une dans{' '}
+            <Link
+              href="/reglages/etablissements"
+              className="underline underline-offset-2"
+            >
+              Réglages · Établissements
+            </Link>
+            , puis rattachez-y les salariés depuis l’onglet « Planification et
+            accès » de leur fiche.
+          </p>
+        </div>
       ) : null}
 
       {board.sections.map((section) => (

@@ -115,6 +115,13 @@ export async function installAccount(
     },
   });
 
+  // Une première équipe. Le planning s'ordonne par équipe : sans elle,
+  // l'établissement neuf n'a aucune ligne où poser un créneau, et l'écran de
+  // planning annonce « pas encore d'équipe » à qui vient de tout installer.
+  await tx.team.create({
+    data: { accountId: account.id, locationId: location.id, name: 'Équipe' },
+  });
+
   // Étiquettes, types d'absence, convention d'amorce, conservation et jours
   // fériés. Ce ne sont pas des exemples : sans eux, l'instance a le schéma et
   // rien à quoi l'accrocher — pas de demande d'absence saisissable, pas de
