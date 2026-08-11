@@ -126,6 +126,12 @@ export const NAVIGATION: NavSection[] = [
         label: 'Durées de conservation',
         href: '/reglages/conservation',
       },
+      { id: 'rgpd', label: 'RGPD', href: '/reglages/rgpd' },
+      {
+        id: 'modeles',
+        label: 'Modèles de documents',
+        href: '/reglages/modeles-documents',
+      },
       {
         id: 'convention',
         label: 'Convention collective',

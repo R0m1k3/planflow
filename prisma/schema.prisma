@@ -34,6 +34,7 @@ model Account {
   jobTitles   JobTitle[]
   labels      Label[]
   absenceTypes AbsenceType[]
+  documentTemplates DocumentTemplate[]
   legalConfig LegalConfigEntry[]
   installation Installation?
 }
@@ -792,6 +793,33 @@ model DailyNote {
 /// pouvoir reproduire à l'identique une paie antérieure après un changement de
 /// règle. Une mise à jour en place rendrait cette reproduction impossible, et
 /// l'impossibilité ne se découvrirait qu'au premier contrôle.
+/// Modèle de document — PLAN.md §4.7 et §9.
+///
+/// `bodyHtml` porte le corps avec ses variables sous la forme `{{cle}}`.
+/// `availableFields` déclare les variables offertes à la rédaction : elles sont
+/// **scopées par établissement**, si bien qu'un modèle rendu pour un salarié
+/// résout ses variables dans le contexte de l'établissement de son contrat. Une
+/// même attestation ne porte donc pas la même raison sociale d'un magasin à
+/// l'autre.
+///
+/// Archivé plutôt que supprimé : un document généré garde `templateId`, et
+/// perdre le modèle rendrait inexplicable la forme d'une pièce déjà remise.
+model DocumentTemplate {
+  id              String    @id @default(cuid())
+  accountId       String
+  name            String
+  bodyHtml        String
+  availableFields Json
+  archivedAt      DateTime?
+  createdAt       DateTime  @default(now())
+
+  account   Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  documents Document[]
+
+  @@unique([accountId, name])
+  @@index([accountId])
+}
+
 /// Pièce du dossier salarié — PLAN.md §4.7.
 ///
 /// Le contenu vit sur disque, **chiffré**, jamais dans la base : une pièce
@@ -811,6 +839,8 @@ model Document {
   /// Empreinte du clair, pour détecter une altération du fichier stocké.
   checksum       String
   /// Donnée de santé : sa lecture est journalisée (§3.6).
+  /// Modèle dont la pièce est issue. Nul pour un fichier déposé à la main.
+  templateId     String?
   isSensitive    Boolean           @default(false)
   /// Échéance de conservation. Nulle tant qu'aucune politique ne l'a fixée :
   /// le plan interdit d'appliquer une durée par défaut (§12.5).
@@ -820,7 +850,8 @@ model Document {
   deletedAt      DateTime?
   deletedBy      String?
 
-  membership Membership? @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  membership Membership?       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  template   DocumentTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
   @@index([accountId])
   @@index([membershipId])
