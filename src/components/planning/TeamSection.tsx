@@ -7,6 +7,7 @@ import { WeekGrid } from '@/components/planning/WeekGrid';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { PersistentForm } from '@/components/ui/PersistentForm';
+import { cx } from '@/lib/cx';
 import { formatMinutes } from '@/domain/counters/week';
 import {
   displayName,
@@ -205,6 +206,8 @@ export function TeamSection({
           rows={section.rows}
           localDate={dates[target.dayIndex] ?? ''}
           dayLabel={days[target.dayIndex] ?? ''}
+          dates={dates}
+          days={days}
           target={target}
           onClose={() => setTarget(null)}
         />
@@ -350,6 +353,8 @@ function ShiftComposer({
   rows,
   localDate,
   dayLabel,
+  dates,
+  days,
   target,
   onClose,
 }: {
@@ -359,6 +364,8 @@ function ShiftComposer({
   rows: BoardRow[];
   localDate: string;
   dayLabel: string;
+  dates: string[];
+  days: string[];
   target: Target;
   onClose: () => void;
 }) {
@@ -450,20 +457,51 @@ function ShiftComposer({
         />
       </Field>
 
+      <Field label="Repas" htmlFor="composer-meals">
+        <input
+          id="composer-meals"
+          name="mealCount"
+          type="number"
+          min={0}
+          max={5}
+          defaultValue={editing ? target.shift.mealCount : 0}
+          className="h-8 w-16 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+        />
+      </Field>
+
+      {/* L'étiquette est modifiable à la correction aussi : posée de travers,
+          elle se corrigeait en supprimant le créneau pour le refaire — ce qui
+          perdait sa validation et son historique. */}
+      <Field label="Poste" htmlFor="composer-label">
+        <select
+          id="composer-label"
+          name="labelId"
+          defaultValue={editing ? (target.shift.labelId ?? '') : ''}
+          className="h-8 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+        >
+          <option value="">Aucune étiquette</option>
+          {labels.map((label) => (
+            <option key={label.id} value={label.id}>
+              {label.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="Notes" htmlFor="composer-note">
+        <input
+          id="composer-note"
+          name="note"
+          type="text"
+          maxLength={500}
+          defaultValue={editing ? (target.shift.note ?? '') : ''}
+          placeholder="Consigne du jour"
+          className="h-8 w-56 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
+        />
+      </Field>
+
       {editing ? null : (
-        <Field label="Poste" htmlFor="composer-label">
-          <select
-            id="composer-label"
-            name="labelId"
-            className="h-8 rounded-2 border border-line-2 bg-surface px-2 text-sm text-ink-1"
-          >
-            {labels.map((label) => (
-              <option key={label.id} value={label.id}>
-                {label.name}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <RepeatDays dates={dates} days={days} selected={localDate} />
       )}
 
       <div className="flex items-center gap-2">
@@ -481,6 +519,67 @@ function ShiftComposer({
         </p>
       ) : null}
     </form>
+  );
+}
+
+/**
+ * Répétition du créneau sur plusieurs jours.
+ *
+ * Le jour ouvert est coché et **verrouillé** : on ne crée pas « ailleurs qu'ici
+ * » depuis la case d'un jour donné, et le décocher laisserait un formulaire qui
+ * ne produit rien tout en paraissant valide.
+ *
+ * La création est tout ou rien côté serveur : un jour refusé — période close,
+ * chevauchement — annule les autres. Une répétition à demi appliquée laisserait
+ * un planning que personne n'a voulu.
+ */
+function RepeatDays({
+  dates,
+  days,
+  selected,
+}: {
+  dates: string[];
+  days: string[];
+  selected: string;
+}) {
+  return (
+    <fieldset className="flex flex-col gap-1">
+      <legend className="text-micro font-medium tracking-[0.04em] text-ink-3 uppercase">
+        Répéter sur
+      </legend>
+      <div className="flex flex-wrap gap-1">
+        {dates.map((date, index) => {
+          const locked = date === selected;
+          return (
+            <label
+              key={date}
+              className={cx(
+                'flex cursor-pointer items-center gap-1 rounded-2 border px-2 py-1 text-micro',
+                locked
+                  ? 'border-accent bg-accent-soft text-accent-soft-ink'
+                  : 'border-line-2 bg-surface text-ink-2 hover:bg-surface-2',
+              )}
+            >
+              <input
+                type="checkbox"
+                name="localDates"
+                value={date}
+                defaultChecked={locked}
+                disabled={locked}
+                className="size-3"
+              />
+              {/* Un champ désactivé n'est pas envoyé : le jour ouvert voyage
+                  donc dans un champ caché, sans quoi cocher zéro case
+                  produirait une création vide. */}
+              {locked ? (
+                <input type="hidden" name="localDates" value={date} />
+              ) : null}
+              {(days[index] ?? date).slice(0, 3)}
+            </label>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 

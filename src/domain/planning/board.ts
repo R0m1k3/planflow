@@ -18,7 +18,10 @@ export interface BoardShiftInput {
   startAt: Date;
   endAt: Date;
   breakMinutes: number;
+  mealCount: number;
   poste: PosteCode;
+  /** Étiquette telle qu'enregistrée, pour rouvrir le créneau sur la sienne. */
+  labelId: string | null;
   isValidated: boolean;
   note: string | null;
 }
@@ -30,6 +33,8 @@ export interface BoardShift {
   time: string;
   minutes: number;
   breakMinutes: number;
+  mealCount: number;
+  labelId: string | null;
   state: ShiftState;
   note: string | null;
 }
@@ -139,6 +144,8 @@ export function buildRows(
       time: `${zonedClock(shift.startAt, timeZone)}–${zonedClock(shift.endAt, timeZone)}`,
       minutes,
       breakMinutes: shift.breakMinutes,
+      mealCount: shift.mealCount,
+      labelId: shift.labelId,
       state: shiftState(shift.isValidated, isPublished, shift.membershipId),
       note: shift.note,
     };

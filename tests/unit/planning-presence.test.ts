@@ -35,6 +35,8 @@ const shift: BoardRow['days'][number][number] = {
   time: '09:00–17:00',
   minutes: 480,
   breakMinutes: 30,
+  mealCount: 0,
+  labelId: null,
   state: 'published',
   note: null,
 };

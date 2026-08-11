@@ -46,14 +46,27 @@ class ValidationError extends Error {}
 
 const HOUR = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
 const shiftInput = z.object({
   teamId: z.string().min(1),
   week: z.string().min(1),
   membershipId: z.string().optional(),
-  localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide'),
+  /**
+   * Jours à créer, un créneau par jour.
+   *
+   * Un même horaire se répète d'un jour à l'autre bien plus souvent qu'il ne
+   * varie : ressaisir cinq fois « 9 h–17 h, pause 30 » est le geste le plus
+   * répété de la semaine, et le plus exposé à la faute de frappe.
+   */
+  localDates: z
+    .array(z.string().regex(ISO_DATE, 'Date invalide'))
+    .min(1, 'Sélectionnez au moins un jour')
+    .max(7),
   start: z.string().regex(HOUR, 'Heure de début invalide'),
   end: z.string().regex(HOUR, 'Heure de fin invalide'),
   breakMinutes: z.coerce.number().int().min(0).max(600).default(0),
+  mealCount: z.coerce.number().int().min(0).max(5).default(0),
   labelId: z.string().optional(),
   note: z.string().trim().max(500).optional(),
 });
@@ -99,14 +112,23 @@ export async function createShiftAction(
   _previous: PlanningActionState,
   formData: FormData,
 ): Promise<PlanningActionState> {
+  // Les cases de répétition portent le même nom : la case du jour ouvert est
+  // cochée d'office, si bien qu'un envoi sans répétition renvoie exactement une
+  // date. Le repli sur `localDate` couvre le formulaire d'un client qui aurait
+  // désactivé JavaScript.
+  const checked = formData.getAll('localDates').map(String).filter(Boolean);
+  const single = String(formData.get('localDate') ?? '');
+  const localDates = checked.length > 0 ? [...new Set(checked)] : single ? [single] : [];
+
   const parsed = shiftInput.safeParse({
     teamId: formData.get('teamId'),
     week: formData.get('week'),
     membershipId: formData.get('membershipId') || undefined,
-    localDate: formData.get('localDate'),
+    localDates,
     start: formData.get('start'),
     end: formData.get('end'),
     breakMinutes: formData.get('breakMinutes') || 0,
+    mealCount: formData.get('mealCount') || 0,
     labelId: formData.get('labelId') || undefined,
     note: formData.get('note') || undefined,
   });
@@ -122,37 +144,11 @@ export async function createShiftAction(
     await mutate('planning.create', async (db, actor) => {
       const { team, location } = await loadTeamContext(db, parsed.data.teamId);
 
-      const startAt = zonedInstant(
-        parsed.data.localDate,
-        parsed.data.start,
-        location.timezone,
-      );
-      let endAt = zonedInstant(
-        parsed.data.localDate,
-        parsed.data.end,
-        location.timezone,
-      );
-      // Fin avant début = créneau de nuit : il finit le lendemain. Le refuser
-      // interdirait de planifier un inventaire 22 h–02 h.
-      if (endAt <= startAt) endAt = new Date(endAt.getTime() + 86_400_000);
-
       // Un mois transmis au cabinet ne se modifie pas par inadvertance : le
-      // contrôle passe **avant** l'écriture.
-      await assertPeriodOpen(db, location.id, [parsed.data.localDate]);
-
-      const worked = shiftMinutes(startAt, endAt, parsed.data.breakMinutes);
-      if (worked <= 0) {
-        throw new ValidationError(
-          'La pause dépasse la durée du créneau — rien ne serait travaillé.',
-        );
-      }
-
-      const { from, to } = weekBounds(week, location.timezone);
-      if (startAt < from || startAt >= to) {
-        throw new ValidationError(
-          "Ce créneau ne commence pas dans la semaine affichée.",
-        );
-      }
+      // contrôle passe **avant** toute écriture, et porte sur tous les jours
+      // demandés — répéter sur cinq jours ne doit pas en glisser un dans une
+      // période close.
+      await assertPeriodOpen(db, location.id, parsed.data.localDates);
 
       const schedule = await ensureSchedule(
         db,
@@ -166,36 +162,75 @@ export async function createShiftAction(
         assertMayEditPublished(actor);
       }
 
-      if (parsed.data.membershipId) {
-        await assertNoOverlap(db, parsed.data.membershipId, startAt, endAt, null);
+      const { from, to } = weekBounds(week, location.timezone);
+
+      // La répétition est **tout ou rien**. Un jour refusé annule la
+      // transaction entière : une répétition à demi appliquée laisserait un
+      // planning que personne n'a voulu, et qu'il faudrait défaire à la main
+      // pour le refaire.
+      for (const localDate of parsed.data.localDates) {
+        const startAt = zonedInstant(
+          localDate,
+          parsed.data.start,
+          location.timezone,
+        );
+        let endAt = zonedInstant(localDate, parsed.data.end, location.timezone);
+        // Fin avant début = créneau de nuit : il finit le lendemain. Le refuser
+        // interdirait de planifier un inventaire 22 h–02 h.
+        if (endAt <= startAt) endAt = new Date(endAt.getTime() + 86_400_000);
+
+        const worked = shiftMinutes(startAt, endAt, parsed.data.breakMinutes);
+        if (worked <= 0) {
+          throw new ValidationError(
+            'La pause dépasse la durée du créneau — rien ne serait travaillé.',
+          );
+        }
+
+        if (startAt < from || startAt >= to) {
+          throw new ValidationError(
+            'Un des jours demandés ne commence pas dans la semaine affichée.',
+          );
+        }
+
+        if (parsed.data.membershipId) {
+          await assertNoOverlap(
+            db,
+            parsed.data.membershipId,
+            startAt,
+            endAt,
+            null,
+          );
+        }
+
+        const created = await db.shift.create({
+          data: {
+            weeklyScheduleId: schedule.id,
+            membershipId: parsed.data.membershipId ?? null,
+            localDate: new Date(`${localDate}T00:00:00Z`),
+            startAt,
+            endAt,
+            breakMinutes: parsed.data.breakMinutes,
+            mealCount: parsed.data.mealCount,
+            labelId: parsed.data.labelId ?? null,
+            note: parsed.data.note ?? null,
+          } as never,
+        });
+
+        await recordAudit(db, {
+          actorMembershipId: actor.membershipId,
+          action: 'planning.shift.create',
+          entityType: 'Shift',
+          entityId: created.id,
+          after: {
+            teamId: team.id,
+            membershipId: created.membershipId,
+            startAt: startAt.toISOString(),
+            endAt: endAt.toISOString(),
+            minutes: worked,
+            mealCount: created.mealCount,
+          },
+        });
       }
-
-      const created = await db.shift.create({
-        data: {
-          weeklyScheduleId: schedule.id,
-          membershipId: parsed.data.membershipId ?? null,
-          localDate: new Date(`${parsed.data.localDate}T00:00:00Z`),
-          startAt,
-          endAt,
-          breakMinutes: parsed.data.breakMinutes,
-          labelId: parsed.data.labelId ?? null,
-          note: parsed.data.note ?? null,
-        } as never,
-      });
-
-      await recordAudit(db, {
-        actorMembershipId: actor.membershipId,
-        action: 'planning.shift.create',
-        entityType: 'Shift',
-        entityId: created.id,
-        after: {
-          teamId: team.id,
-          membershipId: created.membershipId,
-          startAt: startAt.toISOString(),
-          endAt: endAt.toISOString(),
-          minutes: worked,
-        },
-      });
 
       await assertNoBlocking(db, schedule.id);
     });
@@ -214,6 +249,12 @@ const moveInput = z.object({
   start: z.string().regex(HOUR, 'Heure de début invalide'),
   end: z.string().regex(HOUR, 'Heure de fin invalide'),
   breakMinutes: z.coerce.number().int().min(0).max(600).default(0),
+  mealCount: z.coerce.number().int().min(0).max(5).default(0),
+  // Modifiables à la correction comme à la création : une étiquette posée de
+  // travers se corrigeait jusqu'ici en supprimant le créneau pour le refaire,
+  // ce qui perdait sa validation et son historique.
+  labelId: z.string().optional(),
+  note: z.string().trim().max(500).optional(),
 });
 
 export async function updateShiftAction(
@@ -227,6 +268,9 @@ export async function updateShiftAction(
     start: formData.get('start'),
     end: formData.get('end'),
     breakMinutes: formData.get('breakMinutes') || 0,
+    mealCount: formData.get('mealCount') || 0,
+    labelId: formData.get('labelId') || undefined,
+    note: formData.get('note') || undefined,
   });
 
   if (!parsed.success) {
@@ -287,6 +331,9 @@ export async function updateShiftAction(
           startAt,
           endAt,
           breakMinutes: parsed.data.breakMinutes,
+          mealCount: parsed.data.mealCount,
+          labelId: parsed.data.labelId ?? null,
+          note: parsed.data.note ?? null,
           version: { increment: 1 },
         },
       });
