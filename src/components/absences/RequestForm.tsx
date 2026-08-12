@@ -33,6 +33,22 @@ export function RequestForm({
     empty,
   );
 
+  // Un menu « Type » vide ne se voit pas : le formulaire paraît complet, la
+  // demande part sans type et échoue au serveur. Dire que le référentiel manque
+  // coûte moins qu'une saisie qui ne pouvait pas aboutir.
+  if (absenceTypes.length === 0) {
+    return (
+      <p className="rounded-3 border border-line-2 bg-surface-2 p-3 text-sm text-ink-2">
+        Aucun type d’absence n’est défini : une demande ne peut pas être
+        qualifiée, donc pas enregistrée. Le référentiel se pose depuis{' '}
+        <a className="underline" href="/reglages/types-absence">
+          Réglages · Types d’absence
+        </a>
+        .
+      </p>
+    );
+  }
+
   return (
     <PersistentForm
       resetAfter={state.ok ? state : null}
