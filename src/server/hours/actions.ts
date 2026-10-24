@@ -9,6 +9,7 @@ import { zonedDate, zonedInstant } from '@/domain/planning/week';
 import { recordAudit } from '@/server/audit';
 import { mutate } from '@/server/context';
 import { assertPeriodOpen, PeriodLockedError } from '@/server/payroll/periods';
+import { assertResourceInScope } from '@/server/scope';
 
 /**
  * Saisie des heures réelles — PLAN.md §7.3.
@@ -62,6 +63,7 @@ export async function saveActualHoursAction(
         include: { schedule: true },
       });
       if (!shift) throw new AuthorizationError('hours.edit_actual');
+      assertResourceInScope(actor, 'hours.edit_actual', shift.schedule);
 
       const location = await db.location.findUnique({
         where: { id: shift.schedule.locationId },
@@ -196,6 +198,11 @@ export async function validateHoursAction(
         include: { schedule: true },
       });
       if (shifts.length === 0) throw new ValidationError('Lignes introuvables.');
+      // Chaque ligne est contrôlée : une sélection ne doit pas embarquer le
+      // créneau d'un établissement hors périmètre.
+      for (const shift of shifts) {
+        assertResourceInScope(actor, 'hours.validate', shift.schedule);
+      }
 
       for (const shift of shifts) {
         const location = await db.location.findUnique({
@@ -208,8 +215,9 @@ export async function validateHoursAction(
         ]);
       }
 
+      // Seules les lignes lues et contrôlées ci-dessus sont modifiées.
       await db.shift.updateMany({
-        where: { id: { in: parsed.data.shiftIds } },
+        where: { id: { in: shifts.map((shift) => shift.id) } },
         data: {
           isValidated: parsed.data.validate,
           validatedAt: parsed.data.validate ? new Date() : null,

@@ -12,6 +12,7 @@ import {
 import { recordAudit } from '@/server/audit';
 import { mutate } from '@/server/context';
 import { assertPeriodOpen, PeriodLockedError } from '@/server/payroll/periods';
+import { assertMemberInScope } from '@/server/scope';
 import type { ScopedClient } from '@/server/tenant';
 
 /**
@@ -103,6 +104,14 @@ export async function requestTimeOffAction(
         !can(actor, 'timeoff.decide')
       ) {
         throw new AuthorizationError('timeoff.decide');
+      }
+      if (parsed.data.membershipId !== actor.membershipId) {
+        await assertMemberInScope(
+          db,
+          actor,
+          'timeoff.decide',
+          parsed.data.membershipId,
+        );
       }
 
       if (parsed.data.endDate < parsed.data.startDate) {
@@ -264,6 +273,19 @@ export async function decideTimeOffAction(
         include: { absenceType: true },
       });
       if (!timeOff) throw new AuthorizationError('timeoff.decide');
+      // Personne ne décide de sa propre demande : la validation suppose un
+      // second regard.
+      if (timeOff.membershipId === actor.membershipId) {
+        throw new ValidationError(
+          'Vous ne pouvez pas décider de votre propre demande.',
+        );
+      }
+      await assertMemberInScope(
+        db,
+        actor,
+        'timeoff.decide',
+        timeOff.membershipId,
+      );
       if (timeOff.status !== 'PENDING') {
         throw new ValidationError('Cette demande a déjà été traitée.');
       }
@@ -358,6 +380,14 @@ export async function cancelTimeOffAction(
       if (!isOwn && !can(actor, 'timeoff.decide')) {
         throw new AuthorizationError('timeoff.decide');
       }
+      if (!isOwn) {
+        await assertMemberInScope(
+          db,
+          actor,
+          'timeoff.decide',
+          timeOff.membershipId,
+        );
+      }
       if (timeOff.status === 'CANCELLED') {
         throw new ValidationError('Cette absence est déjà annulée.');
       }
@@ -427,6 +457,12 @@ export async function adjustCounterAction(
 
   try {
     await mutate('counters.adjust', async (db, actor) => {
+      await assertMemberInScope(
+        db,
+        actor,
+        'counters.adjust',
+        parsed.data.membershipId,
+      );
       const counter = await ensureCounter(
         db,
         parsed.data.membershipId,

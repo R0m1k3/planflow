@@ -29,6 +29,7 @@ import { sendEmail } from '@/server/email/mailer';
 import { evaluateAround, evaluateSchedule } from '@/server/compliance/evaluate';
 import { mutate } from '@/server/context';
 import { assertPeriodOpen, PeriodLockedError } from '@/server/payroll/periods';
+import { assertResourceInScope } from '@/server/scope';
 import type { ScopedClient } from '@/server/tenant';
 
 /**
@@ -181,6 +182,10 @@ export async function createShiftAction(
   try {
     await mutate('planning.create', async (db, actor) => {
       const { team, location } = await loadTeamContext(db, parsed.data.teamId);
+      assertResourceInScope(actor, 'planning.create', {
+        locationId: location.id,
+        teamId: team.id,
+      });
 
       // Un mois transmis au cabinet ne se modifie pas par inadvertance : le
       // contrôle passe **avant** toute écriture, et porte sur tous les jours
@@ -418,6 +423,7 @@ export async function updateShiftAction(
         include: { schedule: true },
       });
       if (!shift) throw new AuthorizationError('planning.edit');
+      assertResourceInScope(actor, 'planning.edit', shift.schedule);
 
       const location = await db.location.findUnique({
         where: { id: shift.schedule.locationId },
@@ -538,6 +544,7 @@ export async function deleteShiftAction(
         include: { schedule: true },
       });
       if (!shift) throw new AuthorizationError('planning.delete');
+      assertResourceInScope(actor, 'planning.delete', shift.schedule);
 
       if (shift.schedule.status === 'PUBLISHED') {
         assertMayEditPublished(actor);
@@ -660,6 +667,10 @@ export async function duplicateWeekAction(
   try {
     await mutate('planning.duplicate', async (db, actor) => {
       const { team, location } = await loadTeamContext(db, parsed.data.teamId);
+      assertResourceInScope(actor, 'planning.duplicate', {
+        locationId: location.id,
+        teamId: team.id,
+      });
 
       const from = await db.weeklySchedule.findUnique({
         where: {
@@ -782,6 +793,11 @@ async function setPublication(
   try {
     await mutate(publish ? 'planning.publish' : 'planning.unpublish', async (db, actor) => {
       const { team, location } = await loadTeamContext(db, parsed.data.teamId);
+      assertResourceInScope(
+        actor,
+        publish ? 'planning.publish' : 'planning.unpublish',
+        { locationId: location.id, teamId: team.id },
+      );
       const schedule = await ensureSchedule(
         db,
         team.id,

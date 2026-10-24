@@ -7,6 +7,7 @@ import {
 } from '@/domain/access/invitation';
 import { decryptOptional } from '@/server/crypto';
 import { query } from '@/server/context';
+import { isMemberInScope, membershipScopeWhere } from '@/server/scope';
 
 /**
  * Lecture des dossiers salariés.
@@ -87,9 +88,12 @@ export function contractLabel(type: string): string {
 export async function listEmployees(
   filters: EmployeeFilters = {},
 ): Promise<EmployeeDirectory> {
-  return query('members.view', async (db) => {
+  return query('members.view', async (db, actor) => {
     const now = new Date();
     const search = filters.q?.trim();
+    // Le périmètre s'applique en base, avant tout filtre : un manager ne voit
+    // que les dossiers de ses établissements ou équipes.
+    const scopeWhere = membershipScopeWhere(actor);
 
     // Un archivé n'appartient plus à l'effectif : il faut le demander.
     const presence =
@@ -137,10 +141,15 @@ export async function listEmployees(
       : {};
 
     const where = {
-      ...presence,
-      ...contractFilter,
-      ...searchFilter,
-      ...(filters.roleId ? { roleId: filters.roleId } : {}),
+      AND: [
+        {
+          ...presence,
+          ...contractFilter,
+          ...searchFilter,
+          ...(filters.roleId ? { roleId: filters.roleId } : {}),
+        },
+        scopeWhere,
+      ],
     };
 
     const [memberships, total, locations, roles] = await Promise.all([
@@ -171,9 +180,13 @@ export async function listEmployees(
         },
         orderBy: { employeeNumber: 'asc' },
       }),
-      db.membership.count({ where: { archivedAt: null } }),
+      db.membership.count({
+        where: { AND: [{ archivedAt: null }, scopeWhere] },
+      }),
       db.location.findMany({
-        where: { archivedAt: null },
+        where: actor.scope.allLocations
+          ? { archivedAt: null }
+          : { archivedAt: null, id: { in: actor.scope.locationIds } },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),
@@ -373,6 +386,8 @@ export const getEmployee = cache(async function getEmployee(
     });
 
     if (!membership) return null;
+    // Hors périmètre, le dossier n'existe pas pour l'acteur.
+    if (!(await isMemberInScope(db, actor, membership.id))) return null;
 
     const active = membership.contracts.find(
       (contract) => contract.status === 'ACTIVE',
@@ -638,7 +653,9 @@ export interface MemberPlacement {
 export const getMemberPlacement = cache(async function getMemberPlacement(
   id: string,
 ): Promise<MemberPlacement | null> {
-  return query('members.view', async (db) => {
+  return query('members.view', async (db, actor) => {
+    if (!(await isMemberInScope(db, actor, id))) return null;
+
     const membership = await db.membership.findUnique({
       where: { id },
       select: {
